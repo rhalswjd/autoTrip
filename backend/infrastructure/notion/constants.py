@@ -1,0 +1,10 @@
+class NotionColumns:
+    """Constants for Notion Database column names to avoid hardcoding in Mapper."""
+    NAME = "Name"
+    RAILWAY = "Railway"
+    DURATION = "Duration"
+    FARE = "Fare"
+    TRANSFERS = "Transfers"
+    CONFIRMED = "Confirmed"
+    DEPARTURE_TIME = "Departure Time"
+    DATE = "Date"
