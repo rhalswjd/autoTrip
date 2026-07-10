@@ -1,0 +1,33 @@
+.skeleton {
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse var(--duration-pulse) ease-in-out infinite;
+}
+
+.skeleton-text {
+  height: 1em;
+  border-radius: 4px;
+}
+
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}

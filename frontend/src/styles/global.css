@@ -5,26 +5,26 @@
 html, body, #root { height: 100%; }
 
 body {
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
   color: var(--color-text-primary);
-  background: var(--color-bg-primary);
+  background: var(--color-bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::selection { background: var(--color-accent); color: var(--color-text-inverse); }
+::selection { background: var(--color-state-selection); color: var(--color-text-primary); }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
   border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
 
 .sr-only {

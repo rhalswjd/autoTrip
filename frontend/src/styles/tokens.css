@@ -1,93 +1,194 @@
+/* ─── AutoTrip Design Tokens ─── */
+/* Follows Apple Human Interface Guidelines for macOS Utility Apps */
+
 :root {
-  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
-  --font-mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-  --font-size-xs: 11px;
-  --font-size-sm: 13px;
-  --font-size-base: 15px;
-  --font-size-lg: 17px;
-  --font-size-xl: 20px;
-  --font-size-2xl: 24px;
-  --font-size-3xl: 34px;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.65;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f5f5f7;
-  --color-bg-tertiary: #e8e8ed;
+  /* 1. Base Color System (Light Mode) */
+  --color-primary: #007aff;
+  --color-secondary: #5856d6;
+  
+  --color-bg-base: #ffffff;
+  --color-bg-surface: #f5f5f7;
   --color-bg-sidebar: rgba(246, 246, 246, 0.8);
-  --color-bg-elevated: #ffffff;
-  --color-bg-hover: rgba(0, 0, 0, 0.04);
-  --color-bg-active: rgba(0, 0, 0, 0.06);
+  
   --color-text-primary: #1d1d1f;
   --color-text-secondary: #86868b;
   --color-text-tertiary: #aeaeb2;
   --color-text-inverse: #ffffff;
-  --color-accent: #007aff;
-  --color-accent-hover: #0066d6;
-  --color-accent-active: #0055b3;
+  
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-divider: rgba(0, 0, 0, 0.06);
+  
+  --color-state-hover: rgba(0, 0, 0, 0.04);
+  --color-state-pressed: rgba(0, 0, 0, 0.08);
+  --color-state-selection: rgba(0, 122, 255, 0.1);
+  --color-focus-ring: rgba(0, 122, 255, 0.3);
+  --color-error-focus-ring: rgba(255, 59, 48, 0.3);
+  
   --color-success: #34c759;
   --color-warning: #ff9f0a;
   --color-error: #ff3b30;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-strong: rgba(0, 0, 0, 0.15);
-  --color-divider: rgba(0, 0, 0, 0.06);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
-  --blur-sm: 8px;
-  --blur-md: 20px;
-  --blur-lg: 40px;
-  --duration-fast: 120ms;
-  --duration-normal: 200ms;
-  --duration-slow: 350ms;
-  --easing-default: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --sidebar-width: 220px;
+  --color-info: #5ac8fa;
+
+  /* 2. Semantic Colors */
+  --button-bg-primary: var(--color-primary);
+  --button-bg-primary-hover: #0066d6;
+  --button-text-primary: var(--color-text-inverse);
+  
+  --button-bg-secondary: rgba(0, 0, 0, 0.05);
+  --button-bg-secondary-hover: rgba(0, 0, 0, 0.08);
+  --button-text-secondary: var(--color-text-primary);
+  
+  --button-bg-danger: var(--color-error);
+  --button-bg-danger-hover: #e03026;
+  --button-text-danger: var(--color-text-inverse);
+  
+  --card-bg: var(--color-bg-base);
+  --card-border: var(--color-border);
+  --card-hover-bg: var(--color-bg-surface);
+  
+  --input-bg: var(--color-bg-base);
+  --input-border: rgba(0, 0, 0, 0.15);
+  --input-border-focus: var(--color-primary);
+  --input-text: var(--color-text-primary);
+  --input-placeholder: var(--color-text-tertiary);
+  
+  --sidebar-active-bg: var(--color-state-selection);
+  --sidebar-hover-bg: var(--color-state-hover);
+  
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+
+  /* 3. Typography System */
+  --font-family-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+  
+  --font-size-display: 34px;
+  --font-size-title-1: 28px;
+  --font-size-title-2: 22px;
+  --font-size-title-3: 20px;
+  --font-size-headline: 17px;
+  --font-size-body: 15px;
+  --font-size-footnote: 13px;
+  --font-size-caption: 11px;
+  
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  --line-height-tight: 1.2;
+  --line-height-body: 1.5;
+  --line-height-relaxed: 1.6;
+  
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.01em;
+
+  /* 4. Spacing System (4pt Grid) */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  /* 5. Radius System */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  /* 6. Elevation System */
+  --elevation-flat: none;
+  --elevation-raised: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --elevation-floating: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+
+  /* 7. Material Layer System */
+  --material-thin: blur(12px);
+  --material-regular: blur(24px);
+  --material-thick: blur(40px);
+
+  /* 8. Animation & Motion System */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-pulse: 1500ms;
+  --duration-spin: 1000ms;
+  
+  --ease-hover: cubic-bezier(0.2, 0.0, 0, 1.0);
+  --ease-press: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-fade: linear;
+  --ease-scale: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-slide: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --transition-fast: all var(--duration-fast) var(--ease-hover);
+  --transition-normal: all var(--duration-normal) var(--ease-hover);
+  --transition-slow: all var(--duration-slow) var(--ease-hover);
+  
+  --motion-scale-in: scale(0.95);
+  --motion-scale-out: scale(1.05);
+
+  /* 9. Layout System */
+  --sidebar-width: 280px;
   --header-height: 52px;
   --content-max-width: 720px;
+  --panel-padding: var(--space-24);
+  --page-padding: var(--space-32);
+
+  /* 10. Z-index System */
+  --z-dropdown: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
 }
 
+/* Dark Mode Colors */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg-primary: #1c1c1e;
-    --color-bg-secondary: #2c2c2e;
-    --color-bg-tertiary: #3a3a3c;
-    --color-bg-sidebar: rgba(28, 28, 30, 0.85);
-    --color-bg-elevated: #2c2c2e;
-    --color-bg-hover: rgba(255, 255, 255, 0.06);
-    --color-bg-active: rgba(255, 255, 255, 0.08);
-    --color-text-primary: #f5f5f7;
-    --color-text-secondary: #98989d;
-    --color-text-tertiary: #636366;
-    --color-accent: #0a84ff;
-    --color-accent-hover: #409cff;
-    --color-accent-active: #64b5f6;
-    --color-border: rgba(255, 255, 255, 0.08);
-    --color-border-strong: rgba(255, 255, 255, 0.15);
-    --color-divider: rgba(255, 255, 255, 0.06);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --color-primary: #0a84ff;
+    --color-secondary: #5e5ce6;
+    
+    --color-bg-base: #1c1c1e;
+    --color-bg-surface: #2c2c2e;
+    --color-bg-sidebar: rgba(44, 44, 46, 0.8);
+    
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #ebebf599;
+    --color-text-tertiary: #ebebf54d;
+    --color-text-inverse: #000000;
+    
+    --color-border: rgba(255, 255, 255, 0.15);
+    --color-divider: rgba(255, 255, 255, 0.1);
+    
+    --color-state-hover: rgba(255, 255, 255, 0.08);
+    --color-state-pressed: rgba(255, 255, 255, 0.12);
+    --color-state-selection: rgba(10, 132, 255, 0.2);
+    --color-focus-ring: rgba(10, 132, 255, 0.4);
+    --color-error-focus-ring: rgba(255, 69, 58, 0.4);
+    
+    --color-success: #32d74b;
+    --color-warning: #ffd60a;
+    --color-error: #ff453a;
+    --color-info: #64d2ff;
+    
+    --overlay-bg: rgba(0, 0, 0, 0.6);
+    
+    /* Semantic Dark */
+    --button-bg-primary-hover: #409cff;
+    
+    --button-bg-secondary: rgba(255, 255, 255, 0.1);
+    --button-bg-secondary-hover: rgba(255, 255, 255, 0.15);
+    
+    --button-bg-danger-hover: #ff6961;
+    
+    --input-border: rgba(255, 255, 255, 0.2);
+    
+    /* Elevation Dark */
+    --elevation-raised: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    --elevation-floating: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
   }
 }

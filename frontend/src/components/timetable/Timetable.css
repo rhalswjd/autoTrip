@@ -1,0 +1,194 @@
+.timetable-container {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-24) 0;
+}
+
+.timetable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--color-divider);
+  margin-bottom: var(--space-16);
+}
+
+.timetable-title {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.timetable-meta {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-secondary);
+}
+
+.timetable-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ─── Timetable Card ─── */
+.timetable-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-16);
+  cursor: pointer;
+  outline: none;
+}
+
+.timetable-time-info {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.timetable-time {
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+}
+
+.timetable-train-name {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.timetable-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+/* ─── States ─── */
+.timetable-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-48) var(--space-24);
+  gap: var(--space-12);
+  color: var(--color-text-secondary);
+}
+
+.timetable-empty-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-tertiary);
+}
+
+.timetable-empty-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.timetable-empty-desc {
+  font-size: var(--font-size-footnote);
+}
+
+/* ─── Skeleton Loading ─── */
+.timetable-loading-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.timetable-loading-card {
+  padding: var(--space-16);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ─── Movement Dialog ─── */
+.movement-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.movement-dialog-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.movement-dialog-title {
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.movement-dialog-desc {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-secondary);
+}
+
+.movement-dialog-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+.movement-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.movement-detail-label {
+  font-size: var(--font-size-footnote);
+  color: var(--color-text-secondary);
+}
+
+.movement-detail-value {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.movement-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-12);
+  padding-top: var(--space-8);
+}
+
+/* ─── Movement Success ─── */
+.movement-success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  padding: var(--space-24) 0;
+  text-align: center;
+}
+
+.movement-success-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-success);
+}
+
+.movement-success-title {
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.movement-success-desc {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}

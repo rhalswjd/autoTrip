@@ -1,0 +1,18 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 200);
+  background: var(--overlay-bg);
+  backdrop-filter: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-thick);
+  animation: overlay-fade-in var(--duration-normal) var(--ease-fade) forwards;
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

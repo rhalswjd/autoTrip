@@ -1,0 +1,87 @@
+.route-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.route-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.route-form-title {
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.route-fields-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.route-station-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.route-station-field.is-empty {
+  border-style: dashed;
+  color: var(--color-text-tertiary);
+}
+
+.route-station-icon {
+  color: var(--color-text-secondary);
+}
+
+.route-station-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.route-station-label {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.route-station-name {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.swap-button-wrapper {
+  position: absolute;
+  top: 50%;
+  right: var(--space-16);
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.swap-button {
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--elevation-raised);
+}
+
+.swap-button:hover:not(:disabled) {
+  background: var(--color-bg-surface);
+}
+
+.route-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-8);
+}

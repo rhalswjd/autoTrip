@@ -1,14 +1,21 @@
-import { Card } from '../components';
+import { Settings as SettingsIcon } from 'lucide-react';
+import { Sidebar } from '../layouts/Sidebar';
 
 export function SettingsPage() {
   return (
-    <div className="content-inner">
-      <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', marginBottom: 'var(--space-6)', letterSpacing: '-0.02em' }}>Settings</h1>
-      <Card>
-        <div style={{ padding: 'var(--space-4)' }}>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>Settings will be available in a future update.</p>
+    <div className="split-view">
+      <Sidebar />
+
+      <main className="detail-panel">
+        <div className="detail-panel-inner">
+          <div className="placeholder">
+            <SettingsIcon className="placeholder-icon" />
+            <span className="placeholder-text">
+              Settings will be available here
+            </span>
+          </div>
         </div>
-      </Card>
+      </main>
     </div>
   );
 }
