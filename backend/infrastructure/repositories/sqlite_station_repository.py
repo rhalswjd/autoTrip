@@ -7,24 +7,6 @@ from core.logger import logger
 class SqliteStationRepository(StationRepositoryPort):
     def __init__(self, db_path: str = "autotrip_stations.db"):
         self.db_path = db_path
-        self._init_db()
-
-    def _init_db(self):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS stations (
-                    id TEXT PRIMARY KEY,
-                    name_en TEXT NOT NULL,
-                    name_jp TEXT NOT NULL,
-                    prefecture TEXT,
-                    railway_company TEXT,
-                    lat REAL,
-                    lng REAL,
-                    has_midori_office INTEGER NOT NULL
-                )
-            ''')
-            # Seed data is handled by external script for full Japan database
-            # We just ensure the table exists here.
 
     async def search_stations(self, query: str) -> List[Station]:
         if not query.strip():

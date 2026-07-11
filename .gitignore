@@ -70,3 +70,21 @@ build/
 
 # Docker
 .docker/
+
+# Temporary & Uploads
+tmp/
+temp/
+uploads/
+secrets/
+private/
+
+# Testing Coverage
+coverage/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# OS/System cache
+Thumbs.db

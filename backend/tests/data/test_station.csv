@@ -1,0 +1,4 @@
+id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
+st_osaka,Osaka,大阪,Osaka,JR,34.7024,135.4959,1
+st_kyoto,Kyoto,京都,Kyoto,JR,34.9858,135.7587,1
+st_shinosaka,Shin-Osaka,新大阪,Osaka,JR,34.7333,135.5000,1

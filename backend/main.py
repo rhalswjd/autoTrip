@@ -49,6 +49,19 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         logger.info(f"Starting {settings.app_name} in {settings.environment} mode.")
+        # Ensure DB is created from CSV if missing
+        import os
+        import subprocess
+        db_path = os.path.join(os.path.dirname(__file__), "autotrip_stations.db")
+        if not os.path.exists(db_path):
+            csv_path = os.path.join(os.path.dirname(__file__), "data", "station.csv")
+            script_path = os.path.join(os.path.dirname(__file__), "scripts", "seed_station_db.py")
+            logger.info(f"Database not found. Seeding from {csv_path}...")
+            try:
+                subprocess.run(["python", script_path, "--csv", csv_path, "--db", db_path], check=True)
+                logger.info("Database seeding completed.")
+            except Exception as e:
+                logger.error(f"Failed to seed database: {e}")
 
     return app
 

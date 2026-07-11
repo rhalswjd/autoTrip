@@ -1,14 +1,19 @@
 import pytest
 import os
 from infrastructure.repositories.sqlite_station_repository import SqliteStationRepository
+from scripts.seed_station_db import seed_database
 
 @pytest.fixture
 def repo():
     db_path = "test_stations_api.db"
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    csv_path = os.path.join(os.path.dirname(__file__), "data", "test_station.csv")
+    
+    # Generate test DB from test CSV
+    seed_database(csv_path, db_path)
+    
     r = SqliteStationRepository(db_path=db_path)
     yield r
+    
     if os.path.exists(db_path):
         os.remove(db_path)
 
