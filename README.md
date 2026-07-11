@@ -2,18 +2,18 @@
 
 A macOS utility-style application for searching Japanese train routes and seamlessly organizing them into your Notion workspace.
 
-![AutoTrip Search](docs/images/search.png)
+<!-- ![AutoTrip Search](docs/images/search.png) - Coming Soon -->
 
 ## Features
 
-- **Station Search**: Quickly find stations with real-time feedback and keyword support.
-- **Route Search**: Find the best transit options with transfer counts and fare details.
+- **Station Search**: Quickly find stations with real-time feedback and keyword support. (Note: Currently uses local seeded database)
+- **Route Search**: Find the best transit options with transfer counts and fare details. (Note: Currently returns mock/stub data for demonstration)
 - **Route Timeline**: View your journey in a clean, Apple Maps-inspired vertical timeline.
-- **Timetable**: Browse all departure and arrival schedules for selected routes.
-- **Movement Creation**: Automatically generate trip logs directly in your Notion database.
+- **Timetable**: Browse all departure and arrival schedules for selected routes. (Note: Currently returns mock/stub data for demonstration)
+- **Movement Creation**: Automatically generate trip logs directly in your Notion database. (Note: Currently returns a stub response without making actual Notion API calls)
 - **Notion Integration**: Bridge the gap between travel planning and workspace organization.
 
-![AutoTrip Timetable](docs/images/timetable.png)
+<!-- ![AutoTrip Timetable](docs/images/timetable.png) - Coming Soon -->
 
 ## Tech Stack
 
@@ -25,14 +25,11 @@ A macOS utility-style application for searching Japanese train routes and seamle
 **Backend**
 - Python 3.12
 - FastAPI
-- SQLAlchemy
+- SQLite
 
 **State Management**
 - React Query (Tanstack Query)
 - React Built-in Hooks (useState, useContext)
-
-**Database**
-- SQLite
 
 **Deployment**
 - Docker & Docker Compose
@@ -50,19 +47,18 @@ AutoTrip strictly follows **Clean Architecture** to maintain high cohesion and l
 
 ### Backend 구조
 - `domain/`: Core business entities and models.
-- `usecase/`: Application business logic.
-- `repository/`: Data access and external API integrations (Notion).
-- `router/`: FastAPI endpoints.
+- `application/`: Application business logic (Services and Ports).
+- `infrastructure/`: Data access and external API integrations (Adapters, Repositories).
+- `api/`: FastAPI endpoints (Routers).
 
 ```text
 autoTrip/
 ├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── models/
-│   │   ├── repositories/
-│   │   └── services/
+│   ├── api/
+│   ├── application/
+│   ├── core/
+│   ├── domain/
+│   ├── infrastructure/
 │   ├── tests/
 │   └── main.py
 └── frontend/
@@ -82,7 +78,7 @@ Follow these steps to run AutoTrip locally.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/autotrip.git
+   git clone https://github.com/<YOUR_GITHUB_REPOSITORY>/autotrip.git
    cd autotrip
    ```
 
@@ -132,12 +128,12 @@ NOTION_DATABASE_ID=your_notion_database_id_here
 Once the backend is running, you can access the following standard endpoints:
 
 - **Swagger Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+- **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 
 ## Screenshots
 
-- **Route Details**: ![Routes](docs/images/routes.png)
-- **Movement Creation**: ![Movement](docs/images/movement.png)
+<!-- - **Route Details**: ![Routes](docs/images/routes.png) - Coming Soon -->
+<!-- - **Movement Creation**: ![Movement](docs/images/movement.png) - Coming Soon -->
 
 ## License
 

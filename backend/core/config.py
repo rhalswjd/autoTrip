@@ -3,8 +3,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "AutoTrip API"
     environment: str = "local"
-    debug: bool = True
+    debug: bool = False
     log_level: str = "INFO"
+    
+    backend_cors_origins: list[str] = ["http://localhost:5173"]
     
     notion_api_key: str = ""
     notion_database_id: str = ""

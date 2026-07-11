@@ -22,12 +22,14 @@ export function useRoutePanel() {
   );
 
   const handleRoutesLoaded = useCallback((loadedRoutes: Route[] | undefined, isLoading: boolean) => {
-    setRoutes(loadedRoutes);
+    setRoutes((prevRoutes) => {
+      if (loadedRoutes !== prevRoutes) {
+        setSelectedRoute(null);
+      }
+      return loadedRoutes;
+    });
     setRoutesLoading(isLoading);
-    if (loadedRoutes !== routes) {
-      setSelectedRoute(null);
-    }
-  }, [routes]);
+  }, []);
 
   const handleRouteSelect = useCallback((route: Route) => {
     setSelectedRoute((prev) => (prev?.id === route.id ? null : route));

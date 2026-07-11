@@ -8,6 +8,8 @@ from api.v1.timetable import router as timetable_router
 from api.v1.movements import router as movements_router
 from api.v1.stations import router as stations_router
 
+from fastapi.middleware.cors import CORSMiddleware
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
@@ -24,6 +26,15 @@ def create_app() -> FastAPI:
         },
         debug=settings.debug
     )
+
+    if settings.backend_cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[str(origin) for origin in settings.backend_cors_origins],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     # Register Exception Handlers
     setup_exception_handlers(app)
