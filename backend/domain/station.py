@@ -8,6 +8,8 @@ class Station(BaseModel):
     id: str = ""
     name: str = ""
     name_jp: str = ""
+    prefecture: str = ""
+    railway_company: str = ""
     lat: float = 0.0
     lng: float = 0.0
     platform: Optional[str] = None

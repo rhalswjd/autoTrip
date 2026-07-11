@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     notion_api_key: str = ""
     notion_database_id: str = ""
     
+    use_real_scraper: bool = False
+    use_real_notion: bool = False
+    use_sqlite_cache: bool = False
+    
     scraper_base_url: str = "https://www.jr-odekake.net/railroad/eki/"
     
     sqlite_cache_path: str = "autotrip_cache.db"

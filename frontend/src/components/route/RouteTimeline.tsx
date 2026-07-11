@@ -26,6 +26,7 @@ function buildTimelineStops(stations: Station[]): TimelineStop[] {
 
 export function RouteTimeline({ route }: RouteTimelineProps) {
   const stops = buildTimelineStops(route.stations);
+  const segments = route.polyline ? route.polyline.split(' -> ') : [];
 
   return (
     <div className="route-timeline" role="list" aria-label="Route timeline">
@@ -57,7 +58,7 @@ export function RouteTimeline({ route }: RouteTimelineProps) {
             {/* Leg between this stop and next */}
             {index < stops.length - 1 && (
               <RouteLeg
-                railwayName={route.railway_name}
+                railwayName={segments[index] || route.railway_name}
                 stationCount={Math.max(1, Math.floor(route.stations.length / Math.max(1, route.transfer_count + 1)))}
                 duration={index === 0 && route.transfer_count === 0 ? route.total_duration : undefined}
               />

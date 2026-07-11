@@ -5,7 +5,7 @@ from application.ports.cache_port import CachePort
 from application.ports.station_repository_port import StationRepositoryPort
 
 from infrastructure.fakes.fake_scraper import FakeScraperAdapter
-from infrastructure.scrapers.real_scraper import RealScraperAdapter
+from infrastructure.scrapers.yahoo_transit_adapter import YahooTransitAdapter
 from infrastructure.fakes.fake_notion import FakeNotionAdapter
 from infrastructure.notion.notion_adapter import RealNotionAdapter
 from infrastructure.fakes.fake_cache import FakeCacheAdapter
@@ -20,13 +20,14 @@ from application.services.station_service import StationService
 from core.config import settings
 
 # --- Configuration Toggle for Dependency Injection ---
-USE_REAL_SCRAPER = False
-USE_REAL_NOTION = False
-USE_SQLITE_CACHE = False
+USE_REAL_SCRAPER = settings.use_real_scraper
+USE_REAL_NOTION = settings.use_real_notion
+USE_SQLITE_CACHE = settings.use_sqlite_cache
+
 
 # Dependency instantiation (Using singletons)
 fake_scraper = FakeScraperAdapter()
-real_scraper = RealScraperAdapter()
+yahoo_transit = YahooTransitAdapter()
 fake_notion = FakeNotionAdapter()
 real_notion = RealNotionAdapter()
 fake_cache = FakeCacheAdapter()
@@ -34,7 +35,7 @@ sqlite_cache = SqliteCacheAdapter(db_path=settings.sqlite_cache_path)
 sqlite_station_repo = SqliteStationRepository(db_path=settings.sqlite_station_db_path)
 
 def get_scraper_port() -> ScraperPort:
-    return real_scraper if USE_REAL_SCRAPER else fake_scraper
+    return yahoo_transit if USE_REAL_SCRAPER else fake_scraper
 
 def get_notion_port() -> NotionPort:
     return real_notion if USE_REAL_NOTION else fake_notion

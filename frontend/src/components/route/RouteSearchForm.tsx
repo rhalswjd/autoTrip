@@ -30,8 +30,8 @@ export function RouteSearchForm({
   const { data, refetch, isError, error, isFetching } = useRouteSearch(
     isReady
       ? {
-          departure_station: departure.english_name,
-          arrival_station: arrival.english_name,
+          departure_station: departure.japanese_name,
+          arrival_station: arrival.japanese_name,
         }
       : null
   );

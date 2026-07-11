@@ -120,6 +120,11 @@ DB_PATH=data/autotrip.db
 # Notion API (Do not put actual tokens here)
 NOTION_API_KEY=secret_your_notion_api_key_here
 NOTION_DATABASE_ID=your_notion_database_id_here
+
+# Enable real infrastructure adapters
+USE_REAL_SCRAPER=false
+USE_REAL_NOTION=false
+USE_SQLITE_CACHE=false
 ```
 > **Important:** Never commit the `.env` file containing actual sensitive credentials or API keys to the repository.
 
