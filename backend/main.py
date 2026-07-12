@@ -49,19 +49,46 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         logger.info(f"Starting {settings.app_name} in {settings.environment} mode.")
-        # Ensure DB is created from CSV if missing
         import os
         import subprocess
+        import sqlite3
+        
         db_path = os.path.join(os.path.dirname(__file__), "autotrip_stations.db")
-        if not os.path.exists(db_path):
-            csv_path = os.path.join(os.path.dirname(__file__), "data", "station.csv")
-            script_path = os.path.join(os.path.dirname(__file__), "scripts", "seed_station_db.py")
-            logger.info(f"Database not found. Seeding from {csv_path}...")
+        csv_path = os.path.join(os.path.dirname(__file__), "data", "station.csv")
+        script_path = os.path.join(os.path.dirname(__file__), "scripts", "seed_station_db.py")
+
+        def check_db_valid() -> bool:
+            if not os.path.exists(db_path):
+                return False
+            try:
+                with sqlite3.connect(db_path) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='stations'")
+                    if not cursor.fetchone():
+                        return False
+                    cursor.execute("SELECT COUNT(*) FROM stations")
+                    count = cursor.fetchone()[0]
+                    return count > 0
+            except (sqlite3.OperationalError, sqlite3.DatabaseError):
+                return False
+
+        if not check_db_valid():
+            logger.info("Station DB is missing, empty, or corrupted. Seeding from CSV...")
+            if os.path.exists(db_path):
+                try:
+                    os.remove(db_path)
+                except OSError:
+                    pass
             try:
                 subprocess.run(["python", script_path, "--csv", csv_path, "--db", db_path], check=True)
-                logger.info("Database seeding completed.")
+                if check_db_valid():
+                    logger.info("Database seeding and verification completed successfully.")
+                else:
+                    logger.error("Database seeding completed, but verification failed.")
             except Exception as e:
                 logger.error(f"Failed to seed database: {e}")
+        else:
+            logger.info("Station DB is valid and ready.")
 
     return app
 
