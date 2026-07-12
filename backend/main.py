@@ -53,7 +53,7 @@ def create_app() -> FastAPI:
         import subprocess
         import sqlite3
         
-        db_path = os.path.join(os.path.dirname(__file__), "autotrip_stations.db")
+        db_path = settings.sqlite_station_db_path
         csv_path = os.path.join(os.path.dirname(__file__), "data", "station.csv")
         script_path = os.path.join(os.path.dirname(__file__), "scripts", "seed_station_db.py")
 
