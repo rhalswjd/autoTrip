@@ -1,0 +1,12 @@
+id,name_en,name_jp,target_station_id,category
+1,Universal Studios Japan,ユニバーサル・スタジオ・ジャパン,1162403,theme_park
+2,USJ,ユニバーサル・スタジオ・ジャパン,1162403,theme_park
+3,Kansai Airport,関西空港,1162803,airport
+4,Itami Airport,大阪空港,9962601,airport
+5,Narita Airport,成田空港,1132705,airport
+6,Haneda Airport,羽田空港,2700207,airport
+7,Tokyo Disney Resort,東京ディズニーリゾート,1132607,theme_park
+8,Disneyland,東京ディズニーランド,1132607,theme_park
+9,Disneysea,東京ディズニーシー,1132607,theme_park
+10,Chubu Centrair Airport,中部国際空港,3000703,airport
+11,Chubu Centrair International Airport,中部国際空港,3000703,airport

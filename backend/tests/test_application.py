@@ -25,7 +25,10 @@ def test_search_mode_resolver():
 async def test_search_service_cache_hit_miss():
     scraper = FakeScraperAdapter()
     cache = FakeCacheAdapter()
-    service = SearchService(scraper_port=scraper, cache_port=cache)
+    from application.ports.station_repository_port import StationRepositoryPort
+    class FakeStationRepo(StationRepositoryPort):
+        async def search_stations(self, query): return []
+    service = SearchService(scraper_port=scraper, cache_port=cache, station_repo=FakeStationRepo())
     
     req = SearchRequest(departure_station="Tokyo", arrival_station="Kyoto")
     

@@ -25,7 +25,10 @@ def real_scraper():
 
 @pytest.fixture
 def search_service(real_scraper, cache):
-    return SearchService(scraper_port=real_scraper, cache_port=cache)
+    from application.ports.station_repository_port import StationRepositoryPort
+    class FakeStationRepo(StationRepositoryPort):
+        async def search_stations(self, query): return []
+    return SearchService(scraper_port=real_scraper, cache_port=cache, station_repo=FakeStationRepo())
 
 @pytest.mark.asyncio
 async def test_search_integration_success_cache_miss_and_hit(search_service, real_scraper, monkeypatch):

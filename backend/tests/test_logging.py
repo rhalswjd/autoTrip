@@ -13,7 +13,10 @@ from application.ports.notion_port import NotionException
 async def test_search_service_logging(mock_logger):
     scraper = FakeScraperAdapter()
     cache = FakeCacheAdapter()
-    service = SearchService(scraper_port=scraper, cache_port=cache)
+    from application.ports.station_repository_port import StationRepositoryPort
+    class FakeStationRepo(StationRepositoryPort):
+        async def search_stations(self, query): return []
+    service = SearchService(scraper_port=scraper, cache_port=cache, station_repo=FakeStationRepo())
     
     req = SearchRequest(departure_station="Tokyo", arrival_station="Kyoto")
     
@@ -21,7 +24,7 @@ async def test_search_service_logging(mock_logger):
     await service.search(req)
     mock_logger.info.assert_any_call("Route Search Started: Tokyo -> Kyoto")
     mock_logger.info.assert_any_call("Cache Miss for Tokyo -> Kyoto")
-    mock_logger.info.assert_any_call("Scraper Started: Tokyo -> Kyoto")
+    mock_logger.info.assert_any_call("Scraper Started: Tokyo (Tokyo) -> Kyoto (Kyoto)")
     mock_logger.info.assert_any_call("Scraper Finished: Found 1 routes")
     
     # 2. Hit

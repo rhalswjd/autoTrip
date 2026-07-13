@@ -30,7 +30,12 @@ class TranslationService:
             "高槻": "Takatsuki",
             "高槻市": "Takatsuki-shi",
             "熱海": "Atami",
-            "大阪梅田": "Osaka-Umeda"
+            "大阪梅田": "Osaka-Umeda",
+            "大阪空港": "Itami Airport",
+            "関西空港": "Kansai Airport",
+            "中部国際空港": "Chubu Centrair International Airport",
+            "羽田空港": "Haneda Airport",
+            "成田空港": "Narita Airport"
         }
         
         # 1. Company replacements (sorted internally by length descending)
@@ -65,6 +70,7 @@ class TranslationService:
             "琵琶湖線": "Biwako Line",
             "京都線": "Kyoto Line",
             "神戸線": "Kobe Line",
+            "ゆめ咲線": "Yumesaki Line",
             "大阪環状線": "Osaka Loop Line",
             "阪和線": "Hanwa Line",
             "奈良線": "Nara Line",
@@ -115,6 +121,9 @@ class TranslationService:
             "くろしお": "Kuroshio",
             "はるか": "Haruka",
             "サンダーバード": "Thunderbird",
+            "スーパーいなば": "Super Inaba",
+            "ソニック": "Sonic",
+            "ひだ": "Hida",
             "特別快速": "Special Rapid",
             "関空快速": "Kansai Airport Rapid",
             "紀州路快速": "Kishuji Rapid",
@@ -163,11 +172,7 @@ class TranslationService:
     def get_english_name(self, jp_name: str) -> str:
         clean_name = re.sub(r'\(.*?\)', '', jp_name).strip()
         
-        # 1. Check hardcoded map
-        if clean_name in self._station_map:
-            return self._station_map[clean_name]
-            
-        # 2. Query SQLite DB
+        # 1. Check Station DB
         if os.path.exists(self.db_path):
             try:
                 with sqlite3.connect(self.db_path) as conn:
@@ -175,11 +180,36 @@ class TranslationService:
                     row = cursor.fetchone()
                     if row:
                         en_name = row[0]
-                        return self._hyphenate_prefix(en_name)
+                        result = self._hyphenate_prefix(en_name)
+                        logger.debug(f"[Translation] '{jp_name}' -> '{result}' (Layer: Station DB)")
+                        return result
             except Exception as e:
                 logger.error(f"Failed to query SQLite for translation: {e}")
                 
-        # 3. Fallback
+        # 2. Query Bus Stop DB
+        from infrastructure.repositories.sqlite_bus_stop_repository import SqliteBusStopRepository
+        bus_repo = SqliteBusStopRepository()
+        bus_en_name = bus_repo.get_english_name(jp_name)
+        if bus_en_name:
+            logger.debug(f"[Translation] '{jp_name}' -> '{bus_en_name}' (Layer: Bus Stop DB)")
+            return bus_en_name
+            
+        # 3. Query POI DB
+        from core.config import settings
+        poi_db = settings.poi_db_path
+        if os.path.exists(poi_db):
+            try:
+                with sqlite3.connect(poi_db) as conn:
+                    cursor = conn.execute("SELECT name_en FROM pois WHERE name_jp = ? LIMIT 1", (clean_name,))
+                    row = cursor.fetchone()
+                    if row:
+                        logger.debug(f"[Translation] '{jp_name}' -> '{row[0]}' (Layer: POI DB)")
+                        return row[0]
+            except Exception as e:
+                logger.error(f"Failed to query POI SQLite for translation: {e}")
+                
+        # 4. Fallback
+        logger.debug(f"[Translation] '{jp_name}' -> '{jp_name}' (Layer: Fallback)")
         return jp_name
 
     def translate_train(self, jp_train: str) -> str:

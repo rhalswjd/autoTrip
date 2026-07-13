@@ -24,6 +24,35 @@ class SqliteStationRepository(StationRepositoryPort):
             
             rows = cursor.fetchall()
             
+            # Add POI logic
+            import os
+            from core.config import settings
+            poi_db = settings.poi_db_path
+            poi_rows = []
+            if os.path.exists(poi_db):
+                try:
+                    with sqlite3.connect(poi_db) as conn_poi:
+                        poi_cursor = conn_poi.execute('''
+                            SELECT id, name_en, name_jp, target_station_id, category
+                            FROM pois
+                            WHERE name_en LIKE ? OR name_jp LIKE ?
+                        ''', (like_query, like_query))
+                        
+                        for p_row in poi_cursor.fetchall():
+                            target_id = p_row[3]
+                            t_cursor = conn.execute('''
+                                SELECT id, name_en, name_jp, prefecture, railway_company, lat, lng, has_midori_office 
+                                FROM stations WHERE id = ?
+                            ''', (target_id,))
+                            t_row = t_cursor.fetchone()
+                            if t_row:
+                                # Return POI name with the target station's data (including its real name_jp for Yahoo)
+                                poi_rows.append((t_row[0], p_row[1], t_row[2], t_row[3], t_row[4], t_row[5], t_row[6], t_row[7]))
+                except Exception as e:
+                    logger.error(f"Failed to query POI DB: {e}")
+                    
+            rows.extend(poi_rows)
+            
             # Sort by relevance: Exact > Prefix > Word Boundary > Contains
             q_lower = query.lower()
             

@@ -218,7 +218,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 1110821,Nemuro,"根室",1,JR,43.326923,145.582707,1
 1110903,Uenae,"植苗",1,JR,42.713645,141.735344,1
 1110904,Bibi,"美々",1,JR,42.777418,141.711387,1
-1110905,Shin-Chitosekuko,"新千歳空港",1,JR,42.787546,141.680823,1
+1110905,New Chitose Airport,"新千歳空港",1,JR,42.787546,141.680823,1
 1110906,Minami-Chitose,"南千歳",1,JR,42.80804,141.675388,1
 1110907,Chitose,"千歳(北海道)",1,JR,42.82811,141.651934,1
 1110908,Osatsu,"長都",1,JR,42.852178,141.622987,1
@@ -1766,8 +1766,8 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 1132702,Shisui,"酒々井",12,JR,35.731737,140.275271,1
 1132703,Narita,"成田",12,JR,35.777796,140.313853,1
 2300140,Keiseinarita,"京成成田",12,JR,35.776308,140.315473,1
-1132813,"Kukodainibiru（Naritadaini・Daisanta-Minaru）","空港第２ビル（成田第２・第３ターミナル）",12,JR,35.773327,140.387871,1
-1132705,"Naritakuko（Naritadaiichita-Minaru）","成田空港（成田第１ターミナル）",12,JR,35.763983,140.384644,1
+1132813,"Narita Airport (Terminal 2-3)","空港第２ビル（成田第２・第３ターミナル）",12,JR,35.773327,140.387871,1
+1132705,"Narita Airport (Terminal 1)","成田空港（成田第１ターミナル）",12,JR,35.763983,140.384644,1
 1132706,Kuzumi,"久住",12,JR,35.832232,140.338929,1
 1132707,Namegawa,"滑河",12,JR,35.877079,140.347871,1
 1132708,Shimosakozaki,"下総神崎",12,JR,35.8948,140.410657,1
@@ -3174,7 +3174,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 1162318,Momodani,"桃谷",27,JR,34.658453,135.527908,1
 1162319,Teradacho,"寺田町",27,JR,34.647957,135.523437,1
 1162402,Ajikawaguchi,"安治川口",27,JR,34.673416,135.443921,1
-1162403,Yuniba-Sarushitei,"ユニバーサルシティ",27,JR,34.667842,135.438705,1
+1162403,Universal City,"ユニバーサルシティ",27,JR,34.667842,135.438705,1
 1162404,Sakurajima,"桜島",27,JR,34.662065,135.432136,1
 1162502,Osakajokitazume,"大阪城北詰",27,JR,34.694283,135.525538,1
 1162503,Osakatenmangu,"大阪天満宮",27,JR,34.697404,135.513442,1
@@ -3221,7 +3221,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 1162702,Higashi-Hagoromo,"東羽衣",27,JR,34.535029,135.442824,1
 3200114,Hagoromo,"羽衣",27,JR,34.534546,135.44178,1
 1162802,Rinkutaun,"りんくうタウン",27,JR,34.410308,135.300117,1
-1162803,Kansaikuko,"関西空港",27,JR,34.436,135.243419,1
+1162803,Kansai Airport,"関西空港",27,JR,34.436,135.243419,1
 1162901,Amagasakiko,"尼崎港",28,JR,34.713194,135.418944,1
 1162902,Kinrakuji,"金楽寺",28,JR,34.723917,135.428028,1
 1162904,Tsukaguchi,"塚口(JR)",28,JR,34.751028,135.424948,1
@@ -5343,10 +5343,10 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 2700203,Otorii,"大鳥居",13,JR,35.552531,139.739356,1
 2700204,Anamoriinari,"穴守稲荷",13,JR,35.550326,139.746669,1
 2700205,Tenkubashi,"天空橋",13,JR,35.548908,139.75423,1
-2700207,Hanedakukodaisanta-Minaru,"羽田空港第３ターミナル(京浜急行電鉄)",13,JR,35.544913,139.767217,1
-2700206,"Hanedakukodaiichi・Dainita-Minaru","羽田空港第１・第２ターミナル",13,JR,35.549809,139.785962,1
-9933609,Hanedakukodaiichita-Minaru,"羽田空港第１ターミナル",13,JR,35.549163,139.784653,1
-9933610,Hanedakukodainita-Minaru,"羽田空港第２ターミナル",13,JR,35.550734,139.787979,1
+2700207,Haneda Airport Terminal 3,"羽田空港第３ターミナル(京浜急行電鉄)",13,JR,35.544913,139.767217,1
+2700206,"Haneda Airport Terminal 1-2","羽田空港第１・第２ターミナル",13,JR,35.549809,139.785962,1
+9933609,Haneda Airport Terminal 1,"羽田空港第１ターミナル",13,JR,35.549163,139.784653,1
+9933610,Haneda Airport Terminal 2,"羽田空港第２ターミナル",13,JR,35.550734,139.787979,1
 2700302,Minatocho,"港町",14,JR,35.535014,139.712578,1
 2700303,Suzukicho,"鈴木町",14,JR,35.53535,139.720655,1
 2700304,Kawasakidaishi,"川崎大師",14,JR,35.535711,139.725946,1
@@ -5618,7 +5618,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 3000609,Akaike,"赤池(愛知)",23,JR,35.121097,137.017978,1
 3000701,Tokoname,"常滑",23,JR,34.891167,136.834992,1
 3000702,Rinkutokoname,"りんくう常滑",23,JR,34.87967,136.828164,1
-3000703,Chubukokusaikuko,"中部国際空港",23,JR,34.859262,136.816382,1
+3000703,Chubu Centrair International Airport,"中部国際空港",23,JR,34.859262,136.816382,1
 3000805,Toyodahonmachi,"豊田本町",23,JR,35.113586,136.910877,1
 3000806,Dotoku,"道徳",23,JR,35.105712,136.909409,1
 3000807,Oe,"大江(愛知)",23,JR,35.093258,136.912758,1
@@ -6826,7 +6826,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 9921621,Aizukogenozeguchi,"会津高原尾瀬口",7,JR,37.090026,139.705153,1
 9921702,Morisekinoshita,"杜せきのした",4,JR,38.165482,140.895738,1
 9921703,Mitazono,"美田園",4,JR,38.15965,140.917404,1
-9921704,Sendaikuko,"仙台空港",4,JR,38.137266,140.928762,1
+9921704,Sendai Airport,"仙台空港",4,JR,38.137266,140.928762,1
 9921801,Yagiyamadobutsukoen,"八木山動物公園",4,JR,38.242778,140.843472,1
 9921802,Aobayama,"青葉山",4,JR,38.254972,140.835222,1
 9921803,Kawauchi,"川内(宮城)",4,JR,38.261167,140.850667,1
@@ -8349,7 +8349,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 9962507,Nankohigashi,"南港東",27,JR,34.613826,135.438607,1
 9962508,Nankoguchi,"南港口",27,JR,34.613826,135.445959,1
 9962509,Hirabayashi,"平林(大阪)",27,JR,34.610683,135.458585,1
-9962601,Osakakuko,"大阪空港",27,JR,34.791598,135.441821,1
+9962601,Itami Airport,"大阪空港",27,JR,34.791598,135.441821,1
 9962603,Shibaharahandaimae,"柴原阪大前",27,JR,34.800266,135.458734,1
 9962604,Shoji,"少路",27,JR,34.804246,135.47551,1
 9962607,Banpakukinenkoen,"万博記念公園(大阪)",27,JR,34.806692,135.530228,1
@@ -8541,7 +8541,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 9964806,Shiminhiroba,"市民広場",28,JR,34.664897,135.212455,1
 9964807,Iryosenta-,"医療センター",28,JR,34.658578,135.216343,1
 9964808,"Keisankagakusenta-(Kobedobutsuokoku・Fugakumae)","計算科学センター（神戸どうぶつ王国・「富岳」前）",28,JR,34.654892,135.221865,1
-9964809,Kobekuko,"神戸空港",28,JR,34.637194,135.229042,1
+9964809,Kobe Airport,"神戸空港",28,JR,34.637194,135.229042,1
 9964810,Minami-Koen,"南公園",28,JR,34.664666,135.217007,1
 9964811,Naka-Futo,"中埠頭",28,JR,34.669266,135.217096,1
 9964812,Kita-Futo,"北埠頭",28,JR,34.673566,135.214632,1
@@ -9014,7 +9014,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 9990414,Imagawakappa,"今川河童",40,JR,33.702983,130.965517,1
 9990415,Miyakoizumi,"美夜古泉",40,JR,33.709108,130.969052,1
 9990417,Reiwakosutayukuhashi,"令和コスタ行橋",40,JR,33.717097,130.973615,1
-9990501,Fukuokakuko,"福岡空港",40,JR,33.59718,130.448501,1
+9990501,Fukuoka Airport,"福岡空港",40,JR,33.59718,130.448501,1
 9990502,Higashi-Hie,"東比恵",40,JR,33.589958,130.43128,1
 9990504,Gion,"祇園(福岡)",40,JR,33.594124,130.414614,1
 9990505,Naka-Sukawabata,"中洲川端",40,JR,33.594749,130.406418,1
@@ -9345,7 +9345,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 9992616,Toso,"唐湊",46,JR,31.570556,130.541085,1
 9992617,Kogakubumae,"工学部前",46,JR,31.568408,130.541857,1
 9992619,Naka-Gori,"中郡(鹿児島)",46,JR,31.56498,130.545312,1
-9992701,Nahakuko,"那覇空港",47,JR,26.206515,127.652214,1
+9992701,Naha Airport,"那覇空港",47,JR,26.206515,127.652214,1
 9992702,Akamine,"赤嶺",47,JR,26.193289,127.660348,1
 9992703,Oroku,"小禄",47,JR,26.196455,127.666853,1
 9992704,Onoyamakoen,"奥武山公園",47,JR,26.200714,127.675252,1
@@ -9533,7 +9533,7 @@ id,name_en,name_jp,prefecture,railway_company,lat,lng,has_midori_office
 9934419,"Haga・Takanezawakogyodanchi","芳賀・高根沢工業団地",9,JR,36.578612,140.011988,1
 3500101,Osakaumeda,"大阪梅田(阪神電気鉄道)",27,JR,34.700969,135.496444,1
 9992301,Kamikumamoto,"上熊本(熊本市交通局)",43,JR,32.81716,130.699266,1
-9933611,Hanedakukodaisanta-Minaru,"羽田空港第３ターミナル(東京モノレール)",13,JR,35.544169,139.768206,1
+9933611,Haneda Airport Terminal 3,"羽田空港第３ターミナル(東京モノレール)",13,JR,35.544169,139.768206,1
 9920829,Shin-Taro,"新田老",3,JR,39.735601,141.9673,1
 1122423,"Minami-Sanrikuchoyakuba・byoinmae","南三陸町役場・病院前",4,JR,38.678771,141.462452,1
 1122424,Shizugawachuodanchi,"志津川中央団地",4,JR,38.683802,141.450737,1

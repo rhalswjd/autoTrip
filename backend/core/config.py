@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -17,8 +18,10 @@ class Settings(BaseSettings):
     
     scraper_base_url: str = "https://www.jr-odekake.net/railroad/eki/"
     
-    sqlite_cache_path: str = "autotrip_cache.db"
-    sqlite_station_db_path: str = "autotrip_stations.db"
+    sqlite_cache_path: str = os.path.join(os.path.dirname(__file__), '../cache.db')
+    sqlite_station_db_path: str = os.path.join(os.path.dirname(__file__), '../autotrip_stations.db')
+    bus_stop_db_path: str = os.path.join(os.path.dirname(__file__), '../autotrip_bus.db')
+    poi_db_path: str = os.path.join(os.path.dirname(__file__), '../autotrip_poi.db')
     
     cache_ttl_seconds: int = 3600
     

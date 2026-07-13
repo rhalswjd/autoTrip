@@ -48,11 +48,13 @@ def get_station_repository_port() -> StationRepositoryPort:
 
 def get_search_service(
     scraper: ScraperPort = Depends(get_scraper_port),
-    cache: CachePort = Depends(get_cache_port)
+    cache: CachePort = Depends(get_cache_port),
+    station_repo: StationRepositoryPort = Depends(get_station_repository_port)
 ) -> SearchService:
     return SearchService(
         scraper_port=scraper, 
         cache_port=cache,
+        station_repo=station_repo,
         cache_ttl=settings.cache_ttl_seconds
     )
 

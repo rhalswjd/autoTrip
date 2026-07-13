@@ -38,12 +38,19 @@ class YahooTransitAdapter(ScraperPort):
                 continue
                 
             time_text = summary.select_one('.time').text if summary.select_one('.time') else ""
-            duration_match = re.search(r'着(.+?)（', time_text)
-            duration = duration_match.group(1) if duration_match else "0 min"
-            if duration == "0 min":
-                dur_match = re.search(r'([0-9]+時間[0-9]+分|[0-9]+分)', time_text)
-                if dur_match:
-                    duration = dur_match.group(1)
+            
+            # Rule: 1. Try to extract Ride Time (乗車 X時間Y分 / 乗車 X分)
+            ride_match = re.search(r'乗車\s*([0-9]+時間[0-9]+分|[0-9]+分)', time_text)
+            if ride_match:
+                duration = ride_match.group(1)
+            else:
+                # Rule 2: Fallback to Total Time or direct time
+                duration_match = re.search(r'着(.+?)（', time_text)
+                duration = duration_match.group(1) if duration_match else "0 min"
+                if duration == "0 min":
+                    dur_match = re.search(r'([0-9]+時間[0-9]+分|[0-9]+分)', time_text)
+                    if dur_match:
+                        duration = dur_match.group(1)
             
             # Translate duration to English manually
             duration = duration.replace('時間', 'h ').replace('分', 'm').strip()

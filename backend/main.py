@@ -51,44 +51,60 @@ def create_app() -> FastAPI:
         logger.info(f"Starting {settings.app_name} in {settings.environment} mode.")
         import os
         import subprocess
+        import sys
         import sqlite3
         
-        db_path = settings.sqlite_station_db_path
-        csv_path = os.path.join(os.path.dirname(__file__), "data", "station.csv")
-        script_path = os.path.join(os.path.dirname(__file__), "scripts", "seed_station_db.py")
-
-        def check_db_valid() -> bool:
-            if not os.path.exists(db_path):
-                return False
-            try:
-                with sqlite3.connect(db_path) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='stations'")
-                    if not cursor.fetchone():
-                        return False
-                    cursor.execute("SELECT COUNT(*) FROM stations")
-                    count = cursor.fetchone()[0]
-                    return count > 0
-            except (sqlite3.OperationalError, sqlite3.DatabaseError):
-                return False
-
-        if not check_db_valid():
-            logger.info("Station DB is missing, empty, or corrupted. Seeding from CSV...")
+        def setup_db(db_path: str, csv_path: str, script_path: str, table_name: str, name: str):
+            is_valid = False
             if os.path.exists(db_path):
                 try:
-                    os.remove(db_path)
-                except OSError:
-                    pass
-            try:
-                subprocess.run(["python", script_path, "--csv", csv_path, "--db", db_path], check=True)
-                if check_db_valid():
-                    logger.info("Database seeding and verification completed successfully.")
-                else:
-                    logger.error("Database seeding completed, but verification failed.")
-            except Exception as e:
-                logger.error(f"Failed to seed database: {e}")
-        else:
-            logger.info("Station DB is valid and ready.")
+                    with sqlite3.connect(db_path) as conn:
+                        cursor = conn.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+                        if cursor.fetchone():
+                            count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+                            if count > 0:
+                                is_valid = True
+                except Exception as e:
+                    logger.error(f"Failed to validate {db_path}: {e}")
+            
+            if not is_valid:
+                logger.info(f"{name} DB is missing, empty, or corrupted. Seeding from CSV...")
+                if os.path.exists(db_path):
+                    try:
+                        os.remove(db_path)
+                    except OSError:
+                        pass
+                try:
+                    # Note: seed_poi_db doesn't take args in our impl, so we call it directly or run it as script
+                    if "poi" in name.lower():
+                        subprocess.run([sys.executable, script_path], check=True, cwd=os.path.dirname(os.path.dirname(__file__)))
+                    else:
+                        subprocess.run([sys.executable, script_path, "--csv", csv_path, "--db", db_path], check=True, cwd=os.path.dirname(os.path.dirname(__file__)))
+                    logger.info(f"{name} Database seeding completed successfully.")
+                except Exception as e:
+                    logger.error(f"Failed to seed {name} database: {e}")
+            else:
+                logger.info(f"{name} DB is valid and ready.")
+
+        # Station DB
+        station_db = settings.sqlite_station_db_path
+        station_csv = os.path.join(os.path.dirname(__file__), "data", "station.csv")
+        station_script = os.path.join(os.path.dirname(__file__), "scripts", "seed_station_db.py")
+        setup_db(station_db, station_csv, station_script, "stations", "Station")
+
+        # Bus Stop DB
+        bus_db = settings.bus_stop_db_path
+        bus_csv = os.path.join(os.path.dirname(__file__), "data", "bus_stop.csv")
+        bus_script = os.path.join(os.path.dirname(__file__), "scripts", "seed_bus_stop_db.py")
+        if os.path.exists(bus_csv):
+            setup_db(bus_db, bus_csv, bus_script, "bus_stops", "Bus Stop")
+            
+        # POI DB
+        poi_db = settings.poi_db_path
+        poi_csv = os.path.join(os.path.dirname(__file__), "data", "poi.csv")
+        poi_script = os.path.join(os.path.dirname(__file__), "scripts", "seed_poi_db.py")
+        if os.path.exists(poi_csv):
+            setup_db(poi_db, poi_csv, poi_script, "pois", "POI")
 
     return app
 
