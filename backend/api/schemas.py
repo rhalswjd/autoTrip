@@ -14,6 +14,12 @@ class StationSchema(BaseModel):
     platform: Optional[str] = Field(None, title="Platform", description="Platform number or name.", json_schema_extra={"examples": ["11"]})
     has_midori_office: bool = Field(False, title="Has Midori Office", description="True if the station has a JR ticket office (Midori no Madoguchi).", json_schema_extra={"examples": [True]})
 
+class RouteSegmentSchema(BaseModel):
+    segment_type: str = Field(..., title="Segment Type", description="Type of segment: train, bus, walk.")
+    railway_name: str = Field(..., title="Railway Name", description="Name of the transport.")
+    duration: str = Field("", title="Duration", description="Duration of this segment.")
+    is_through: bool = Field(False, title="Is Through Service", description="True if no transfer is required.")
+
 class RouteResponseSchema(BaseModel):
     id: str = Field(..., title="Route ID", description="Unique identifier for the route.", json_schema_extra={"examples": ["route_12345"]})
     departure_station: str = Field(..., title="Departure Station", description="The name of the departure station.", json_schema_extra={"examples": ["Osaka"]})
@@ -24,6 +30,7 @@ class RouteResponseSchema(BaseModel):
     transfer_count: int = Field(..., title="Transfer Count", description="Number of transfers required.", json_schema_extra={"examples": [0]})
     polyline: str = Field(..., title="Polyline", description="Google Maps encoded polyline string for the route path.", json_schema_extra={"examples": ["_p~iF~ps|U_ulLnnqC_mqNvxq`@"]})
     stations: List[StationSchema] = Field(..., title="Stations", description="List of stations along the route.")
+    segments: List[RouteSegmentSchema] = Field([], title="Segments", description="List of segments along the route.")
 
 class DepartureInfoSchema(BaseModel):
     time: str = Field(..., title="Departure Time", description="Departure time in HH:MM format.", json_schema_extra={"examples": ["10:00"]})

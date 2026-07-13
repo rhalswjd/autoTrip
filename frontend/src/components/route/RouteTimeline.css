@@ -103,16 +103,26 @@
   padding-left: 28px;
 }
 
-/* Vertical line */
-.timeline-track::before {
-  content: '';
+.timeline-item-wrapper {
+  position: relative;
+}
+
+/* ─── Timeline Segment Line (replaces global track) ─── */
+.timeline-segment-line {
   position: absolute;
-  left: 7px;
-  top: 8px;
-  bottom: 8px;
+  left: -21px; /* 28px padding minus 21px = 7px from left edge, center is 8px */
+  top: 24px; /* start below the dot */
+  bottom: -8px; /* extend to the next node's center (padding 8px) */
   width: 2px;
   background: var(--color-border);
   border-radius: 1px;
+  z-index: 0;
+}
+
+.timeline-segment-line-dashed {
+  background: transparent;
+  border-left: 2px dashed var(--color-border);
+  width: 0;
 }
 
 /* ─── Timeline Station Node ─── */
@@ -165,6 +175,22 @@
   background: var(--color-warning);
 }
 
+.timeline-dot-through {
+  background: var(--color-bg-base);
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-bg-base);
+}
+
+.timeline-node-through {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+.timeline-station-name-through {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
 .timeline-dot-arrival {
   background: var(--color-success);
   box-shadow: 0 0 0 3px var(--color-bg-base);
@@ -215,6 +241,13 @@
   border-radius: 2px;
   background: var(--color-primary);
   opacity: 0.3;
+}
+
+.route-leg-line-dashed {
+  background: transparent;
+  border-left: 3px dashed var(--color-text-tertiary);
+  width: 0;
+  opacity: 0.6;
 }
 
 .route-leg-info {

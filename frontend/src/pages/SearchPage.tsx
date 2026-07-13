@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Sidebar } from '../layouts/Sidebar';
 import { SearchBar, SearchResultList } from '../components/search';
-import { RouteSearchForm, RouteResultList, RouteTimeline, RouteSummary } from '../components/route';
+import { RouteSearchForm, RouteResultList, RouteTimelineV2, RouteSummary } from '../components/route';
 import { TimetableList } from '../components/timetable';
 import { Divider } from '../components/ui';
 import { useStationSearch, useRoutePanel } from '../hooks';
@@ -75,7 +75,7 @@ export function SearchPage() {
           {selectedRoute && (
             <>
               <Divider />
-              <RouteTimeline route={selectedRoute} />
+              <RouteTimelineV2 route={selectedRoute} />
               <RouteSummary route={selectedRoute} />
               
               <Divider style={{ margin: '16px 0' }} />

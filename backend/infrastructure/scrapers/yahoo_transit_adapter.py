@@ -5,7 +5,7 @@ from typing import List
 import uuid
 
 from application.ports.scraper_port import ScraperPort, ScraperException
-from domain.route import Route
+from domain.route import Route, RouteSegment
 from domain.station import Station
 from domain.timetable import Timetable
 from core.logger import logger
@@ -98,6 +98,26 @@ class YahooTransitAdapter(ScraperPort):
                 
             polyline = " -> ".join(en_trains)
             
+            segments = []
+            for j, jp_train in enumerate(trains):
+                if "徒歩" in jp_train or "Walk" in jp_train or "도보" in jp_train:
+                    seg_type = "walk"
+                elif "バス" in jp_train or "Bus" in jp_train:
+                    seg_type = "bus"
+                else:
+                    seg_type = "train"
+                
+                is_through = False
+                if j < len(station_names):
+                    if "乗換不要" in station_names[j] or "直通" in station_names[j]:
+                        is_through = True
+                
+                segments.append(RouteSegment(
+                    segment_type=seg_type,
+                    railway_name=en_trains[j],
+                    is_through=is_through
+                ))
+            
             dep_en = self.translation_service.get_english_name(params.get("from", ""))
             arr_en = self.translation_service.get_english_name(params.get("to", ""))
             
@@ -110,7 +130,8 @@ class YahooTransitAdapter(ScraperPort):
                 total_fare=fare,
                 transfer_count=transfers,
                 polyline=polyline,
-                stations=domain_stations
+                stations=domain_stations,
+                segments=segments
             ))
             
         return routes

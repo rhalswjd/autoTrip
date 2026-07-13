@@ -9,3 +9,4 @@ export * from './TransferBadge';
 export * from './RouteSummary';
 export * from './RouteLoading';
 export * from './RouteEmpty';
+export * from './v2/RouteTimelineV2';

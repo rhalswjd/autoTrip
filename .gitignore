@@ -89,3 +89,15 @@ coverage.xml
 # OS/System cache
 Thumbs.db
 autotrip_bus.db
+
+# Temporary testing & scripting files
+analyze_direct*.py
+test_*.py
+**/test*.py
+!backend/tests/test_*.py
+emulate_react*.js
+test_timeline.js
+test_render.js
+yahoo_sample.html
+test*.html
+trace.py

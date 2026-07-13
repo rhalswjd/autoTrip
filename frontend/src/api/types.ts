@@ -1,9 +1,18 @@
 export interface Station {
+  id?: string;
   name: string;
+  name_jp?: string;
   lat: number;
   lng: number;
   platform: string | null;
   has_midori_office: boolean;
+}
+
+export interface RouteSegment {
+  segment_type: 'train' | 'bus' | 'walk';
+  railway_name: string;
+  duration: string;
+  is_through: boolean;
 }
 
 export interface Route {
@@ -16,6 +25,7 @@ export interface Route {
   transfer_count: number;
   polyline: string;
   stations: Station[];
+  segments: RouteSegment[];
 }
 
 export interface DepartureInfo {

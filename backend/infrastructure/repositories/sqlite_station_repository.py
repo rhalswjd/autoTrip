@@ -47,7 +47,7 @@ class SqliteStationRepository(StationRepositoryPort):
                             t_row = t_cursor.fetchone()
                             if t_row:
                                 # Return POI name with the target station's data (including its real name_jp for Yahoo)
-                                poi_rows.append((t_row[0], p_row[1], t_row[2], t_row[3], t_row[4], t_row[5], t_row[6], t_row[7]))
+                                poi_rows.append((f"poi_{p_row[0]}", p_row[1], t_row[2], t_row[3], t_row[4], t_row[5], t_row[6], t_row[7]))
                 except Exception as e:
                     logger.error(f"Failed to query POI DB: {e}")
                     

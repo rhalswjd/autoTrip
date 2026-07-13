@@ -55,7 +55,8 @@ class TranslationService:
             "京王": "Keio ",
             "小田急": "Odakyu ",
             "京成": "Keisei ",
-            "都営": "Toei "
+            "都営": "Toei ",
+            "名鉄": "Meitetsu "
         }
 
         # 2. Line replacements
@@ -104,6 +105,11 @@ class TranslationService:
             "京都本線": "Kyoto Line",
             "神戸本線": "Kobe Line",
             "宝塚本線": "Takarazuka Line",
+            "名古屋本線": "Nagoya Main Line",
+            "犬山線": "Inuyama Line",
+            "常滑線": "Tokoname Line",
+            "空港線": "Airport Line",
+            "名鉄名古屋本線": "Meitetsu Nagoya Main Line",
             "本線": "Main Line",
             "高野線": "Koya Line",
             "大阪線": "Osaka Line",
@@ -170,7 +176,10 @@ class TranslationService:
         return res
 
     def get_english_name(self, jp_name: str) -> str:
-        clean_name = re.sub(r'\(.*?\)', '', jp_name).strip()
+        clean_name = re.sub(r'[\(（].*?[\)）]', '', jp_name)
+        clean_name = re.sub(r'【.*?】', '', clean_name)
+        clean_name = re.sub(r'\[.*?\]', '', clean_name)
+        clean_name = clean_name.strip()
         
         # 1. Check Station DB
         if os.path.exists(self.db_path):
@@ -208,7 +217,29 @@ class TranslationService:
             except Exception as e:
                 logger.error(f"Failed to query POI SQLite for translation: {e}")
                 
-        # 4. Fallback
+        # 4. External Translator Cache
+        if not hasattr(self, '_translator_cache'):
+            self._translator_cache = {
+                "清水道": "Kiyomizu-michi",
+                "祇園": "Gion",
+                "金閣寺道": "Kinkakuji-michi",
+                "銀閣寺道": "Ginkakuji-michi",
+                "四条河原町": "Shijo-Kawaramachi",
+                "天神橋筋六丁目": "Tenjimbashisuji 6-chome",
+                "神宮前": "Jingu-mae",
+                "名鉄名古屋": "Meitetsu-Nagoya",
+                "岐阜": "Gifu",
+                "空港": "Airport",
+                "金山": "Kanayama",
+                "栄": "Sakae"
+            }
+        
+        if jp_name in self._translator_cache:
+            en_name = self._translator_cache[jp_name]
+            logger.debug(f"[Translation] '{jp_name}' -> '{en_name}' (Layer: Translator)")
+            return en_name
+                
+        # 5. Fallback
         logger.debug(f"[Translation] '{jp_name}' -> '{jp_name}' (Layer: Fallback)")
         return jp_name
 
@@ -219,6 +250,44 @@ class TranslationService:
             return "Walk"
             
         res = jp_train
+        
+        # Remove destination info in parentheses like (神宮前−岐阜) or （神宮前−空港）
+        res = re.sub(r'[\(（].*?[-−].*?[\)）]', '', res)
+        # Also remove any standalone parentheses at the end if they contain Japanese text that wasn't stripped
+        res = re.sub(r'[\(（][^\)）]+[\)）]', '', res)
+        
+        # Apply Bus Patterns
+        bus_companies = {
+            "京都市営": "Kyoto City ",
+            "京阪": "Keihan ",
+            "西日本ＪＲ": "West Japan JR ",
+            "ＪＲ東海": "JR Tokai ",
+            "近鉄": "Kintetsu ",
+            "阪急": "Hankyu ",
+            "南海": "Nankai ",
+            "名鉄": "Meitetsu ",
+            "東京空港交通": "Airport Transport Service ",
+            "関西空港交通": "Kansai Airport Transportation "
+        }
+        
+        bus_types = {
+            "高速バス": "Highway Bus",
+            "夜行バス": "Night Bus",
+            "リムジンバス": "Limousine Bus",
+            "バス": "Bus"
+        }
+        
+        for jp, en in sorted(bus_companies.items(), key=lambda x: len(x[0]), reverse=True):
+            if jp in res and ("バス" in res or "系統" in res):
+                res = res.replace(jp, f"{en}")
+                
+        for jp, en in sorted(bus_types.items(), key=lambda x: len(x[0]), reverse=True):
+            if jp in res:
+                res = res.replace(jp, f" {en} ")
+                
+        # Translate Route XX (e.g., ２０６系統 -> Route 206)
+        # Convert full-width numbers to half-width for routes
+        res = re.sub(r'([０-９0-9]+)系統', lambda m: f" Route {m.group(1).translate(str.maketrans('０１２３４５６７８９', '0123456789'))} ", res)
         
         # Apply Companies
         for jp, en in self._companies_sorted:
@@ -232,6 +301,15 @@ class TranslationService:
                 
         # Apply Services
         for jp, en in self._services_sorted:
+            if jp in res:
+                res = res.replace(jp, f" {en} ")
+                
+        # Apply Directions
+        directions = {
+            "外回り": "Outer Loop",
+            "内回り": "Inner Loop"
+        }
+        for jp, en in directions.items():
             if jp in res:
                 res = res.replace(jp, f" {en} ")
                 
