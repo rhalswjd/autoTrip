@@ -83,7 +83,7 @@ export function SearchPage() {
               <RouteSummary route={selectedRoute} />
               
               <Divider style={{ margin: '16px 0' }} />
-              {selectedRoute.segments.length > 1 ? (
+              {selectedRoute.segments.filter(s => s.segment_type !== 'walk').length > 1 ? (
                 <TransferWizard route={selectedRoute} />
               ) : (
                 <TimetableList route={selectedRoute} />

@@ -57,7 +57,7 @@ class YahooTimetableScraper:
             score += 10
         return score
 
-    async def _check_direction_validity(self, timetable_url: str, arrival_station: str) -> bool:
+    async def _check_direction_validity(self, timetable_url: str, departure_station: str, arrival_station: str) -> bool:
         try:
             r = await self.client.get(urljoin(self.base_url, timetable_url))
             soup = BeautifulSoup(r.text, 'html.parser')
@@ -78,11 +78,21 @@ class YahooTimetableScraper:
                         import json
                         data = json.loads(script.string)
                         stop_stations = data.get("props", {}).get("pageProps", {}).get("timetableStationTrainResult", {}).get("timetable", {}).get("stopStation", [])
-                        for s in stop_stations:
+                        dep_idx = -1
+                        for idx, s in enumerate(stop_stations):
+                            if departure_station in s.get("stationName", ""):
+                                dep_idx = idx
+                                break
+                        
+                        search_space = stop_stations[dep_idx + 1:] if dep_idx != -1 else stop_stations
+                        for s in search_space:
                             if arrival_station in s.get("stationName", ""):
                                 return True
+                        # If we successfully parsed the JSON stop stations, don't fall back to HTML
+                        if stop_stations:
+                            return False
                     
-                    # fallback
+                    # fallback if no JSON data
                     stations = tsoup.select('.station .title')
                     for s in stations:
                         if arrival_station in s.text:
@@ -133,7 +143,7 @@ class YahooTimetableScraper:
                     return c['url']
                     
             for c in top_candidates:
-                is_valid = await self._check_direction_validity(c['url'], arrival_station)
+                is_valid = await self._check_direction_validity(c['url'], departure_station, arrival_station)
                 if is_valid:
                     return c['url']
                     
@@ -142,7 +152,7 @@ class YahooTimetableScraper:
             logger.error(f"Error getting timetable url for {station_id}: {e}")
             return None
 
-    async def _fetch_train_details(self, train_url: str, arrival_station: str, sem: asyncio.Semaphore) -> dict:
+    async def _fetch_train_details(self, train_url: str, departure_station: str, arrival_station: str, sem: asyncio.Semaphore) -> dict:
         async with sem:
             try:
                 r = await self.client.get(urljoin(self.base_url, train_url))
@@ -158,7 +168,14 @@ class YahooTimetableScraper:
                     result["train_name"] = tt.get("displayName", "")
                     
                     stop_stations = tt.get("stopStation", [])
-                    for s in stop_stations:
+                    dep_idx = -1
+                    for idx, s in enumerate(stop_stations):
+                        if departure_station in s.get("stationName", ""):
+                            dep_idx = idx
+                            break
+                            
+                    search_space = stop_stations[dep_idx + 1:] if dep_idx != -1 else stop_stations
+                    for s in search_space:
                         if arrival_station in s.get("stationName", ""):
                             arr_time = s.get("arrivalTime") or s.get("departureTime")
                             if arr_time:
@@ -168,9 +185,10 @@ class YahooTimetableScraper:
                                 else:
                                     result["arrival_time"] = arr_time
                                 break
-                    if result["arrival_time"]:
+                    if stop_stations:
                         return result
                 
+                # Fallback if no JSON
                 for s in soup.select('.station'):
                     title = s.select_one('.title')
                     if title and arrival_station in title.text:
@@ -186,7 +204,7 @@ class YahooTimetableScraper:
             except Exception:
                 return {"arrival_time": "", "train_name": ""}
 
-    async def _parse_timetable_page(self, url: str, arrival_station: str) -> List[DepartureInfo]:
+    async def _parse_timetable_page(self, url: str, departure_station: str, arrival_station: str) -> List[DepartureInfo]:
         r = await self.client.get(urljoin(self.base_url, url))
         soup = BeautifulSoup(r.text, 'html.parser')
         
@@ -234,7 +252,7 @@ class YahooTimetableScraper:
                 departures.append(dep_info)
                 
                 if href:
-                    train_tasks.append((len(departures)-1, self._fetch_train_details(href, arrival_station, sem)))
+                    train_tasks.append((len(departures)-1, self._fetch_train_details(href, departure_station, arrival_station, sem)))
                     
         if train_tasks:
             results = await asyncio.gather(*(t[1] for t in train_tasks))
@@ -287,7 +305,7 @@ class YahooTimetableScraper:
             base_timetable_url += '?'
             
         weekday_url = base_timetable_url + "kind=1"
-        weekday_deps = await self._parse_timetable_page(weekday_url, arrival)
+        weekday_deps = await self._parse_timetable_page(weekday_url, departure, arrival)
         
         return Timetable(
             route_id=route_id,

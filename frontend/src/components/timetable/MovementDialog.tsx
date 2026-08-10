@@ -22,7 +22,7 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
   // Calculate a mock arrival time based on route.total_duration for the API requirement
   // Since we don't have real math here, we just pass the duration or a dummy string.
   // The backend MovementRequest expects `selected_arrival_time`
-  const mockArrivalTime = 'N/A (Calculated by backend)'; 
+  const mockArrivalTime = departure.arrival_time || 'N/A (Calculated by backend)'; 
 
   useEffect(() => {
     if (isSuccess && data) {

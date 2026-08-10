@@ -13,16 +13,18 @@ class TimetableService:
             route = await self.cache_port.get(route_id)
             if route:
                 dep = route.stations[0].name_jp if route.stations and route.stations[0].name_jp else route.departure_station
-                arr = route.stations[-1].name_jp if route.stations and route.stations[-1].name_jp else route.arrival_station
-                # Backward compatibility: Hardcode the old default ID since dynamic lookup is impossible
-                timetable = await self.scraper_port.get_timetable(route_id, dep, arr, timetable_id="2815011001")
+                arr = route.stations[1].name_jp if route.stations and len(route.stations) > 1 and route.stations[1].name_jp else route.arrival_station
+                
+                railway_jp = route.segments[0].railway_name_jp if route.segments else ""
+                
+                timetable = await self.scraper_port.get_timetable(route_id, dep, arr, timetable_id=None, railway_name_jp=railway_jp)
                 from core.logger import logger
                 logger.info(f"[Service] Received from adapter (cache hit): type={type(timetable)}, weekday count={len(timetable.weekday)}")
                 logger.info(f"[Service] Returning: type={type(timetable)}, weekday count={len(timetable.weekday)}")
                 return timetable
         
         # If no cache, this shouldn't normally happen but we keep the old logic
-        timetable = await self.scraper_port.get_timetable(route_id, timetable_id="2815011001")
+        timetable = await self.scraper_port.get_timetable(route_id, timetable_id=None)
         from core.logger import logger
         logger.info(f"[Service] Received from adapter (no cache): type={type(timetable)}, weekday count={len(timetable.weekday)}")
         logger.info(f"[Service] Returning: type={type(timetable)}, weekday count={len(timetable.weekday)}")
