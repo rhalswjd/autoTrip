@@ -134,25 +134,34 @@ class YahooTimetableScraper:
             logger.error(f"Error getting timetable url for {station_id}: {e}")
             return None
 
-    async def _fetch_train_arrival(self, train_url: str, arrival_station: str, sem: asyncio.Semaphore) -> str:
+    async def _fetch_train_details(self, train_url: str, arrival_station: str, sem: asyncio.Semaphore) -> dict:
         async with sem:
             try:
                 r = await self.client.get(urljoin(self.base_url, train_url))
                 soup = BeautifulSoup(r.text, 'html.parser')
                 
+                result = {"arrival_time": "", "train_name": ""}
                 script = soup.select_one("script#__NEXT_DATA__")
                 if script:
                     import json
                     data = json.loads(script.string)
-                    stop_stations = data.get("props", {}).get("pageProps", {}).get("timetableStationTrainResult", {}).get("timetable", {}).get("stopStation", [])
+                    tt = data.get("props", {}).get("pageProps", {}).get("timetableStationTrainResult", {}).get("timetable", {})
+                    
+                    result["train_name"] = tt.get("displayName", "")
+                    
+                    stop_stations = tt.get("stopStation", [])
                     for s in stop_stations:
                         if arrival_station in s.get("stationName", ""):
                             arr_time = s.get("arrivalTime") or s.get("departureTime")
                             if arr_time:
                                 arr_time = str(arr_time)
                                 if len(arr_time) >= 3:
-                                    return f"{arr_time[:-2].zfill(2)}:{arr_time[-2:]}"
-                                return arr_time
+                                    result["arrival_time"] = f"{arr_time[:-2].zfill(2)}:{arr_time[-2:]}"
+                                else:
+                                    result["arrival_time"] = arr_time
+                                break
+                    if result["arrival_time"]:
+                        return result
                 
                 for s in soup.select('.station'):
                     title = s.select_one('.title')
@@ -160,12 +169,14 @@ class YahooTimetableScraper:
                         time_lis = s.select('.time li')
                         for li in time_lis:
                             if '着' in li.text:
-                                return li.text.replace('着', '').strip()
+                                result["arrival_time"] = li.text.replace('着', '').strip()
+                                return result
                         if time_lis:
-                            return time_lis[0].text.replace('着', '').replace('発', '').strip()
-                return ""
+                            result["arrival_time"] = time_lis[0].text.replace('着', '').replace('発', '').strip()
+                            return result
+                return result
             except Exception:
-                return ""
+                return {"arrival_time": "", "train_name": ""}
 
     async def _parse_timetable_page(self, url: str, arrival_station: str) -> List[DepartureInfo]:
         r = await self.client.get(urljoin(self.base_url, url))
@@ -213,24 +224,26 @@ class YahooTimetableScraper:
                 departures.append(dep_info)
                 
                 if href:
-                    train_tasks.append((len(departures)-1, self._fetch_train_arrival(href, arrival_station, sem)))
+                    train_tasks.append((len(departures)-1, self._fetch_train_details(href, arrival_station, sem)))
                     
         if train_tasks:
             results = await asyncio.gather(*(t[1] for t in train_tasks))
-            for (idx, _), arr_time in zip(train_tasks, results):
+            for (idx, _), details in zip(train_tasks, results):
                 old = departures[idx]
                 departures[idx] = DepartureInfo(
                     id=old.id,
                     time=old.time,
-                    arrival_time=arr_time,
-                    train_name=old.train_name,
+                    arrival_time=details["arrival_time"],
+                    train_name=details["train_name"] if details["train_name"] else old.train_name,
                     train_type=old.train_type,
                     platform=old.platform,
                     direction=old.direction,
                     metadata=old.metadata
                 )
                 
-        return departures
+        # Filter out trains that don't reach the destination
+        valid_departures = [d for d in departures if d.arrival_time != ""]
+        return valid_departures
 
     async def get_timetable(self, route_id: str, departure: str, arrival: str, timetable_id: Optional[str] = None, railway_name_jp: str = "") -> Timetable:
         logger.info(f"YahooTimetableScraper fetching timetable for {departure} -> {arrival}")
