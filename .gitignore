@@ -101,3 +101,14 @@ test_render.js
 yahoo_sample.html
 test*.html
 trace.py
+
+# Debugging, Scripting, and Scraper Artifacts
+scratch/
+e2e_*.py
+debug_*.py
+parse_test*.py
+verify_*.py
+response*.json
+*.html
+*.png
+!frontend/index.html
