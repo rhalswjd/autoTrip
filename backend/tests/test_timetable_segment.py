@@ -68,8 +68,8 @@ def test_get_entire_timetable(mock_cache, mock_scraper):
     response = client.get("/api/v1/routes/route_123/timetable")
     assert response.status_code == 200
     
-    # Assert scraper called with default timetable_id="2815011001"
-    mock_scraper.get_timetable.assert_called_with("route_123", "新大阪", "萩", timetable_id="2815011001")
+    # Assert scraper called with first segment and dynamic timetable lookup
+    mock_scraper.get_timetable.assert_called_with("route_123", "新大阪", "新山口", timetable_id=None, railway_name_jp="")
     
     teardown_dependencies()
 
