@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useEffect } from 'react';
 import type { Route, DepartureInfo } from '../../api/types';
-import { Modal, Button } from '../ui';
+import { Modal, Button, Input } from '../ui';
 import { useMovement, useToast } from '../../hooks';
 import { CheckCircle } from 'lucide-react';
 import './Timetable.css';
@@ -15,6 +16,8 @@ export interface MovementDialogProps {
 export function MovementDialog({ route, departure, isOpen, onClose }: MovementDialogProps) {
   const { mutate, isPending, isSuccess, data } = useMovement();
   const { success, error: toastError } = useToast();
+  const [notionUrl, setNotionUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
   
   // Calculate a mock arrival time based on route.total_duration for the API requirement
   // Since we don't have real math here, we just pass the duration or a dummy string.
@@ -27,7 +30,21 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
     }
   }, [isSuccess, data, success]);
 
+  const validateUrl = (url: string) => {
+    if (!url) return true; // Optional field
+    if (!url.includes('notion.so') && !url.includes('notion.site') && !url.includes('app.notion.com')) {
+      return false;
+    }
+    return true;
+  };
+
   const handleConfirm = () => {
+    if (notionUrl && !validateUrl(notionUrl)) {
+      setUrlError('올바른 Notion 페이지 링크를 입력해 주세요.');
+      return;
+    }
+    setUrlError('');
+    
     mutate(
       {
         route_id: route.id,
@@ -35,6 +52,7 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
         selected_arrival_time: mockArrivalTime,
         departure_station: route.departure_station,
         arrival_station: route.arrival_station,
+        notion_page_url: notionUrl || undefined,
       },
       {
         onError: (err: Error) => {
@@ -82,7 +100,7 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
           </p>
         </div>
 
-        <div className="movement-dialog-details">
+        <div className="movement-dialog-details" style={{ marginBottom: '16px' }}>
           <div className="movement-detail-row">
             <span className="movement-detail-label">Route</span>
             <span className="movement-detail-value">{route.railway_name}</span>
@@ -103,6 +121,31 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
             <span className="movement-detail-label">Train</span>
             <span className="movement-detail-value">{departure.train_name}</span>
           </div>
+        </div>
+        
+        <div className="movement-dialog-input-section" style={{ marginBottom: '24px', textAlign: 'left' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+            Notion 여행 페이지
+          </label>
+          <Input 
+            type="text" 
+            placeholder="Notion 페이지 링크를 붙여넣어 주세요" 
+            value={notionUrl}
+            onChange={(e) => {
+              setNotionUrl(e.target.value);
+              if (urlError) setUrlError('');
+            }}
+            error={!!urlError}
+          />
+          {urlError ? (
+            <p style={{ fontSize: '12px', color: 'var(--danger-color)', marginTop: '4px' }}>
+              {urlError}
+            </p>
+          ) : (
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Notion에서 여행 페이지를 열고 링크를 복사해 붙여넣으면 됩니다.
+            </p>
+          )}
         </div>
 
         <div className="movement-dialog-actions">

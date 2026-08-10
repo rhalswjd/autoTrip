@@ -16,6 +16,11 @@ from application.services.search_service import SearchService
 from application.services.timetable_service import TimetableService
 from application.services.movement_service import MovementService
 from application.services.station_service import StationService
+from application.services.planner_query_service import PlannerQueryService
+from application.ports.timetable_source_port import TimetableSourcePort
+
+from infrastructure.scrapers.timetable.odekake_scraper import JROdekakeTimetableScraper
+from infrastructure.adapters.yahoo_timetable_source import YahooTimetableSource
 
 from core.config import settings
 
@@ -27,15 +32,19 @@ USE_SQLITE_CACHE = settings.use_sqlite_cache
 
 # Dependency instantiation (Using singletons)
 fake_scraper = FakeScraperAdapter()
-yahoo_transit = YahooTransitAdapter()
 fake_notion = FakeNotionAdapter()
 real_notion = RealNotionAdapter()
 fake_cache = FakeCacheAdapter()
 sqlite_cache = SqliteCacheAdapter(db_path=settings.sqlite_cache_path)
 sqlite_station_repo = SqliteStationRepository(db_path=settings.sqlite_station_db_path)
 
+from infrastructure.scrapers.timetable.yahoo_timetable_scraper import YahooTimetableScraper
+
 def get_scraper_port() -> ScraperPort:
-    return yahoo_transit if USE_REAL_SCRAPER else fake_scraper
+    if USE_REAL_SCRAPER:
+        timetable_scraper_facade = YahooTimetableScraper()
+        return YahooTransitAdapter(timetable_scraper_facade)
+    return fake_scraper
 
 def get_notion_port() -> NotionPort:
     return real_notion if USE_REAL_NOTION else fake_notion
@@ -59,9 +68,10 @@ def get_search_service(
     )
 
 def get_timetable_service(
-    scraper: ScraperPort = Depends(get_scraper_port)
+    scraper: ScraperPort = Depends(get_scraper_port),
+    cache: CachePort = Depends(get_cache_port)
 ) -> TimetableService:
-    return TimetableService(scraper_port=scraper)
+    return TimetableService(scraper_port=scraper, cache_port=cache)
 
 def get_movement_service(
     cache: CachePort = Depends(get_cache_port),
@@ -73,3 +83,15 @@ def get_station_service(
     repo: StationRepositoryPort = Depends(get_station_repository_port)
 ) -> StationService:
     return StationService(repository=repo)
+
+from functools import lru_cache
+
+@lru_cache
+def get_timetable_source_port() -> TimetableSourcePort:
+    timetable_scraper_facade = JROdekakeTimetableScraper()
+    return YahooTimetableSource(timetable_scraper_facade)
+
+def get_planner_query_service(
+    source: TimetableSourcePort = Depends(get_timetable_source_port)
+) -> PlannerQueryService:
+    return PlannerQueryService(timetable_source=source)

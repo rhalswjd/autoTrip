@@ -1,0 +1,280 @@
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+2026-07-20 05:16:27 | INFO     | main | Starting AutoTrip API in local mode.
+2026-07-20 05:16:27 | INFO     | main | Station DB is valid and ready.
+2026-07-20 05:16:27 | INFO     | main | Bus Stop DB is valid and ready.
+2026-07-20 05:16:27 | INFO     | main | POI DB is valid and ready.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53122 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45058 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32906 - "GET /api/v1/health HTTP/1.1" 200 OK
+2026-07-20 05:17:36 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'sh'
+INFO:     192.168.97.1:50840 - "GET /api/v1/stations/search?q=sh HTTP/1.1" 200 OK
+2026-07-20 05:17:36 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'shi'
+INFO:     192.168.97.1:50842 - "GET /api/v1/stations/search?q=shi HTTP/1.1" 200 OK
+2026-07-20 05:17:36 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'shin'
+INFO:     192.168.97.1:50844 - "GET /api/v1/stations/search?q=shin HTTP/1.1" 200 OK
+2026-07-20 05:17:37 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'shin-'
+INFO:     192.168.97.1:50846 - "GET /api/v1/stations/search?q=shin- HTTP/1.1" 200 OK
+2026-07-20 05:17:37 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'shin-o'
+INFO:     192.168.97.1:50858 - "GET /api/v1/stations/search?q=shin-o HTTP/1.1" 200 OK
+2026-07-20 05:17:38 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'shin-os'
+INFO:     192.168.97.1:50872 - "GET /api/v1/stations/search?q=shin-os HTTP/1.1" 200 OK
+2026-07-20 05:17:42 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'wa'
+INFO:     192.168.97.1:50874 - "GET /api/v1/stations/search?q=wa HTTP/1.1" 200 OK
+2026-07-20 05:17:43 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'wak'
+INFO:     192.168.97.1:50884 - "GET /api/v1/stations/search?q=wak HTTP/1.1" 200 OK
+2026-07-20 05:17:43 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'waka'
+INFO:     192.168.97.1:50898 - "GET /api/v1/stations/search?q=waka HTTP/1.1" 200 OK
+2026-07-20 05:17:43 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'wakas'
+INFO:     192.168.97.1:50906 - "GET /api/v1/stations/search?q=wakas HTTP/1.1" 200 OK
+2026-07-20 05:17:44 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query 'wakasa'
+INFO:     192.168.97.1:50912 - "GET /api/v1/stations/search?q=wakasa HTTP/1.1" 200 OK
+2026-07-20 05:17:48 | INFO     | search_service | Route Search Started: 新大阪 -> 若狭本郷
+2026-07-20 05:17:48 | INFO     | search_service | Cache Miss for 新大阪 -> 若狭本郷
+2026-07-20 05:17:48 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query '新大阪'
+2026-07-20 05:17:48 | DEBUG    | sqlite_station_repository | SQLite Read: Station Search for query '若狭本郷'
+2026-07-20 05:17:48 | INFO     | search_service | Scraper Started: 新大阪 (新大阪) -> 若狭本郷 (若狭本郷)
+2026-07-20 05:17:48 | DEBUG    | yahoo_transit_adapter | Fetching Yahoo Transit multi-tabs: 新大阪 to 若狭本郷
+2026-07-20 05:17:48 | DEBUG    | yahoo_transit_adapter | Fetching Yahoo Transit with params: {'from': '新大阪', 'to': '若狭本郷', 'shin': '1', 'ex': '1', 'hb': '1', 'al': '1', 'type': '5'}
+2026-07-20 05:17:48 | DEBUG    | yahoo_transit_adapter | Fetching Yahoo Transit with params: {'from': '新大阪', 'to': '若狭本郷', 'shin': '1', 'ex': '1', 'hb': '1', 'al': '1', 'type': '5', 's': '2'}
+2026-07-20 05:17:48 | DEBUG    | yahoo_transit_adapter | Fetching Yahoo Transit with params: {'from': '新大阪', 'to': '若狭本郷', 'shin': '1', 'ex': '1', 'hb': '1', 'al': '1', 'type': '5', 's': '1'}
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '新大阪' -> 'Shin-Osaka' (Layer: Station DB)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '京都' -> 'Kyoto' (Layer: Station DB)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '東舞鶴' -> 'Higashi-Maizuru' (Layer: Station DB)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '若狭本郷' -> 'Wakasahongo' (Layer: Station DB)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '新大阪駅前(高速・連絡バス)' -> 'Shinosaka Station' (Layer: Romanization Fallback)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '東舞鶴駅前(高速・連絡バス)' -> 'Higashimaizuru Station' (Layer: Romanization Fallback)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '敦賀' -> 'Tsuruga' (Layer: Station DB)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '近江塩津' -> 'Omishiotsu' (Layer: Station DB)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] '白銀乗車口(高速・連絡バス)' -> 'Hakugin Joushaguchi' (Layer: Romanization Fallback)
+2026-07-20 05:17:48 | DEBUG    | translation_service | [Translation] 'ＪＲ若狭本郷駅(高速・連絡バス)' -> 'JRWakasa Hongou Station' (Layer: Romanization Fallback)
+2026-07-20 05:17:48 | INFO     | search_service | Scraper Finished: Found 8 routes
+INFO:     192.168.97.1:59224 - "GET /api/v1/search?departure_station=%E6%96%B0%E5%A4%A7%E9%98%AA&arrival_station=%E8%8B%A5%E7%8B%AD%E6%9C%AC%E9%83%B7 HTTP/1.1" 200 OK
+2026-07-20 05:17:53 | INFO     | downloader | [TimetableDownloader] Requesting URL: https://transit.yahoo.co.jp/search/result?from=%E6%96%B0%E5%A4%A7%E9%98%AA&to=%E8%8B%A5%E7%8B%AD%E6%9C%AC%E9%83%B7&type=1&ticket=ic&expkind=1&ws=3&s=0&y=2026&m=07&d=20
+2026-07-20 05:17:53 | INFO     | yahoo_transit_adapter | Scraping Yahoo Timetable for 新大阪 -> 若狭本郷
+2026-07-20 05:17:53 | INFO     | downloader | [TimetableDownloader] Requesting URL: https://transit.yahoo.co.jp/timetable/search?q=%E6%96%B0%E5%A4%A7%E9%98%AA
+2026-07-20 05:17:53 | INFO     | downloader | [TimetableDownloader] Final response.url: https://transit.yahoo.co.jp/timetable/25978?q=%E6%96%B0%E5%A4%A7%E9%98%AA
+INFO:     192.168.97.1:59226 - "GET /api/v1/routes/46fae24b-1039-45b4-841f-177f7ab5341b/timetable HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 345, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/api/v1/timetable.py", line 19, in get_timetable
+    timetable = await service.get_timetable(route_id)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/application/services/timetable_service.py", line 17, in get_timetable
+    return await self.scraper_port.get_timetable(route_id, dep, arr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/infrastructure/scrapers/yahoo_transit_adapter.py", line 209, in get_timetable
+    raw_data = await self.timetable_scraper.fetch_timetable(departure, arrival)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/infrastructure/scrapers/timetable/scraper.py", line 83, in fetch_timetable
+    raise Exception(f"Could not find timetable link for {departure_station} -> {arrival_station}")
+Exception: Could not find timetable link for 新大阪 -> 若狭本郷
+2026-07-20 05:17:54 | INFO     | downloader | [TimetableDownloader] Final response.url: https://transit.yahoo.co.jp/search/result?from=%E6%96%B0%E5%A4%A7%E9%98%AA&to=%E8%8B%A5%E7%8B%AD%E6%9C%AC%E9%83%B7&type=1&ticket=ic&expkind=1&ws=3&s=0&y=2026&m=07&d=20
+INFO:     192.168.97.1:59234 - "GET /api/v1/routes/46fae24b-1039-45b4-841f-177f7ab5341b/planner?planner_mode=WEEKDAY HTTP/1.1" 200 OK
+2026-07-20 05:17:54 | INFO     | yahoo_transit_adapter | Scraping Yahoo Timetable for 新大阪 -> 若狭本郷
+2026-07-20 05:17:54 | INFO     | downloader | [TimetableDownloader] Requesting URL: https://transit.yahoo.co.jp/timetable/search?q=%E6%96%B0%E5%A4%A7%E9%98%AA
+2026-07-20 05:17:55 | INFO     | downloader | [TimetableDownloader] Final response.url: https://transit.yahoo.co.jp/timetable/25978?q=%E6%96%B0%E5%A4%A7%E9%98%AA
+INFO:     192.168.97.1:59248 - "GET /api/v1/routes/46fae24b-1039-45b4-841f-177f7ab5341b/timetable HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 345, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/api/v1/timetable.py", line 19, in get_timetable
+    timetable = await service.get_timetable(route_id)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/application/services/timetable_service.py", line 17, in get_timetable
+    return await self.scraper_port.get_timetable(route_id, dep, arr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/infrastructure/scrapers/yahoo_transit_adapter.py", line 209, in get_timetable
+    raw_data = await self.timetable_scraper.fetch_timetable(departure, arrival)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/infrastructure/scrapers/timetable/scraper.py", line 83, in fetch_timetable
+    raise Exception(f"Could not find timetable link for {departure_station} -> {arrival_station}")
+Exception: Could not find timetable link for 新大阪 -> 若狭本郷
+INFO:     127.0.0.1:54630 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36500 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49560 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45060 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44682 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59930 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41396 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52204 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46164 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38036 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41884 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60440 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53664 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41150 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50986 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60174 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54700 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50898 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40332 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41216 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39918 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54566 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     192.168.97.1:59656 - "GET /api/v1/routes/test/timetable HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2685, in app
+    await route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1766, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2740, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1786, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1265, in handle
+    await app(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 151, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 137, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 691, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 345, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/api/v1/timetable.py", line 19, in get_timetable
+    timetable = await service.get_timetable(route_id)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/backend/application/services/timetable_service.py", line 18, in get_timetable
+    from core.logger import logger
+  File "/app/backend/infrastructure/scrapers/yahoo_transit_adapter.py", line 205, in get_timetable
+    raise ValueError("Departure and arrival stations are required for Yahoo Transit Timetable")
+ValueError: Departure and arrival stations are required for Yahoo Transit Timetable
+INFO:     127.0.0.1:43648 - "GET /api/v1/health HTTP/1.1" 200 OK

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Sidebar } from '../layouts/Sidebar';
 import { SearchBar, SearchResultList } from '../components/search';
 import { RouteSearchForm, RouteResultList, RouteTimelineV2, RouteSummary } from '../components/route';
-import { TimetableList } from '../components/timetable';
+import { TimetableList, TransferWizard } from '../components/timetable';
 import { Divider } from '../components/ui';
 import { useStationSearch, useRoutePanel } from '../hooks';
 
@@ -23,6 +23,10 @@ export function SearchPage() {
   } = useRoutePanel();
 
   const { data, isLoading, error, refetch } = useStationSearch(searchQuery);
+
+  console.log("SearchPage data:", data);
+  console.log("SearchPage data.weekday:", (data as any)?.weekday);
+  console.log("SearchPage data.data:", (data as any)?.data);
 
   const handleEscape = useCallback(() => {
     setSearchQuery('');
@@ -79,7 +83,11 @@ export function SearchPage() {
               <RouteSummary route={selectedRoute} />
               
               <Divider style={{ margin: '16px 0' }} />
-              <TimetableList route={selectedRoute} />
+              {selectedRoute.segments.length > 1 ? (
+                <TransferWizard route={selectedRoute} />
+              ) : (
+                <TimetableList route={selectedRoute} />
+              )}
             </>
           )}
         </div>

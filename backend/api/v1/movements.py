@@ -16,14 +16,32 @@ async def create_movement(
     req: MovementRequestSchema,
     service: MovementService = Depends(get_movement_service)
 ):
-    movement, notion_url = await service.create_movement(
+    from utils.notion_parser import extract_notion_page_id
+    from fastapi import HTTPException
+    
+    final_target_page_id = req.target_page_id
+    
+    if req.notion_page_url:
+        try:
+            final_target_page_id = extract_notion_page_id(req.notion_page_url)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    elif req.target_page_id:
+        try:
+            final_target_page_id = extract_notion_page_id(req.target_page_id)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+            
+    movement, notion_result = await service.create_movement(
         route_id=req.route_id,
         departure_station=req.departure_station,
         arrival_station=req.arrival_station,
         search_time=req.search_time,
         search_date=req.search_date,
         selected_departure_time=req.selected_departure_time,
-        selected_arrival_time=req.selected_arrival_time
+        selected_arrival_time=req.selected_arrival_time,
+        target_page_id=final_target_page_id,
+        legs=req.legs
     )
     return MovementResponseSchema(
         route_id=movement.route.id,
@@ -33,5 +51,7 @@ async def create_movement(
         selected_arrival_time=movement.selected_arrival_time,
         search_mode=movement.search_context.search_mode.value,
         status="saved_to_notion",
-        notion_url=notion_url
+        notion_url=notion_result.get("notion_url", ""),
+        parent_page_id=notion_result.get("parent_page_id"),
+        child_page_ids=notion_result.get("child_page_ids")
     )

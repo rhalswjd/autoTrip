@@ -1,3 +1,4 @@
+from typing import Optional
 from domain.movement import Movement
 from domain.search import SearchRequest
 from application.services.search_service import SearchModeResolver
@@ -18,12 +19,14 @@ class MovementService:
         route_id: str,
         departure_station: str,
         arrival_station: str,
-        search_time: str | None,
-        search_date: str | None,
+        search_time: Optional[str],
+        search_date: Optional[str],
         selected_departure_time: str,
-        selected_arrival_time: str
-    ) -> tuple[Movement, str]:
-        route = await self.cache_port.get(f"route_{route_id}")
+        selected_arrival_time: str,
+        target_page_id: Optional[str] = None,
+        legs: Optional[list] = None
+    ) -> tuple[Movement, dict]:
+        route = await self.cache_port.get(route_id)
         
         if not route:
             route = Route(
@@ -56,9 +59,9 @@ class MovementService:
         logger.info(f"Movement Created: {route_id} ({departure_station} -> {arrival_station})")
         logger.info("Notion Save Started")
         try:
-            notion_url = await self.notion_port.save_movement(movement)
+            notion_result = await self.notion_port.save_movement(movement, target_page_id=target_page_id, legs=legs)
             logger.info("Notion Save Success")
-            return movement, notion_url
+            return movement, notion_result
         except Exception as e:
             logger.error(f"Notion Save Failed: {e}")
             raise

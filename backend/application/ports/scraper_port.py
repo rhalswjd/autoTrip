@@ -10,5 +10,5 @@ class ScraperPort(Protocol):
     async def search_routes(self, departure: str, arrival: str, time: str | None = None, date: str | None = None) -> List[Route]:
         ...
         
-    async def get_timetable(self, route_id: str) -> Timetable:
+    async def get_timetable(self, route_id: str, departure: str = "", arrival: str = "", timetable_id: str | None = None, railway_name_jp: str = "") -> Timetable:
         ...

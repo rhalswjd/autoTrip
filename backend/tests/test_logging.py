@@ -44,7 +44,8 @@ async def test_movement_service_logging_success(mock_logger):
     await service.create_movement(
         route_id="r1", departure_station="A", arrival_station="B",
         search_time=None, search_date=None,
-        selected_departure_time="10:00", selected_arrival_time="11:00"
+        selected_departure_time="10:00", selected_arrival_time="11:00",
+        target_page_id=None, legs=[]
     )
     
     mock_logger.info.assert_any_call("Movement Created: r1 (A -> B)")

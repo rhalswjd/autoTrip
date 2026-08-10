@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from domain.movement import Movement
 from infrastructure.notion.properties import (
-    build_title, build_select, build_rich_text, build_number, build_checkbox, build_date
+    build_title, build_rich_text, build_number, build_select
 )
 from infrastructure.notion.constants import NotionColumns
 
@@ -12,31 +12,51 @@ class NotionMapper:
     """
     @staticmethod
     def map_to_properties(movement: Movement) -> Dict[str, Any]:
+        return NotionMapper.map_parent_movement(movement)
+
+    @staticmethod
+    def map_parent_movement(movement: Movement) -> Dict[str, Any]:
         route = movement.route
-        context = movement.search_context
         
         properties: Dict[str, Any] = {
-            NotionColumns.NAME: build_title(f"{route.departure_station} -> {route.arrival_station}"),
-            NotionColumns.RAILWAY: build_select(route.railway_name),
-            NotionColumns.DURATION: build_rich_text(route.total_duration),
-            NotionColumns.FARE: build_number(route.total_fare),
-            NotionColumns.TRANSFERS: build_number(route.transfer_count)
+            NotionColumns.ROUTE: build_title(f"{route.departure_station} -> {route.arrival_station}"),
+            NotionColumns.TRANSPORT_TYPE: build_select("Mixed" if route.transfer_count > 0 else route.railway_name),
+            NotionColumns.FARE: build_number(route.total_fare)
         }
 
-        # Data-driven decision logic (No Enum checks)
-        has_time = bool(movement.selected_departure_time)
-        has_date = bool(context.departure_date)
-
-        if has_date and has_time:
-            properties[NotionColumns.CONFIRMED] = build_checkbox(True)
-            # Notion Date Property requires ISO-8601 formatting
-            date_str = f"{context.departure_date}T{movement.selected_departure_time}:00"
-            properties[NotionColumns.DATE] = build_date(start_date=date_str)
-        elif has_time:
-            properties[NotionColumns.CONFIRMED] = build_checkbox(False)
+        if movement.selected_departure_time:
             properties[NotionColumns.DEPARTURE_TIME] = build_rich_text(movement.selected_departure_time)
-        else:
-            properties[NotionColumns.CONFIRMED] = build_checkbox(False)
-            properties[NotionColumns.DEPARTURE_TIME] = build_rich_text("Not Specified")
 
+        if movement.selected_arrival_time and not movement.selected_arrival_time.startswith("N/A"):
+            properties[NotionColumns.ARRIVAL_TIME] = build_rich_text(movement.selected_arrival_time)
+
+        import logging
+        logger = logging.getLogger("autotrip")
+        logger.debug(f"Notion Mapper Parent Payload: {properties}")
+
+        return properties
+
+    @staticmethod
+    def map_leg(leg, parent_page_id: str, parent_property_name: str) -> Dict[str, Any]:
+        properties: Dict[str, Any] = {
+            NotionColumns.ROUTE: build_title(f"{leg.departure_station} -> {leg.arrival_station}")
+        }
+        
+        if leg.transport_name:
+            properties[NotionColumns.TRANSPORT_TYPE] = build_select(leg.transport_name)
+            
+        if leg.departure_time:
+            properties[NotionColumns.DEPARTURE_TIME] = build_rich_text(leg.departure_time)
+            
+        if leg.arrival_time and not leg.arrival_time.startswith("N/A"):
+            properties[NotionColumns.ARRIVAL_TIME] = build_rich_text(leg.arrival_time)
+            
+        if leg.platform is not None:
+            properties[NotionColumns.PLATFORM] = build_number(leg.platform)
+            
+        if leg.fare is not None:
+            properties[NotionColumns.FARE] = build_number(leg.fare)
+            
+        properties[parent_property_name] = {"relation": [{"id": parent_page_id}]}
+        
         return properties

@@ -8,11 +8,27 @@ export interface Station {
   has_midori_office: boolean;
 }
 
+export interface ScheduleCandidate {
+  candidate_id: string;
+  departure_time: string;
+  arrival_time: string;
+  train_name: string;
+  train_type: string;
+  direction: string;
+  is_current: boolean;
+}
+
 export interface RouteSegment {
   segment_type: 'train' | 'bus' | 'walk';
   railway_name: string;
   duration: string;
   is_through: boolean;
+  schedule_candidates?: ScheduleCandidate[];
+}
+
+export interface PlannerMetadata {
+  planner_state: string;
+  planner_mode: string;
 }
 
 export interface Route {
@@ -26,18 +42,36 @@ export interface Route {
   polyline: string;
   stations: Station[];
   segments: RouteSegment[];
+  planner_metadata?: PlannerMetadata;
 }
 
 export interface DepartureInfo {
+  id: string;
   time: string;
+  arrival_time?: string;
   train_name: string;
+  train_type?: string;
+  platform?: string;
+  direction?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface Timetable {
   route_id: string;
-  first_train: string;
-  last_train: string;
-  departures: DepartureInfo[];
+  weekday: DepartureInfo[];
+  saturday: DepartureInfo[];
+  holiday: DepartureInfo[];
+}
+
+export interface LegSelection {
+  segment_index: number;
+  departure_station: string;
+  arrival_station: string;
+  departure_time: string;
+  arrival_time?: string;
+  transport_name?: string;
+  platform?: number;
+  fare?: number;
 }
 
 export interface MovementRequest {
@@ -48,6 +82,8 @@ export interface MovementRequest {
   arrival_station: string;
   search_time?: string;
   search_date?: string;
+  notion_page_url?: string;
+  legs?: LegSelection[];
 }
 
 export interface MovementResponse {

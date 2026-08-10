@@ -11,7 +11,8 @@ from domain.timetable import Timetable
 from core.logger import logger
 
 class YahooTransitAdapter(ScraperPort):
-    def __init__(self):
+    def __init__(self, timetable_scraper=None):
+        self.timetable_scraper = timetable_scraper
         self.base_url = "https://transit.yahoo.co.jp/search/result"
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
@@ -115,6 +116,7 @@ class YahooTransitAdapter(ScraperPort):
                 segments.append(RouteSegment(
                     segment_type=seg_type,
                     railway_name=en_trains[j],
+                    railway_name_jp=trains[j],
                     is_through=is_through
                 ))
             
@@ -197,5 +199,15 @@ class YahooTransitAdapter(ScraperPort):
             logger.error(f"Yahoo Transit Scraper Error: {e}")
             raise ScraperException(f"Yahoo Transit scraping failed: {str(e)}") from e
 
-    async def get_timetable(self, route_id: str) -> Timetable:
-        raise NotImplementedError("Timetable not implemented yet for Yahoo Transit")
+    async def get_timetable(self, route_id: str, departure: str = "", arrival: str = "", timetable_id: str | None = None, railway_name_jp: str = "") -> Timetable:
+        if not self.timetable_scraper:
+            raise NotImplementedError("TimetableScraper not injected")
+        if not departure or not arrival:
+            raise ValueError("Departure and arrival stations are required for Yahoo Transit Timetable")
+            
+        logger.info(f"Scraping Timetable for {departure} -> {arrival}")
+        # Use the injected timetable scraper
+        res = await self.timetable_scraper.get_timetable(route_id, departure, arrival, timetable_id=timetable_id, railway_name_jp=railway_name_jp)
+        
+        logger.info(f"YahooTransitAdapter returning Timetable: type={type(res)}, weekday length={len(res.weekday)}")
+        return res

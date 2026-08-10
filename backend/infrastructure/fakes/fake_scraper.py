@@ -20,7 +20,7 @@ class FakeScraperAdapter(ScraperPort):
         )
         return [dummy_route]
         
-    async def get_timetable(self, route_id: str) -> Timetable:
+    async def get_timetable(self, route_id: str, departure: str = "", arrival: str = "", *args, **kwargs) -> Timetable:
         return Timetable(
             route_id=route_id,
             first_train="05:00",

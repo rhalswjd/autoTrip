@@ -42,6 +42,9 @@ async def test_search_service_cache_hit_miss():
 @pytest.mark.asyncio
 async def test_movement_service():
     cache = FakeCacheAdapter()
+    class FakeNotionAdapter:
+        async def save_movement(self, movement, target_page_id=None, legs=None):
+            return {"notion_url": "https://notion.so/fake"}
     notion = FakeNotionAdapter()
     service = MovementService(cache_port=cache, notion_port=notion)
     

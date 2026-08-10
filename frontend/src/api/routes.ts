@@ -14,6 +14,10 @@ export function getTimetable(routeId: string): Promise<Timetable> {
   return api.get<Timetable>(`/routes/${routeId}/timetable`);
 }
 
+export function getSegmentTimetable(routeId: string, segmentIndex: number): Promise<Timetable> {
+  return api.get<Timetable>(`/routes/${routeId}/segments/${segmentIndex}/timetable`);
+}
+
 export function createMovement(data: MovementRequest): Promise<MovementResponse> {
   return api.post<MovementResponse>('/movements', data);
 }

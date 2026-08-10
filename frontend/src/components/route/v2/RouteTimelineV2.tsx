@@ -1,8 +1,9 @@
 import React from 'react';
 import type { Route, RouteSegment } from '../../../api/types';
-import { TrainFront, BusFront, Footprints } from 'lucide-react';
+import { TrainFront, BusFront, Footprints, AlertCircle } from 'lucide-react';
 import './RouteTimelineV2.css';
 import { getLineColor } from './utils';
+import { usePlannerRoute } from '../../../hooks';
 
 export interface RouteTimelineV2Props {
   route: Route;
@@ -15,13 +16,34 @@ function getPrimaryRouteIcon(segments: RouteSegment[]) {
 }
 
 export function RouteTimelineV2({ route }: RouteTimelineV2Props) {
-  const { stations = [], segments = [] } = route;
+  const { data: plannerRoute, isLoading, error } = usePlannerRoute(route.id);
+
+  const activeRoute = (plannerRoute && !error) ? plannerRoute : route;
+  const { stations = [], segments = [], planner_metadata } = activeRoute;
 
   return (
     <div className="rt-container" role="list" aria-label="Route timeline">
-      <div className="rt-header">
-        {getPrimaryRouteIcon(segments)}
-        <span className="rt-header-title">Route Detail</span>
+      <div className="rt-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {getPrimaryRouteIcon(segments)}
+          <span className="rt-header-title">Route Detail</span>
+          {isLoading && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Loading planner...</span>}
+          {error && <AlertCircle size={14} color="var(--color-danger)" />}
+        </div>
+        {planner_metadata && (
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {planner_metadata.planner_state && (
+              <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                {planner_metadata.planner_state}
+              </span>
+            )}
+            {planner_metadata.planner_mode && (
+              <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', background: 'var(--color-primary-light, #e6f7ff)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
+                {planner_metadata.planner_mode}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       {stations.map((station, i) => {
         const segment = segments[i]; // Segment leaving this station
@@ -107,7 +129,7 @@ export function RouteTimelineV2({ route }: RouteTimelineV2Props) {
                       
                       {/* Optional Stops accordion UI (pseudo for now) */}
                       {/* Real stops data would be parsed or fetched if available */}
-                      {route.transfer_count > 0 && i === 0 && (
+                      {activeRoute.transfer_count > 0 && i === 0 && (
                         <div className="rt-stops-accordion">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>

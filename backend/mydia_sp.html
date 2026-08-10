@@ -1,0 +1,472 @@
+<!DOCTYPE html><html lang="ja"><head>
+    <meta charset="UTF-8">
+    <title>マイ・ダイヤ｜検索条件入力：JRおでかけネット</title>
+    <meta name="viewport" content="width=device-width,user-scalable=no">
+    <meta name="keywords" content="時刻,運賃,駅情報,路線図,列車,新幹線,予約,JR西日本">
+    <meta name="description" content="JR西日本が運営する観光情報サイトです。時刻表・運賃・トクトクきっぷ・ICOCA・J-WESTカード・駅・路線図などの営業情報や西日本各地の観光情報、エクスプレス予約・e5489などの予約サービスがご覧いただけます。">
+    <link rel="stylesheet" href="/smt/common/css/common.css">
+    <link rel="stylesheet" href="/smt/common/css/second.css">
+    <link rel="stylesheet" href="/smt/railroad/css/style.css">
+    <link rel="stylesheet" href="/mydia/sp/css/style.css">
+    <link rel="stylesheet" href="/mydia/sp/css/top.css">
+    <link rel="stylesheet" type="text/css" href="/mydia/sp/css/ajax.css">
+    <script async="" src="//s.yjtag.jp/tag.js#site=bxGsFPU"></script><script async="" src="https://www.googletagmanager.com/gtm.js?id=GTM-T79SSB7"></script><script type="text/javascript" src="/mydia/js/lib/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="/smt/common/js/lib/smartview.js"></script>
+    <script type="text/javascript" src="/smt/common/js/common.js" charset="shift_jis"></script>
+    <script type="text/javascript" src="/smt/common/js/user_geolocation.js"></script>
+    <script type="text/javascript" src="/mydia/js/mydia.js"></script>
+    <script type="text/javascript" src="/mydia/js/ajax_common.js"></script>
+    <!-- analyze-sub-start -->
+    <script type="text/javascript" src="https://www.jr-odekake.net/common/js/analyze_sub.js"></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-4549396-1"></script>
+    <!-- analyze-sub-end -->
+    <script type="text/javascript" language="JavaScript">
+    <!--
+        window.addEventListener("load", function (event) {
+            set_via_mojis_autocomplete(window.document.input1);
+        });
+        window.addEventListener("pagehide", function (event) {
+            remove_via_mojis_autocomplete(window.document.input1);
+        });
+        var Sugget = function () {
+            this.asg1;
+            this.asg2;
+            this.asg3;
+            this.array = [this.asg1, this.asg2, this.asg3];
+        }
+        function init() {
+            enable_Time();
+            enable_Nozomi(window.document.input1.sprexprs, window.document.input1.sprnzmdsp);
+            Sugget.asg1 = new AjaxSuggest('via_moji', 'ajax_result', 'SuggestList');
+            Sugget.asg2 = new AjaxSuggest('via2_moji', 'ajax_result2', 'SuggestList2');
+            Sugget.asg3 = new AjaxSuggest('via3_moji', 'ajax_result3', 'SuggestList3');
+        }
+
+        function Submit_Data() {
+            var doc_form = document.input1;
+            var node_list = doc_form.getElementsByTagName("input");
+            var checkbox_list = [];
+            var hidden_list = [];
+            for (var i = 0; i < node_list.length; i++) {
+                if (node_list[i].type == "checkbox") checkbox_list.push(node_list[i]);
+                if (node_list[i].type == "hidden") hidden_list.push(node_list[i]);
+            }
+            for (var i = 0; i < hidden_list.length; i++) {
+                for (var j = 0; j < checkbox_list.length; j++) {
+                    if (hidden_list[i].name == checkbox_list[j].name) hidden_list[i].remove();
+                }
+            }
+            for (var i = 0; i < checkbox_list.length; i++) {
+                if (checkbox_list[i].checked == false) {
+                    var new_node = document.createElement("input");
+                    new_node.name = checkbox_list[i].name;
+                    new_node.type = "hidden";
+                    new_node.value = 0;
+                    doc_form.appendChild(new_node);
+                }
+            }
+            return true;
+        }
+    //-->
+    </script>
+</head>
+
+<body onload="init();">
+
+    <div class="smt">
+        <script type="text/javascript" src="/mydia/sp/include/header_http_utf8.js"></script><script type="text/javascript" src="https://www.jr-odekake.net/smt/common/js/sitesearch.js"></script><link rel="stylesheet" href="https://www.jr-odekake.net/smt/common/css/sitesearch.css"><header class="smt"><div id="logo"><a href="https://www.jr-odekake.net/smt/"><img src="https://www.jr-odekake.net/smt/common/img/logo_odekake.png" alt="JRおでかけネット" width="114"></a></div><nav><ul><li class="smt_btn"><a href="https://trafficinfo.westjr.co.jp/" target="_blank"><img src="https://www.jr-odekake.net/smt/common/img/txt_train_info.png" alt="列車運行情報" width="54"><span class="header_icon"><img src="https://www.jr-odekake.net/smt/common/img/icon_blank_b.png" alt="新規ウィンドウで開きます。" width="11" height="10"></span></a></li><li class="smt_btn"><a href="https://www.jr-odekake.net/" target="_blank"><img src="https://www.jr-odekake.net/smt/common/img/txt_pc_site.png" alt="PCサイト" width="33"><span class="header_icon"><img src="https://www.jr-odekake.net/smt/common/img/icon_pc_b.png" alt="新規ウィンドウでPCサイトが開きます。" width="10" height="10"></span></a></li><li class="smt_btn" id="smt_showSearch"><a href="#"><img src="https://www.jr-odekake.net/smt/common/img/head_searchbtn.png" alt="検索" width="32"></a></li></ul></nav><div id="smt_searchWrap"><form action="https://srh.westjr.co.jp/" method="get" name="search_form"><input type="hidden" name="ie" value="u"><input type="text" value="" name="kw" placeholder="サイト内検索"><button><img src="https://www.jr-odekake.net/smt/common/img/icon_search.png" alt="検索アイコン" width="22">検索</button><input type="hidden" name="domain" value="sp"></form></div></header>
+
+        <script type="text/javascript" src="/mydia/sp/js/mydia.js"></script>
+
+        <div id="smt_content">
+            <script type="text/javascript" src="/mydia/sp/include/mydia_header.js"></script><h1>時刻・運賃検索(マイ・ダイヤ)</h1><ul class="mydiahd_btn"><li class="smt_btn"><a href="/mydia/sp/info/about.html"><img src="/mydia/sp/img/btn_info.png" width="49" alt="ご利用案内"></a></li><li class="smt_btn"><a href="/mydia/sp/info/update.html"><img src="/mydia/sp/img/btn_update.png" width="79" alt="データの対応状況"></a></li><li class="smt_btn"><a href="/cgi-bin/mydia_sp.cgi?MODE=1&amp;FUNC=0&amp;COMPANY_CODE=%/GetCC%"><img src="/mydia/sp/img/btn_myroute.png" width="68" alt="マイルート検索"></a></li></ul>
+
+            
+
+
+            
+
+
+            <!--////////// アコーディオン start -->
+            <nav class="nav-acc">
+	<ul class="acc-sub">
+		<li>
+			<h2 class="acc-head"><a href="#">お知らせ(お読みください)</a></h2>
+			<div class="acc-inner">
+				<ul class="acc-list-inner"><li><a href="/mydia/sp/info/update.html#2021032901" target="_blank" class="smtlink">【お知らせ】工事に伴う列車の運休について（JR西日本エリア）</a></li><li><a href="/mydia/sp/info/update.html#2023072601" target="_blank" class="smtlink">【お知らせ】災害の影響により不通となっている区間の検索について（JR西日本エリア）</a></li><li><a href="/mydia/sp/info/update.html#2021010702" target="_blank" class="smtlink">【お知らせ】災害の影響により不通となっている区間の検索について（JR九州エリア）</a></li><li><a href="/mydia/sp/info/update.html#2025102301" target="_blank" class="smtlink">【お知らせ】N700系8両編成化改造工事完了に伴う営業運転開始について</a></li><li><a href="/mydia/sp/info/update.html#2025102302" target="_blank" class="smtlink">【お知らせ】「快速うれしート（有料着席サービス）」指定席未設定区間における列車名表示の不具合について</a></li><li><a href="/mydia/sp/info/update.html#2026052901" target="_blank" class="smtlink">【お知らせ】大阪環状線の一部列車（「快速うれしート（有料着席サービス）」設定区間が「寺田町駅」までの列車）の経路検索結果表示不具合について</a></li><li><a href="/mydia/sp/info/update.html#2026062501" target="_blank" class="smtlink">【お知らせ】福知山駅での乗換案内の表示不具合について</a></li></ul>
+			</div>
+		</li>
+	</ul>
+</nav>
+
+
+            <!--////////// アコーディオン end -->
+
+            <h2 id="search_ttl">検索条件入力</h2>
+            <form name="input1" action="/cgi-bin/mydia_sp.cgi" method="Post" onsubmit="return IsNotLocked('submit1') &amp;&amp; Submit_Data()" target="_self">
+                <div class="smt_myDia">
+
+                    <section class="smt_box">
+                        <ul id="smt_myDiaInputs" class="station_input">
+                            <li>
+                                出発駅 <input id="departureStation" type="text" name="dep_node" value="" placeholder="出発駅を入力"> 駅
+                                <a class="clear" href="#" style="display:none;"></a>
+                            </li>
+                            <li>
+                                <span class="smt_btn switch_input" id="switch_input"><a href="javascript:void(0)"></a></span>
+                            </li>
+                            <li>
+                                到着駅 <input id="arrivalStation" type="text" name="arv_node" value="" placeholder="到着駅を入力"> 駅
+                                <a class="clear" href="#" style="display:none;"></a>
+                            </li>
+                        </ul>
+
+                        <div class="dayInputs">
+                            <h3>ご利用日時</h3>
+
+                            <ul class="select-custom-3column in-block">
+                                <li>
+                                    <input type="radio" value="0" name="basis" id="dp1" checked="checked">
+                                    <label for="dp1">出発時刻</label>
+                                </li>
+                                <li>
+                                    <input type="radio" value="1" name="basis" id="dp2">
+                                    <label for="dp2">到着時刻</label>
+                                </li>
+                                <li>
+                                    <input type="radio" value="2" name="basis" id="dp3">
+                                    <label for="dp3">終電</label>
+                                </li>
+                            </ul>
+
+                            <div class="display_ltrain">
+
+                                <div class="timeInputs">
+                                    <select id="yearmonth" name="yearmonthday" onchange="">
+	<option value="20260720" selected="selected">2026年7月20日</option>
+	<option value="20260721">2026年7月21日</option>
+	<option value="20260722">2026年7月22日</option>
+	<option value="20260723">2026年7月23日</option>
+	<option value="20260724">2026年7月24日</option>
+	<option value="20260725">2026年7月25日</option>
+	<option value="20260726">2026年7月26日</option>
+	<option value="20260727">2026年7月27日</option>
+	<option value="20260728">2026年7月28日</option>
+	<option value="20260729">2026年7月29日</option>
+	<option value="20260730">2026年7月30日</option>
+	<option value="20260731">2026年7月31日</option>
+	<option value="20260801">2026年8月1日</option>
+	<option value="20260802">2026年8月2日</option>
+	<option value="20260803">2026年8月3日</option>
+	<option value="20260804">2026年8月4日</option>
+	<option value="20260805">2026年8月5日</option>
+	<option value="20260806">2026年8月6日</option>
+	<option value="20260807">2026年8月7日</option>
+	<option value="20260808">2026年8月8日</option>
+	<option value="20260809">2026年8月9日</option>
+	<option value="20260810">2026年8月10日</option>
+	<option value="20260811">2026年8月11日</option>
+	<option value="20260812">2026年8月12日</option>
+	<option value="20260813">2026年8月13日</option>
+	<option value="20260814">2026年8月14日</option>
+	<option value="20260815">2026年8月15日</option>
+	<option value="20260816">2026年8月16日</option>
+	<option value="20260817">2026年8月17日</option>
+	<option value="20260818">2026年8月18日</option>
+	<option value="20260819">2026年8月19日</option>
+	<option value="20260820">2026年8月20日</option>
+	<option value="20260821">2026年8月21日</option>
+	<option value="20260822">2026年8月22日</option>
+	<option value="20260823">2026年8月23日</option>
+	<option value="20260824">2026年8月24日</option>
+	<option value="20260825">2026年8月25日</option>
+	<option value="20260826">2026年8月26日</option>
+	<option value="20260827">2026年8月27日</option>
+	<option value="20260828">2026年8月28日</option>
+	<option value="20260829">2026年8月29日</option>
+	<option value="20260830">2026年8月30日</option>
+	<option value="20260831">2026年8月31日</option>
+	<option value="20260901">2026年9月1日</option>
+</select>
+<input name="server_datetime" type="hidden" value="2026/07/20 16:56:15">
+                                </div>
+
+                                <div class="timeInputs display" style="display: block;">
+                                <select name="hour" id="hour">
+	<option value="0">0時</option>
+	<option value="1">1時</option>
+	<option value="2">2時</option>
+	<option value="3">3時</option>
+	<option value="4">4時</option>
+	<option value="5">5時</option>
+	<option value="6">6時</option>
+	<option value="7">7時</option>
+	<option value="8">8時</option>
+	<option value="9">9時</option>
+	<option value="10">10時</option>
+	<option value="11">11時</option>
+	<option value="12">12時</option>
+	<option value="13">13時</option>
+	<option value="14">14時</option>
+	<option value="15">15時</option>
+	<option value="16" selected="selected">16時</option>
+	<option value="17">17時</option>
+	<option value="18">18時</option>
+	<option value="19">19時</option>
+	<option value="20">20時</option>
+	<option value="21">21時</option>
+	<option value="22">22時</option>
+	<option value="23">23時</option>
+</select>
+
+                                <select name="minute" id="minute">
+	<option value="0">0分</option>
+	<option value="1">1分</option>
+	<option value="2">2分</option>
+	<option value="3">3分</option>
+	<option value="4">4分</option>
+	<option value="5">5分</option>
+	<option value="6">6分</option>
+	<option value="7">7分</option>
+	<option value="8">8分</option>
+	<option value="9">9分</option>
+	<option value="10">10分</option>
+	<option value="11">11分</option>
+	<option value="12">12分</option>
+	<option value="13">13分</option>
+	<option value="14">14分</option>
+	<option value="15">15分</option>
+	<option value="16">16分</option>
+	<option value="17">17分</option>
+	<option value="18">18分</option>
+	<option value="19">19分</option>
+	<option value="20">20分</option>
+	<option value="21">21分</option>
+	<option value="22">22分</option>
+	<option value="23">23分</option>
+	<option value="24">24分</option>
+	<option value="25">25分</option>
+	<option value="26">26分</option>
+	<option value="27">27分</option>
+	<option value="28">28分</option>
+	<option value="29">29分</option>
+	<option value="30">30分</option>
+	<option value="31">31分</option>
+	<option value="32">32分</option>
+	<option value="33">33分</option>
+	<option value="34">34分</option>
+	<option value="35">35分</option>
+	<option value="36">36分</option>
+	<option value="37">37分</option>
+	<option value="38">38分</option>
+	<option value="39">39分</option>
+	<option value="40">40分</option>
+	<option value="41">41分</option>
+	<option value="42">42分</option>
+	<option value="43">43分</option>
+	<option value="44">44分</option>
+	<option value="45">45分</option>
+	<option value="46">46分</option>
+	<option value="47">47分</option>
+	<option value="48">48分</option>
+	<option value="49">49分</option>
+	<option value="50">50分</option>
+	<option value="51">51分</option>
+	<option value="52">52分</option>
+	<option value="53">53分</option>
+	<option value="54">54分</option>
+	<option value="55">55分</option>
+	<option value="56" selected="selected">56分</option>
+	<option value="57">57分</option>
+	<option value="58">58分</option>
+	<option value="59">59分</option>
+</select>
+
+                            </div>
+
+
+                            <ul class="select-custom-min in-block display" style="display: block;">
+                            <li><a href="#" id="now">現在時刻</a></li>
+                            <li><a href="#" id="prev5">5分前</a></li>
+                            <li><a href="#" id="next5">5分後</a></li>
+                            </ul>
+                        </div><!-- display_ltrain -->
+                        <!-- /dayInputs -->
+                        <button id="smt_myDiaSubmit" name="submit1"><img src="https://www.jr-odekake.net/smt/common/img/icon_search.png" alt="検索アイコン" width="30" onclick="javascript:ac_tracer(13004, '/click_count/smt/top/mydia_search');">検索</button>
+                    </div></section>
+                </div>
+
+
+                <!-- /smt_box -->
+                <!--////////// さらに条件を設定するアコーディオン start -->
+                <nav class="nav-acc">
+                    <ul class="acc-list">
+                        <li>
+                            <h2 class="acc-head"><a href="#">さらに条件を設定する</a></h2>
+                            <div class="acc-inner">
+
+                                <div class="smt_myDia">
+                                    <section class="smt_box">
+
+                                        <!-- 運賃・料金表示 -->
+                                        <input name="taxview" type="hidden" value="6">
+<input name="tax" type="hidden" value="0">
+
+                                        <!--
+                                            <div class="dayInputs mt16">
+                                            <h3>運賃・料金表示</h3>
+                                            <ul class="select-custom-2column in-block">
+                                            <li><input type="radio" value="" name="tax" checked="" id="tax1">
+                                            <label for="tax1">消費税改定後</label></li>
+                                            <li><input type="radio" value="" name="tax" id="tax2">
+                                            <label for="tax2">消費税改定前</label></li>
+                                            </ul>
+                                            </div>
+                                        -->
+
+                                        <div class="dayInputs type mt16">
+                                            <h3>ご利用列車</h3>
+                                            <ul class="select-custom-3column in-block">
+                                                <li>
+                                                    <input type="checkbox" value="1" name="sprexprs" id="type1" onclick="enable_Nozomi(this, window.document.input1.sprnzmdsp);" checked="checked">
+                                                    <label for="type1">新幹線</label>
+                                                </li>
+                                                <li>
+                                                    <input type="checkbox" value="1" name="utrexprs" id="type2" checked="checked">
+                                                    <label for="type2">特急・急行</label>
+                                                </li>
+                                                <li>
+                                                    <input type="checkbox" value="1" name="unewrapid" id="type3" checked="checked">
+                                                    <label for="type3">新快速</label>
+                                                </li>
+                                                <li>
+                                                    <input type="checkbox" value="1" name="urapid" id="type4" checked="checked">
+                                                    <label for="type4">快速</label>
+                                                </li>
+                                            </ul>
+
+                                            <div class="type1_cb">
+                                                <input type="checkbox" value="1" name="sprnzmdsp" id="type1_cb">
+                                                <label for="type1_cb">のぞみ・みずほを除く</label>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="dayInputs sheet">
+                                            <h3>座席条件</h3>
+                                            <ul class="select-custom-3column in-block">
+                                                <li>
+                                                    <input type="radio" value="3" name="seat" id="sheet1" checked="checked">
+                                                    <label for="sheet1">普通車指定席</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="1" name="seat" id="sheet2">
+                                                    <label for="sheet2">グリーン席</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="7" name="seat" id="sheet3">
+                                                    <label for="sheet3">グランクラス</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="9" name="seat" id="sheet4">
+                                                    <label for="sheet4">普通車自由席</label>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="dayInputs">
+                                            <h3>乗換時分</h3>
+                                            <ul class="select-custom-3column in-block">
+                                                <li>
+                                                    <input type="radio" value="1" name="changetime" id="transfer1" checked="checked">
+                                                    <label for="transfer1">標準</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="2" name="changetime" id="transfer2">
+                                                    <label for="transfer2">ゆっくり</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="3" name="changetime" id="transfer3">
+                                                    <label for="transfer3">もっと<br>ゆっくり</label>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="dayInputs">
+                                            <h3>回答数</h3>
+                                            <ul class="select-custom-3column in-block">
+                                                <li>
+                                                    <input type="radio" value="1" name="kbest" id="responses1">
+                                                    <label for="responses1">1件</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="2" name="kbest" id="responses2">
+                                                    <label for="responses2">2件</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" value="3" name="kbest" id="responses3" checked="checked">
+                                                    <label for="responses3">3件</label>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+
+                                        <div class="dayInputs">
+                                            <div class="via_wrap">
+                                                <h3 class="via_title">経由駅</h3>
+                                                <ul class="via">
+                                                    <li>
+                                                        <input type="text" id="via_moji" name="via_moji" value="" placeholder="経由駅を入力"> 駅
+                                                        <a class="clear" href="#" style="display:none;"></a>
+                                                        <div id="ajax_result" style="visibility: hidden;"><span id="SuggestList" class="SuggestList" style="visible: inherit; height: 0px"></span></div>
+                                                    </li>
+                                                    <li>
+                                                        <input type="text" id="via2_moji" name="via2_moji" value="" placeholder="経由駅を入力"> 駅
+                                                        <a class="clear" href="#" style="display:none;"></a>
+                                                        <div id="ajax_result2" style="visibility: hidden;"><span id="SuggestList2" class="SuggestList" style="visible: inherit; height: 0px"></span></div>
+                                                    </li>
+                                                    <li>
+                                                        <input type="text" id="via3_moji" name="via3_moji" value="" placeholder="経由駅を入力"> 駅
+                                                        <a class="clear" href="#" style="display:none;"></a>
+                                                        <div id="ajax_result3" style="visibility: hidden;"><span id="SuggestList3" class="SuggestList" style="visible: inherit; height: 0px"></span></div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="cb_box">
+                                                <input type="checkbox" value="1" name="localonly" id="cb_box1">
+                                                <label for="cb_box1">特急券など運賃以外に追加料金が必要な経路は表示しない</label>
+                                            </div>
+                                        </div>
+
+                                        <button id="smt_myDiaSubmit" name="submit1"><img src="https://www.jr-odekake.net/smt/common/img/icon_search.png" alt="検索アイコン" width="30" onclick="javascript:ac_tracer(13004, '/click_count/smt/top/mydia_search');">検索</button>
+
+                                    </section>
+                                    <!-- /smt_box -->
+                                </div>
+                                <!-- /acc-inner -->
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+                <!--////////// アコーディオン end -->
+                <input name="MODE" value="2" type="hidden">
+                <input name="FUNC" value="1" type="hidden">
+                <input name="GUID" value="c7917423-1df3-4585-99b3-9edf8ea4c2d4" type="hidden">
+                <input name="COMPANY_CODE" value="402" type="hidden">
+                <input name="INDATE" value="2026/07/20 16:56" type="hidden">
+            </form>
+
+
+            <!-- /content -->
+        </div>
+
+        <script type="text/javascript" src="/mydia/sp/include/contents_menu_http_utf8.js"></script><div id="smt_contentsMenu" class="smt"><div id="smt_btnMenuClose">	<div class="smt_menu_head"><img src="https://www.jr-odekake.net/smt/common/img/txt_contents_menu.gif" alt="コンテンツメニュー" width="175"></div>	<a href="#"><img src="https://www.jr-odekake.net/smt/common/img/btn_close.gif" alt="閉じる" width="62"></a></div><nav id="smt_main">	<ul>		<li id="smt_myDia">			<div class="smt_menu_head"><a href="#">時刻・運賃検索<span class="head_small">（マイ・ダイヤ）</span></a></div>			<ul class="smt_nav">				<li><a href="https://www.jr-odekake.net/smt/#smt_myDia">駅名を入力して検索</a></li>				<li><a href="/cgi-bin/mydia_sp.cgi?MD=8&amp;FN=0">マイルート検索</a></li>				<li><a href="/mydia/sp/info/about.html">ご利用案内</a></li>			</ul>		</li>		<li>			<div class="smt_menu_head"><a href="#">鉄道のご案内<span class="head_small">（駅・列車・きっぷ）</span></a></div>			<ul class="smt_nav">				<li><a href="https://www.jr-odekake.net/smt/railroad/index.html#srch-station">駅検索（駅の時刻表・構内図ほか）</a></li>				<li><a href="https://www.jr-odekake.net/smt/route/">JR西日本路線図</a></li>				<li><a href="https://www.jr-odekake.net/smt/railroad/index.html#ticket">きっぷ・定期</a></li>				<li><a href="https://www.jr-odekake.net/smt/railroad/index.html#train">車両案内・列車でのサービス</a></li>				<li><a href="https://www.jr-odekake.net/smt/railroad/index.html#safely">安心・快適にご利用いただくために</a></li>				<li><a href="https://www.jr-odekake.net/smt/railroad/index.html#help">困ったときは？</a></li>			</ul>		</li>		<li>			<div class="smt_menu_head"><a href="#">予約<span class="head_small">（新幹線・特急・宿泊）</span></a></div>			<ul class="smt_nav">				<li class="smt_li_logo smt_li_logo_e5489 smt_li_mt">					<div><img src="https://www.jr-odekake.net/smt/common/img/logo_e5489.gif" width="121" alt="e5489"></div>					<h3>山陽・九州新幹線や<br>主な特急をカンタン予約!</h3>				</li>				<li><a href="https://www.jr-odekake.net/goyoyaku/e5489/sp_login.html">予約する</a></li>				<li><a href="https://www.jr-odekake.net/goyoyaku/e5489/">ご利用方法</a></li>				<li class="smt_li_logo smt_li_logo_exyoyaku">					<div><img src="https://www.jr-odekake.net/smt/common/img/logo_exyoyaku.gif" width="123" alt="EXPRESS予約"></div>					<h3>東海道・山陽新幹線を<br>年中おトクな価格で!</h3>				</li>				<li><a href="https://shinkansen1.jr-central.co.jp/RSV_P/S_west_index.html" target="_blank" class="smtlink">予約する</a></li>				<li><a href="https://www.jr-odekake.net/goyoyaku/express/index_smt.html">ご利用方法</a></li>				<li class="smt_li_logo smt_li_logo_smartex">					<div><img src="https://www.jr-odekake.net/smt/common/img/logo_smartex.gif" width="123" alt="スマートEX"></div>					<h3>東海道・山陽新幹線を<br>ネットでカンタン予約!</h3>				</li>				<li><a href="https://shinkansen2.jr-central.co.jp/RSV_P/S_smart_index.htm" target="_blank" class="smtlink">予約する</a></li>				<li><a href="https://smart-ex.jp/" target="_blank">ご利用方法</a></li>				<li class="smt_li_mt"><a href="https://www.jr-odekake.net/goyoyaku/phone/index_smt.html">電話予約サービスのご案内</a></li>				<li><a href="https://www.jr-odekake.net/br-yadopla/" target="_blank">ベストリザーブ・宿ぷらざ</a></li>				<li><a href="http://www.ekiren.com/" target="_blank">駅レンタカー</a></li>			</ul>		</li>		<li>			<ul class="smt_nav">				<li class="smt_li_mt"><a href="https://www.jr-odekake.net/smt/railroad/ticket/tokutoku/index.html">トクトクきっぷ検索</a></li>				<li class="smt_li_mt"><a href="https://www.jr-odekake.net/smt/shinkansen/benri/" class="middle"><img src="https://www.jr-odekake.net/smt/common/img/logo_benri.png" width="30" alt="山陽新幹線便利帳">山陽新幹線便利帳<span class="inner-small">（おトクなクーポンあり）</span></a></li>			</ul>		</li>		<li class="smt_jwest_service">			<div class="smt_main_inner">				<h2 class="smt_box_ttl">J-WESTネット会員サービス</h2>				<div class="main_inbox">					<a href="https://clubj.jr-odekake.net/shared/pc/sp_login1.do?JRSSID=0401&amp;RTURL=https%3a%2f%2fwww.jr-odekake.net%2fsmt%2f&amp;NTURL=https%3a%2f%2fwww.jr-odekake.net%2fcjw%2f" class="smt_btn large_btn">ログイン<br>					<span class="inner-small">会員サポートメニュー</span></a>						<a href="https://www.jr-odekake.net/cjw/about/index_smt.html" class="smt_btn entry_btn">新規会員登録 (無料)</a>					<a href="https://clubj.jr-odekake.net/shared/pc/sp_logout.do?JRSSID=0401&amp;RTURL=https%3a%2f%2fwww%2ejr%2dodekake%2enet%2fsmt%2f&amp;NTURL=https%3a%2f%2fwww%2ejr%2dodekake%2enet%2fsmt%2f" class="smt_btn logout_btn">ログアウト</a>					<p class="exp-caution"><a href="https://www.jr-odekake.net/goyoyaku/express/redirect/west_new_entry.html" target="_blank">エクスプレス予約への新規登録</a></p>					<p class="exp-notes">（J-WESTネット会員の新規登録とは異なります）</p>				</div>			</div>		</li>		<li>			<ul class="smt_nav">				<li class="smt_Icon smt_li_mt"><a href="https://www.jr-odekake.net/smt/cjw/otonavi/"><img src="https://www.jr-odekake.net/smt/common/img/logo_otonavi-2.gif" width="87" alt="おとなび"></a></li>			</ul>		</li>		<li>			<ul class="smt_nav">				<li class="smt_withIcon smt_li_mt"><a href="https://www.jr-odekake.net/j-west/index_smt.html" target="_blank"><img src="https://www.jr-odekake.net/smt/common/img/logo_jwestcard.gif" width="45" alt="J-WESTカード">J-WESTカードのご案内</a></li>				<li class="smt_withIcon"><a href="https://www.jr-odekake.net/icoca/index_smt.html"><img src="https://www.jr-odekake.net/smt/common/img/logo_icoca.gif" width="45" alt="ICOCA">ICOCA(イコカ)のご案内</a></li>				<li><a href="https://www.jr-odekake.net/smt/campaign/">キャンペーン一覧</a></li>				<li><a href="https://www.jr-odekake.net/smt/navi/">西Navi</a></li>				<li><a href="https://www.jr-odekake.net/smt/about/">JRおでかけネットについて</a></li>				<li><a href="https://www.jr-odekake.net/smt/taiou/">推奨環境</a></li>				<li><a href="https://www.jr-odekake.net/use/kiyaku/" target="_blank" class="smtlink">規約集</a></li>				<li><a href="https://www.jr-odekake.net/railroad/service/left_smt.html">お忘れ物をしたら</a></li>				<li><a href="https://www.westjr.co.jp/info/faq.html" target="_blank">よくあるご質問</a></li>				<li><a href="https://www.jr-odekake.net/mainte.html" target="_blank">メンテナンス情報</a></li>			</ul>		</li>	</ul></nav><div id="smt_btnMenuClose2">	<a href="#"><img src="https://www.jr-odekake.net/smt/common/img/btn_close.gif" alt="閉じる" width="62"></a></div></div>
+
+        <script type="text/javascript" src="/mydia/sp/include/footer_http_utf8.js"></script><footer class="smt">	<ul>		<li><a href="https://www.jr-odekake.net/smt/"><img src="https://www.jr-odekake.net/smt/common/img/btn_sitetop.gif" alt="JRおでかけネットトップ" width="96"></a></li>	</ul>	<!-- <div style="border: 1px solid #BC3838;margin-bottom:20px;padding:10px;color: #9A2414;">		<p style="line-height:1.5;">当サイトの表記価格は、特に明記のない場合、2014年4月1日の消費税率引き上げにより変更となる場合があります。</p>	</div> -->	<a href="https://www.westjr.co.jp/" target="_blank"><img src="https://www.jr-odekake.net/smt/common/img/logo_jrwest.png" alt="JR西日本" width="24"></a>	<address>COPYRIGHT © WEST JAPAN RAILWAY COMPANY ALL RIGHTS RESERVED.<br>このサイトに掲載されている情報はJR西日本が提供しております。</address></footer>
+    </div>
+
+    <!-- analyze-main-start -->
+    <script type="text/javascript" src="https://www.jr-odekake.net/common/js/analyze_main.js"></script>
+    <!-- analyze-main-end -->
+
+
+</body></html>

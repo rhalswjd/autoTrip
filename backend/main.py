@@ -7,6 +7,7 @@ from api.v1.search import router as search_router
 from api.v1.timetable import router as timetable_router
 from api.v1.movements import router as movements_router
 from api.v1.stations import router as stations_router
+from api.v1.planner import router as planner_router
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(timetable_router, prefix="/api/v1")
     app.include_router(movements_router, prefix="/api/v1")
     app.include_router(stations_router, prefix="/api/v1")
+    app.include_router(planner_router, prefix="/api/v1")
 
     @app.on_event("startup")
     async def startup_event():

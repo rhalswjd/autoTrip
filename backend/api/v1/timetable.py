@@ -18,3 +18,27 @@ async def get_timetable(
 ):
     timetable = await service.get_timetable(route_id)
     return timetable
+
+from typing import Optional
+from fastapi import Query
+
+@router.get(
+    "/{route_id}/segments/{segment_index}/timetable", 
+    response_model=TimetableResponseSchema,
+    summary="Get Leg Timetable",
+    description="Fetches the departure timetable for a specific leg (segment) of a route.",
+    responses=ERROR_RESPONSES
+)
+async def get_segment_timetable(
+    route_id: str = Path(..., description="The unique route identifier."),
+    segment_index: int = Path(..., description="The 0-based index of the route segment."),
+    timetable_id: Optional[str] = Query(None, description="Optional JR Odekake timetable ID. If not provided, dynamic lookup will fail."),
+    service: TimetableService = Depends(get_timetable_service)
+):
+    try:
+        timetable = await service.get_segment_timetable(route_id, segment_index, timetable_id)
+        return timetable
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e))
+

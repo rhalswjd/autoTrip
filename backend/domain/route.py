@@ -1,14 +1,17 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List
+from typing import List, Optional
 from domain.station import Station
+from domain.planner import ScheduleCandidate, PlannerMetadata
 
 class RouteSegment(BaseModel):
     model_config = ConfigDict(frozen=True)
     
     segment_type: str  # 'train', 'bus', 'walk'
     railway_name: str
+    railway_name_jp: str = ""
     duration: str = ""
     is_through: bool = False
+    schedule_candidates: Optional[List[ScheduleCandidate]] = None
 
 class Route(BaseModel):
     """
@@ -26,3 +29,4 @@ class Route(BaseModel):
     polyline: str
     stations: List[Station] = []
     segments: List[RouteSegment] = []
+    planner_metadata: Optional[PlannerMetadata] = None

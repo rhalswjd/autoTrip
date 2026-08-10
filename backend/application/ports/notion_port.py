@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, Optional
 from domain.movement import Movement
 
 class NotionException(Exception):
@@ -7,6 +7,6 @@ class NotionException(Exception):
 
 class NotionPort(Protocol):
     """Interface for saving journey movements to Notion."""
-    async def save_movement(self, movement: Movement) -> str:
-        """Saves movement and returns the saved Notion page URL."""
+    async def save_movement(self, movement: Movement, target_page_id: Optional[str] = None, legs: Optional[list] = None) -> dict:
+        """Saves movement and returns a dict with notion_url, parent_page_id, child_page_ids."""
         ...

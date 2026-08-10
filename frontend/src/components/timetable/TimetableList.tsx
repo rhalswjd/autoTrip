@@ -41,7 +41,7 @@ export function TimetableList({ route }: TimetableListProps) {
     );
   }
 
-  if (timetable?.departures.length === 0) {
+  if (timetable?.weekday.length === 0) {
     return (
       <div className="timetable-container">
         <h3 className="timetable-title" style={{ marginBottom: '16px' }}>Timetable</h3>
@@ -55,19 +55,22 @@ export function TimetableList({ route }: TimetableListProps) {
       <div className="timetable-header">
         <h3 className="timetable-title">Timetable</h3>
         <span className="timetable-meta">
-          {timetable?.departures.length} departures
+          {timetable?.weekday.length} departures (Weekday)
         </span>
       </div>
       
       <div className="timetable-list" role="listbox" aria-label="Available departures">
-        {timetable?.departures.map((departure, idx) => (
-          <TimetableCard
-            key={`${departure.time}-${idx}`}
-            departure={departure}
-            isSelected={selectedDeparture?.time === departure.time}
-            onClick={handleDepartureSelect}
-          />
-        ))}
+        {timetable?.weekday.map((departure) => {
+          console.log('Departure ID:', departure.id);
+          return (
+            <TimetableCard
+              key={departure.id}
+              departure={departure}
+              isSelected={selectedDeparture?.id === departure.id}
+              onClick={handleDepartureSelect}
+            />
+          );
+        })}
       </div>
 
       {selectedDeparture && (

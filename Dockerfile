@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Playwright Chromium browser and OS dependencies
+RUN playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
+
 # Copy backend source code
 COPY backend /app/backend
 

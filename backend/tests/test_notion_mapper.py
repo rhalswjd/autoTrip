@@ -23,18 +23,19 @@ def _build_dummy_movement(date: str = None, time: str = "") -> Movement:
     )
 
 def test_mapper_no_time_no_date():
-    movement = _build_dummy_movement()
-    props = NotionMapper.map_to_properties(movement)
+    movement = _build_dummy_movement(date=None, time="")
+    properties = NotionMapper.map_to_properties(movement)
     
-    assert props[NotionColumns.NAME]["title"][0]["text"]["content"] == "Osaka -> Kyoto"
-    assert props[NotionColumns.CONFIRMED]["checkbox"] is False
-    assert props[NotionColumns.DEPARTURE_TIME]["rich_text"][0]["text"]["content"] == "Not Specified"
-    assert NotionColumns.DATE not in props
+    assert NotionColumns.ROUTE in properties
+    assert properties[NotionColumns.ROUTE]["title"][0]["text"]["content"] == "Osaka -> Kyoto"
+    assert NotionColumns.FARE in properties
+    assert properties[NotionColumns.FARE]["number"] == 580
+    assert NotionColumns.DEPARTURE_TIME not in properties
+    assert NotionColumns.ARRIVAL_TIME not in properties
 
 def test_mapper_with_datetime():
     movement = _build_dummy_movement(date="2024-10-01", time="10:00")
     props = NotionMapper.map_to_properties(movement)
     
-    assert props[NotionColumns.CONFIRMED]["checkbox"] is True
-    assert props[NotionColumns.DATE]["date"]["start"] == "2024-10-01T10:00:00"
-    assert NotionColumns.DEPARTURE_TIME not in props
+    assert props[NotionColumns.DEPARTURE_TIME]["rich_text"][0]["text"]["content"] == "10:00"
+    assert props[NotionColumns.ARRIVAL_TIME]["rich_text"][0]["text"]["content"] == "10:00"

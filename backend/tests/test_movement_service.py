@@ -15,13 +15,18 @@ async def test_movement_service_success():
     notion = FakeNotionAdapter(should_fail=False)
     service = MovementService(cache_port=cache, notion_port=notion)
     
-    movement, url = await service.create_movement(
-        route_id="r1", departure_station="A", arrival_station="B",
-        search_time=None, search_date=None,
-        selected_departure_time="10:00", selected_arrival_time="11:00"
+    movement, notion_result = await service.create_movement(
+        route_id="r1",
+        departure_station="Osaka",
+        arrival_station="Kyoto",
+        search_time=None,
+        search_date=None,
+        selected_departure_time="10:00",
+        selected_arrival_time="11:00"
     )
-    
-    assert url == "https://notion.so/fake_movement_url"
+    assert movement.route.id == "r1"
+    assert movement.selected_departure_time == "10:00"
+    assert notion_result["notion_url"] == "https://notion.so/fake-page"
     assert movement.route.id == "r1"
 
 @pytest.mark.asyncio
@@ -48,13 +53,18 @@ def test_create_movement_api_success():
         "selected_departure_time": "10:00",
         "selected_arrival_time": "11:00",
         "departure_station": "Osaka",
-        "arrival_station": "Kyoto"
+        "arrival_station": "Kyoto",
+        "target_page_id": None,
+        "legs": None
     }
     
     res = client.post("/api/v1/movements", json=payload)
     assert res.status_code == 200
     data = res.json()
-    assert data["notion_url"] == "https://notion.so/fake_movement_url"
+    assert data["route_id"] == "r1"
+    assert data["status"] == "saved_to_notion"
+    assert data["notion_url"] == "https://notion.so/fake-page"
+    assert data["parent_page_id"] == "fake_parent"
     
     app.dependency_overrides.clear()
 

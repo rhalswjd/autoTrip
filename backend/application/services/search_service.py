@@ -78,6 +78,9 @@ class SearchService:
             return []
             
         await self.cache_port.set(cache_key, routes, ttl_seconds=self.cache_ttl)
+        for r in routes:
+            await self.cache_port.set(r.id, r, ttl_seconds=self.cache_ttl)
+            
         return routes
 
     async def get_route(self, route_id: str) -> Route:
