@@ -16,6 +16,8 @@ class YahooTimetableScraper:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         self.client = httpx.AsyncClient(follow_redirects=True, headers=self.headers, timeout=15.0)
+        from infrastructure.services.translation_service import TranslationService
+        self.translation_service = TranslationService()
 
     async def _get_station_id(self, station_name: str) -> Optional[str]:
         url = f"{self.base_url}/station/time/search"
@@ -64,27 +66,33 @@ class YahooTimetableScraper:
                 href = a.get('href')
                 if href and '/timetable/' in href:
                     train_links.append(href)
-                    if len(train_links) >= 3:
+                    if len(train_links) >= 20:
                         break
             
-            for t_url in train_links:
-                tr = await self.client.get(urljoin(self.base_url, t_url))
-                tsoup = BeautifulSoup(tr.text, 'html.parser')
-                script = tsoup.select_one("script#__NEXT_DATA__")
-                if script:
-                    import json
-                    data = json.loads(script.string)
-                    stop_stations = data.get("props", {}).get("pageProps", {}).get("timetableStationTrainResult", {}).get("timetable", {}).get("stopStation", [])
-                    for s in stop_stations:
-                        if arrival_station in s.get("stationName", ""):
+            async def _check_train(t_url):
+                try:
+                    tr = await self.client.get(urljoin(self.base_url, t_url))
+                    tsoup = BeautifulSoup(tr.text, 'html.parser')
+                    script = tsoup.select_one("script#__NEXT_DATA__")
+                    if script:
+                        import json
+                        data = json.loads(script.string)
+                        stop_stations = data.get("props", {}).get("pageProps", {}).get("timetableStationTrainResult", {}).get("timetable", {}).get("stopStation", [])
+                        for s in stop_stations:
+                            if arrival_station in s.get("stationName", ""):
+                                return True
+                    
+                    # fallback
+                    stations = tsoup.select('.station .title')
+                    for s in stations:
+                        if arrival_station in s.text:
                             return True
-                
-                # fallback
-                stations = tsoup.select('.station .title')
-                for s in stations:
-                    if arrival_station in s.text:
-                        return True
-            return False
+                except Exception:
+                    pass
+                return False
+
+            results = await asyncio.gather(*[_check_train(t) for t in train_links])
+            return any(results)
         except Exception as e:
             logger.warning(f"Error checking direction validity for {timetable_url}: {e}")
             return False
@@ -212,12 +220,14 @@ class YahooTimetableScraper:
                 
                 train_id = href.split('/')[-1].split('?')[0] if href else f"{hour}{minute}"
                 
+                en_train_type = self.translation_service.translate_train(train_type_text)
+                
                 dep_info = DepartureInfo(
                     id=train_id,
                     time=time_str,
                     arrival_time="",
-                    train_name=train_type_text,
-                    train_type=train_type_text,
+                    train_name=en_train_type,
+                    train_type=en_train_type,
                     direction=dest,
                     metadata={"url": href}
                 )
@@ -230,11 +240,12 @@ class YahooTimetableScraper:
             results = await asyncio.gather(*(t[1] for t in train_tasks))
             for (idx, _), details in zip(train_tasks, results):
                 old = departures[idx]
+                final_train_name = details["train_name"] if details["train_name"] else old.metadata.get("original_train_name", old.train_name)
                 departures[idx] = DepartureInfo(
                     id=old.id,
                     time=old.time,
                     arrival_time=details["arrival_time"],
-                    train_name=details["train_name"] if details["train_name"] else old.train_name,
+                    train_name=self.translation_service.translate_train(final_train_name),
                     train_type=old.train_type,
                     platform=old.platform,
                     direction=old.direction,

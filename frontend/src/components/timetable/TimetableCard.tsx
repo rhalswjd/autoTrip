@@ -4,11 +4,13 @@ import './Timetable.css';
 
 export interface TimetableCardProps {
   departure: DepartureInfo;
+  platform?: string | null;
+  fare?: number | null;
   isSelected?: boolean;
   onClick: (departure: DepartureInfo) => void;
 }
 
-export function TimetableCard({ departure, isSelected, onClick }: TimetableCardProps) {
+export function TimetableCard({ departure, platform, fare, isSelected, onClick }: TimetableCardProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -30,8 +32,10 @@ export function TimetableCard({ departure, isSelected, onClick }: TimetableCardP
         <span className="timetable-time">{departure.time}</span>
         <span className="timetable-train-name">{departure.train_name}</span>
       </div>
-      <div className="timetable-status">
+      <div className="timetable-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
         <Badge variant="success">Available</Badge>
+        {platform && <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Platform {platform}</span>}
+        {fare !== undefined && fare !== null && <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>¥{fare.toLocaleString()}</span>}
       </div>
     </Card>
   );

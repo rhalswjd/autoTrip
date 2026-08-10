@@ -29,6 +29,12 @@ class YahooTransitAdapter(ScraperPort):
         soup = BeautifulSoup(response.text, 'html.parser')
         routes = []
         
+        script = soup.select_one("script#__NEXT_DATA__")
+        next_data = None
+        if script:
+            import json
+            next_data = json.loads(script.string)
+            
         for i in range(1, 10):
             route_div = soup.select_one(f'#route0{i}')
             if not route_div:
@@ -99,6 +105,59 @@ class YahooTransitAdapter(ScraperPort):
                 
             polyline = " -> ".join(en_trains)
             
+            # Parse platforms and fares from __NEXT_DATA__
+            feature_list = next_data.get("props", {}).get("pageProps", {}).get("naviSearchParam", {}).get("featureInfoList", []) if next_data else []
+            edge_list = feature_list[i-1].get("edgeInfoList", []) if len(feature_list) >= i else []
+            
+            platforms = []
+            fares = []
+            seen_edge_groups = set()
+            edge_idx = 0
+            
+            for jp_train in trains:
+                plat = None
+                fare_val = None
+                while edge_idx < len(edge_list):
+                    e = edge_list[edge_idx]
+                    e_name = e.get("railNameExcludingDestination") or e.get("railName", "")
+                    
+                    if "徒歩" in jp_train or "Walk" in jp_train or "도보" in jp_train or jp_train in e_name or e_name in jp_train:
+                        if "徒歩" not in jp_train and "Walk" not in jp_train and "도보" not in jp_train:
+                            riding_info = e.get("ridingPositionInfo") or {}
+                            pos = riding_info.get("departure", [])
+                            if pos and len(pos) >= 1:
+                                plat = pos[0]
+                                
+                            p_info = e.get("priceInfo") or {}
+                            if p_info:
+                                p = int(p_info.get("price", "0").replace(",", ""))
+                                ep = int(p_info.get("expPrice", "0").replace(",", ""))
+                                e_group = p_info.get("edgeGroup")
+                                
+                                base_fare = 0
+                                if e_group:
+                                    if e_group not in seen_edge_groups:
+                                        base_fare = p
+                                        seen_edge_groups.add(e_group)
+                                else:
+                                    base_fare = p
+                                    
+                                fare_val = base_fare + ep
+                                    
+                        while edge_idx + 1 < len(edge_list):
+                            next_e = edge_list[edge_idx + 1]
+                            next_e_name = next_e.get("railNameExcludingDestination") or next_e.get("railName", "")
+                            if next_e_name == e_name:
+                                edge_idx += 1
+                            else:
+                                break
+                                
+                        edge_idx += 1
+                        break
+                    edge_idx += 1
+                platforms.append(plat)
+                fares.append(fare_val)
+            
             segments = []
             for j, jp_train in enumerate(trains):
                 if "徒歩" in jp_train or "Walk" in jp_train or "도보" in jp_train:
@@ -113,11 +172,16 @@ class YahooTransitAdapter(ScraperPort):
                     if "乗換不要" in station_names[j] or "直通" in station_names[j]:
                         is_through = True
                 
+                seg_platform = platforms[j] if j < len(platforms) else None
+                seg_fare = fares[j] if j < len(fares) else None
+                
                 segments.append(RouteSegment(
                     segment_type=seg_type,
                     railway_name=en_trains[j],
                     railway_name_jp=trains[j],
-                    is_through=is_through
+                    is_through=is_through,
+                    departure_platform=seg_platform,
+                    fare=seg_fare
                 ))
             
             dep_en = self.translation_service.get_english_name(params.get("from", ""))

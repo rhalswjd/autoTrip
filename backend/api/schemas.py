@@ -32,6 +32,8 @@ class RouteSegmentSchema(BaseModel):
     railway_name: str = Field(..., title="Railway Name", description="Name of the transport.")
     duration: str = Field("", title="Duration", description="Duration of this segment.")
     is_through: bool = Field(False, title="Is Through Service", description="True if no transfer is required.")
+    departure_platform: Optional[str] = Field(None, title="Departure Platform", description="Platform number for departure.")
+    fare: Optional[int] = Field(None, title="Segment Fare", description="Fare for this specific segment.")
     schedule_candidates: Optional[List[ScheduleCandidateSchema]] = Field(None, title="Schedule Candidates", description="Optional list of alternative times.")
 
 class RouteResponseSchema(BaseModel):

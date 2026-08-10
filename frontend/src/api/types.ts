@@ -19,11 +19,14 @@ export interface ScheduleCandidate {
 }
 
 export interface RouteSegment {
-  segment_type: 'train' | 'bus' | 'walk';
+  segment_type: string;
   railway_name: string;
+  railway_name_jp: string;
   duration: string;
   is_through: boolean;
   schedule_candidates?: ScheduleCandidate[];
+  departure_platform?: string | null;
+  fare?: number | null;
 }
 
 export interface PlannerMetadata {
