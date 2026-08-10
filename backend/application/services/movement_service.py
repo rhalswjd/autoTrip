@@ -10,9 +10,10 @@ from core.exceptions import DomainException
 from core.logger import logger
 
 class MovementService:
-    def __init__(self, cache_port: CachePort, notion_port: NotionPort):
+    def __init__(self, cache_port: CachePort, notion_port: NotionPort, search_service=None):
         self.cache_port = cache_port
         self.notion_port = notion_port
+        self.search_service = search_service
 
     async def create_movement(
         self,
@@ -57,6 +58,7 @@ class MovementService:
         )
         
         logger.info(f"Movement Created: {route_id} ({departure_station} -> {arrival_station})")
+        
         logger.info("Notion Save Started")
         try:
             notion_result = await self.notion_port.save_movement(movement, target_page_id=target_page_id, legs=legs)

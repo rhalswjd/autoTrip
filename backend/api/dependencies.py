@@ -75,9 +75,10 @@ def get_timetable_service(
 
 def get_movement_service(
     cache: CachePort = Depends(get_cache_port),
-    notion: NotionPort = Depends(get_notion_port)
+    notion: NotionPort = Depends(get_notion_port),
+    search_service: SearchService = Depends(get_search_service)
 ) -> MovementService:
-    return MovementService(cache_port=cache, notion_port=notion)
+    return MovementService(cache_port=cache, notion_port=notion, search_service=search_service)
 
 def get_station_service(
     repo: StationRepositoryPort = Depends(get_station_repository_port)

@@ -33,7 +33,8 @@ class RouteSegmentSchema(BaseModel):
     duration: str = Field("", title="Duration", description="Duration of this segment.")
     is_through: bool = Field(False, title="Is Through Service", description="True if no transfer is required.")
     departure_platform: Optional[str] = Field(None, title="Departure Platform", description="Platform number for departure.")
-    fare: Optional[int] = Field(None, title="Segment Fare", description="Fare for this specific segment.")
+    base_fare: Optional[int] = Field(None, title="Base Fare", description="Base fare for this segment (may be null if bundled with previous segment).")
+    express_fare: Optional[int] = Field(None, title="Express Fare", description="Express fare for this specific segment.")
     schedule_candidates: Optional[List[ScheduleCandidateSchema]] = Field(None, title="Schedule Candidates", description="Optional list of alternative times.")
 
 class RouteResponseSchema(BaseModel):
@@ -73,7 +74,8 @@ class LegSelection(BaseModel):
     arrival_time: Optional[str] = None
     transport_name: Optional[str] = None
     platform: Optional[int] = None
-    fare: Optional[int] = None
+    base_fare: Optional[int] = None
+    express_fare: Optional[int] = None
 
 class MovementRequestSchema(BaseModel):
     route_id: str = Field(..., title="Route ID", description="Unique identifier of the selected route.", json_schema_extra={"examples": ["route_12345"]})

@@ -45,6 +45,54 @@ class SearchService:
                 return s.name_jp
         return name_en
 
+    async def _populate_independent_fares(self, routes: List[Route], departure_time: str, departure_date: str):
+        import asyncio
+        from core.logger import logger
+        
+        async def fetch_fare(route_idx, seg_idx, seg, dep_station: str, arr_station: str):
+            try:
+                dep_jp = await self._get_jp_name(dep_station)
+                arr_jp = await self._get_jp_name(arr_station)
+                
+                indep_routes = await self.scraper_port.search_routes(
+                    departure=dep_jp,
+                    arrival=arr_jp,
+                    time=departure_time,
+                    date=departure_date
+                )
+                if indep_routes:
+                    for r in indep_routes:
+                        for s in r.segments:
+                            if seg.railway_name and (seg.railway_name in s.railway_name or s.railway_name in seg.railway_name):
+                                return route_idx, seg_idx, seg.model_copy(update={"base_fare": s.base_fare, "express_fare": s.express_fare})
+                    if indep_routes[0].segments:
+                        first_seg = indep_routes[0].segments[0]
+                        return route_idx, seg_idx, seg.model_copy(update={"base_fare": first_seg.base_fare, "express_fare": first_seg.express_fare})
+            except Exception as e:
+                logger.error(f"Failed to fetch independent fare for {dep_station} -> {arr_station}: {e}")
+            return route_idx, seg_idx, seg
+
+        tasks = []
+        for route_idx, r in enumerate(routes):
+            if len(r.segments) > 1:
+                for seg_idx, seg in enumerate(r.segments):
+                    dep_station = r.stations[seg_idx].name
+                    arr_station = r.stations[seg_idx+1].name
+                    tasks.append(fetch_fare(route_idx, seg_idx, seg, dep_station, arr_station))
+                    
+        if tasks:
+            logger.info(f"Fetching {len(tasks)} independent fares concurrently...")
+            results = await asyncio.gather(*tasks)
+            
+            updates = {}
+            for r_idx, s_idx, new_seg in results:
+                if r_idx not in updates:
+                    updates[r_idx] = list(routes[r_idx].segments)
+                updates[r_idx][s_idx] = new_seg
+                
+            for r_idx, new_segments in updates.items():
+                routes[r_idx] = routes[r_idx].model_copy(update={"segments": new_segments})
+
     async def search(self, request: SearchRequest) -> List[Route]:
         logger.info(f"Route Search Started: {request.departure_station} -> {request.arrival_station}")
         
@@ -76,6 +124,8 @@ class SearchService:
         
         if not routes:
             return []
+            
+        await self._populate_independent_fares(routes, request.departure_time, request.departure_date)
             
         await self.cache_port.set(cache_key, routes, ttl_seconds=self.cache_ttl)
         for r in routes:

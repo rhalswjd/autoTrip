@@ -87,7 +87,8 @@ export function TransferWizard({ route }: TransferWizardProps) {
         arrival_time: legDeparture.arrival_time,
         transport_name: legDeparture.train_name,
         platform: platStr ? parseInt(platStr as string, 10) : undefined,
-        fare: segment.fare || undefined
+        base_fare: segment.base_fare != null ? segment.base_fare : undefined,
+        express_fare: segment.express_fare != null ? segment.express_fare : undefined
       };
     });
 
@@ -202,7 +203,7 @@ export function TransferWizard({ route }: TransferWizardProps) {
                   key={departure.id}
                   departure={departure}
                   platform={route.segments[currentStep].departure_platform}
-                  fare={route.segments[currentStep].fare}
+                  fare={(route.segments[currentStep].base_fare || 0) + (route.segments[currentStep].express_fare || 0) || undefined}
                   isSelected={selectedLegs[currentStep]?.id === departure.id}
                   onClick={handleSelect}
                 />
@@ -220,10 +221,10 @@ export function TransferWizard({ route }: TransferWizardProps) {
                 <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: 'var(--primary-color)' }}>[{idx + 1}구간] {route.stations[idx].name} → {route.stations[idx + 1].name}</div>
                 <div style={{ fontSize: '13px' }}>{leg?.time} → {leg?.arrival_time || '?'}</div>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{leg?.train_name}</div>
-                {(segment.departure_platform || segment.fare != null) && (
+                {(segment.departure_platform || segment.base_fare != null || segment.express_fare != null) && (
                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', gap: '8px' }}>
                     {segment.departure_platform && <span>Platform: {segment.departure_platform}</span>}
-                    {segment.fare != null && <span>Fare: ¥{segment.fare.toLocaleString()}</span>}
+                    {(segment.base_fare != null || segment.express_fare != null) && <span>Fare: ¥{((segment.base_fare || 0) + (segment.express_fare || 0)).toLocaleString()}</span>}
                   </div>
                 )}
               </div>

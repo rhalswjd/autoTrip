@@ -13,7 +13,8 @@ class RouteSegment(BaseModel):
     is_through: bool = False
     schedule_candidates: Optional[List[ScheduleCandidate]] = None
     departure_platform: Optional[str] = None
-    fare: Optional[int] = None
+    base_fare: Optional[int] = None
+    express_fare: Optional[int] = None
 
 class Route(BaseModel):
     """

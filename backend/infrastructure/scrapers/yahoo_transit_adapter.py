@@ -116,7 +116,8 @@ class YahooTransitAdapter(ScraperPort):
             
             for jp_train in trains:
                 plat = None
-                fare_val = None
+                base_fare = None
+                express_fare = None
                 while edge_idx < len(edge_list):
                     e = edge_list[edge_idx]
                     e_name = e.get("railNameExcludingDestination") or e.get("railName", "")
@@ -134,7 +135,7 @@ class YahooTransitAdapter(ScraperPort):
                                 ep = int(p_info.get("expPrice", "0").replace(",", ""))
                                 e_group = p_info.get("edgeGroup")
                                 
-                                base_fare = 0
+                                base_fare = None
                                 if e_group:
                                     if e_group not in seen_edge_groups:
                                         base_fare = p
@@ -142,7 +143,7 @@ class YahooTransitAdapter(ScraperPort):
                                 else:
                                     base_fare = p
                                     
-                                fare_val = base_fare + ep
+                                express_fare = ep if ep > 0 else None
                                     
                         while edge_idx + 1 < len(edge_list):
                             next_e = edge_list[edge_idx + 1]
@@ -156,7 +157,7 @@ class YahooTransitAdapter(ScraperPort):
                         break
                     edge_idx += 1
                 platforms.append(plat)
-                fares.append(fare_val)
+                fares.append((base_fare, express_fare))
             
             segments = []
             for j, jp_train in enumerate(trains):
@@ -173,7 +174,7 @@ class YahooTransitAdapter(ScraperPort):
                         is_through = True
                 
                 seg_platform = platforms[j] if j < len(platforms) else None
-                seg_fare = fares[j] if j < len(fares) else None
+                seg_fares = fares[j] if j < len(fares) else (None, None)
                 
                 segments.append(RouteSegment(
                     segment_type=seg_type,
@@ -181,7 +182,8 @@ class YahooTransitAdapter(ScraperPort):
                     railway_name_jp=trains[j],
                     is_through=is_through,
                     departure_platform=seg_platform,
-                    fare=seg_fare
+                    base_fare=seg_fares[0] if seg_fares else None,
+                    express_fare=seg_fares[1] if seg_fares else None
                 ))
             
             dep_en = self.translation_service.get_english_name(params.get("from", ""))

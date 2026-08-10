@@ -54,8 +54,17 @@ class NotionMapper:
         if leg.platform is not None:
             properties[NotionColumns.PLATFORM] = build_number(leg.platform)
             
-        if leg.fare is not None:
-            properties[NotionColumns.FARE] = build_number(leg.fare)
+        has_fare = False
+        total_leg_fare = 0
+        if getattr(leg, 'base_fare', None) is not None:
+            total_leg_fare += leg.base_fare
+            has_fare = True
+        if getattr(leg, 'express_fare', None) is not None:
+            total_leg_fare += leg.express_fare
+            has_fare = True
+            
+        if has_fare and total_leg_fare > 0:
+            properties[NotionColumns.FARE] = build_number(total_leg_fare)
             
         properties[parent_property_name] = {"relation": [{"id": parent_page_id}]}
         

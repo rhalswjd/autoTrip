@@ -26,7 +26,8 @@ export interface RouteSegment {
   is_through: boolean;
   schedule_candidates?: ScheduleCandidate[];
   departure_platform?: string | null;
-  fare?: number | null;
+  base_fare?: number | null;
+  express_fare?: number | null;
 }
 
 export interface PlannerMetadata {
@@ -74,7 +75,8 @@ export interface LegSelection {
   arrival_time?: string;
   transport_name?: string;
   platform?: number;
-  fare?: number;
+  base_fare?: number;
+  express_fare?: number;
 }
 
 export interface MovementRequest {

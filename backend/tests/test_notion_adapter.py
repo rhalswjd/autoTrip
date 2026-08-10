@@ -71,7 +71,8 @@ def test_notion_mapper_child_payload():
         departure_time="10:00",
         transport_name="Train",
         platform=2,
-        fare=None
+        base_fare=None,
+        express_fare=None
     )
     
     properties = NotionMapper.map_leg(leg, "parent-page-id", "Parent item")
