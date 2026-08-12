@@ -62,6 +62,10 @@ class YahooTransitAdapter(ScraperPort):
             # Translate duration to English manually
             duration = duration.replace('時間', 'h ').replace('分', 'm').strip()
             
+            times = re.findall(r'\d{1,2}:\d{2}', time_text)
+            dep_time = times[0] if times else ""
+            arr_time = times[-1] if len(times) > 1 else (times[0] if times else "")
+            
             fare_elem = summary.select_one('.fare')
             fare_text = fare_elem.text if fare_elem else summary.text
             fare_match = re.search(r'([0-9,]+)円', fare_text)
@@ -111,6 +115,7 @@ class YahooTransitAdapter(ScraperPort):
             
             platforms = []
             fares = []
+            seat_selections = []
             seen_edge_groups = set()
             edge_idx = 0
             
@@ -118,6 +123,7 @@ class YahooTransitAdapter(ScraperPort):
                 plat = None
                 base_fare = None
                 express_fare = None
+                has_seat = False
                 while edge_idx < len(edge_list):
                     e = edge_list[edge_idx]
                     e_name = e.get("railNameExcludingDestination") or e.get("railName", "")
@@ -144,6 +150,8 @@ class YahooTransitAdapter(ScraperPort):
                                     base_fare = p
                                     
                                 express_fare = ep if ep > 0 else None
+                                if p_info.get("expType"):
+                                    has_seat = True
                                     
                         while edge_idx + 1 < len(edge_list):
                             next_e = edge_list[edge_idx + 1]
@@ -158,6 +166,7 @@ class YahooTransitAdapter(ScraperPort):
                     edge_idx += 1
                 platforms.append(plat)
                 fares.append((base_fare, express_fare))
+                seat_selections.append(has_seat)
             
             segments = []
             for j, jp_train in enumerate(trains):
@@ -175,6 +184,7 @@ class YahooTransitAdapter(ScraperPort):
                 
                 seg_platform = platforms[j] if j < len(platforms) else None
                 seg_fares = fares[j] if j < len(fares) else (None, None)
+                seg_has_seat = seat_selections[j] if j < len(seat_selections) else False
                 
                 segments.append(RouteSegment(
                     segment_type=seg_type,
@@ -183,7 +193,8 @@ class YahooTransitAdapter(ScraperPort):
                     is_through=is_through,
                     departure_platform=seg_platform,
                     base_fare=seg_fares[0] if seg_fares else None,
-                    express_fare=seg_fares[1] if seg_fares else None
+                    express_fare=seg_fares[1] if seg_fares else None,
+                    has_seat_selection=seg_has_seat
                 ))
             
             dep_en = self.translation_service.get_english_name(params.get("from", ""))
@@ -194,6 +205,8 @@ class YahooTransitAdapter(ScraperPort):
                 departure_station=domain_stations[0].name if domain_stations else dep_en,
                 arrival_station=domain_stations[-1].name if domain_stations else arr_en,
                 railway_name=railway,
+                departure_time=dep_time,
+                arrival_time=arr_time,
                 total_duration=duration,
                 total_fare=fare,
                 transfer_count=transfers,

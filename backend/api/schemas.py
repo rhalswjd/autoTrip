@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from domain.route import SeatPreference
 
 class SearchRequestSchema(BaseModel):
     departure_station: str = Field(..., title="Departure Station", description="The name of the departure station in English.", json_schema_extra={"examples": ["Osaka"]})
@@ -35,6 +36,8 @@ class RouteSegmentSchema(BaseModel):
     departure_platform: Optional[str] = Field(None, title="Departure Platform", description="Platform number for departure.")
     base_fare: Optional[int] = Field(None, title="Base Fare", description="Base fare for this segment (may be null if bundled with previous segment).")
     express_fare: Optional[int] = Field(None, title="Express Fare", description="Express fare for this specific segment.")
+    has_seat_selection: bool = Field(False, title="Has Seat Selection", description="True if seat selection is applicable.")
+    selected_seat: Optional[SeatPreference] = Field(None, title="Selected Seat", description="The selected seat preference.")
     schedule_candidates: Optional[List[ScheduleCandidateSchema]] = Field(None, title="Schedule Candidates", description="Optional list of alternative times.")
 
 class RouteResponseSchema(BaseModel):
@@ -42,6 +45,8 @@ class RouteResponseSchema(BaseModel):
     departure_station: str = Field(..., title="Departure Station", description="The name of the departure station.", json_schema_extra={"examples": ["Osaka"]})
     arrival_station: str = Field(..., title="Arrival Station", description="The name of the arrival station.", json_schema_extra={"examples": ["Kyoto"]})
     railway_name: str = Field(..., title="Railway Name", description="The name of the railway company.", json_schema_extra={"examples": ["JR West"]})
+    departure_time: str = Field("", title="Departure Time", description="Departure time in HH:MM format.")
+    arrival_time: str = Field("", title="Arrival Time", description="Arrival time in HH:MM format.")
     total_duration: str = Field(..., title="Total Duration", description="Total travel time formatted as string.", json_schema_extra={"examples": ["30m"]})
     total_fare: int = Field(..., title="Total Fare", description="Total fare in JPY.", json_schema_extra={"examples": [580]})
     transfer_count: int = Field(..., title="Transfer Count", description="Number of transfers required.", json_schema_extra={"examples": [0]})
@@ -76,6 +81,7 @@ class LegSelection(BaseModel):
     platform: Optional[int] = None
     base_fare: Optional[int] = None
     express_fare: Optional[int] = None
+    selected_seat: Optional[SeatPreference] = None
 
 class MovementRequestSchema(BaseModel):
     route_id: str = Field(..., title="Route ID", description="Unique identifier of the selected route.", json_schema_extra={"examples": ["route_12345"]})

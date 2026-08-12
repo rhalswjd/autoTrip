@@ -42,3 +42,25 @@ async def get_segment_timetable(
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get(
+    "/{route_id}/segments/{segment_index}/platform", 
+    response_model=dict,
+    summary="Get Platform for Selected Train",
+    description="Dynamically looks up the platform for a specific train by performing a targeted search.",
+    responses=ERROR_RESPONSES
+)
+async def get_segment_platform(
+    route_id: str = Path(..., description="The unique route identifier."),
+    segment_index: int = Path(..., description="The 0-based index of the route segment."),
+    time: str = Query(..., description="The departure time in HH:MM format."),
+    train_name: str = Query(..., description="The name of the train to match."),
+    date: Optional[str] = Query(None, description="The departure date in YYYY-MM-DD format."),
+    service: TimetableService = Depends(get_timetable_service)
+):
+    try:
+        platform = await service.get_segment_platform(route_id, segment_index, time, train_name, date)
+        return {"platform": platform}
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e))
+

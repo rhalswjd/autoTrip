@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { Route, DepartureInfo } from '../../api/types';
+import { SeatPreference } from '../../api/types';
 import { useSegmentTimetable, useMovement, useToast } from '../../hooks';
+import { getSegmentPlatform } from '../../api';
 import { TimetableCard } from './TimetableCard';
 import { TimetableLoading } from './TimetableLoading';
 import { TimetableEmpty } from './TimetableEmpty';
@@ -18,6 +20,7 @@ export interface TransferWizardProps {
 export function TransferWizard({ route }: TransferWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedLegs, setSelectedLegs] = useState<Record<number, DepartureInfo>>({});
+  const [selectedSeats, setSelectedSeats] = useState<Record<number, SeatPreference>>({});
   
   const [notionUrl, setNotionUrl] = useState('');
   const [urlError, setUrlError] = useState('');
@@ -63,8 +66,25 @@ export function TransferWizard({ route }: TransferWizardProps) {
     }
   };
   
-  const handleSelect = (departure: DepartureInfo) => {
+  const handleSelect = async (departure: DepartureInfo) => {
     setSelectedLegs(prev => ({ ...prev, [currentStep]: departure }));
+    
+    // Fetch platform dynamically in the background
+    try {
+      // Use today's date or leave empty for backend default
+      const res = await getSegmentPlatform(route.id, currentStep, departure.time, departure.train_name);
+      if (res.platform) {
+        setSelectedLegs(prev => {
+          const current = prev[currentStep];
+          if (current?.id === departure.id) {
+            return { ...prev, [currentStep]: { ...current, platform: res.platform || undefined } };
+          }
+          return prev;
+        });
+      }
+    } catch (e) {
+      console.error("Failed to fetch platform:", e);
+    }
   };
 
   const handleSubmit = () => {
@@ -77,8 +97,8 @@ export function TransferWizard({ route }: TransferWizardProps) {
     // Map selectedLegs to LegSelection
     const legs = route.segments.map((segment, index) => {
       const legDeparture = selectedLegs[index];
-      // Use platform from route segment if not available in timetable leg
-      const platStr = legDeparture.platform || segment.departure_platform;
+      // Only use the platform explicitly provided by the Timetable. Do not fallback to the searched route's platform.
+      const platStr = legDeparture.platform;
       return {
         segment_index: index,
         departure_station: route.stations[index].name,
@@ -88,7 +108,8 @@ export function TransferWizard({ route }: TransferWizardProps) {
         transport_name: legDeparture.train_name,
         platform: platStr ? parseInt(platStr as string, 10) : undefined,
         base_fare: segment.base_fare != null ? segment.base_fare : undefined,
-        express_fare: segment.express_fare != null ? segment.express_fare : undefined
+        express_fare: segment.express_fare != null ? segment.express_fare : undefined,
+        selected_seat: segment.has_seat_selection ? (selectedSeats[index] || SeatPreference.RESERVED) : SeatPreference.NOT_APPLICABLE
       };
     });
 
@@ -184,6 +205,22 @@ export function TransferWizard({ route }: TransferWizardProps) {
               {route.segments[currentStep].railway_name}
             </div>
           </div>
+
+          {route.segments[currentStep].has_seat_selection && (
+            <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600 }}>좌석 타입 (Seat Type)</label>
+              <select 
+                className="input"
+                style={{ width: 'auto', padding: '4px 8px', fontSize: '13px' }}
+                value={selectedSeats[currentStep] || SeatPreference.RESERVED}
+                onChange={(e) => setSelectedSeats(prev => ({ ...prev, [currentStep]: e.target.value as SeatPreference }))}
+              >
+                <option value={SeatPreference.RESERVED}>지정석 (Reserved)</option>
+                <option value={SeatPreference.NON_RESERVED}>자유석 (Non-Reserved)</option>
+                <option value={SeatPreference.GREEN}>그린샤 (Green Car)</option>
+              </select>
+            </div>
+          )}
           
           {currentStep > 0 && !prevArrivalTime && (
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--warning-bg, #fff3cd)', color: 'var(--warning-text, #856404)', borderRadius: '8px', marginBottom: '16px' }}>
@@ -202,7 +239,7 @@ export function TransferWizard({ route }: TransferWizardProps) {
                 <TimetableCard
                   key={departure.id}
                   departure={departure}
-                  platform={route.segments[currentStep].departure_platform}
+                  platform={departure.platform}
                   fare={(route.segments[currentStep].base_fare || 0) + (route.segments[currentStep].express_fare || 0) || undefined}
                   isSelected={selectedLegs[currentStep]?.id === departure.id}
                   onClick={handleSelect}
@@ -221,10 +258,11 @@ export function TransferWizard({ route }: TransferWizardProps) {
                 <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: 'var(--primary-color)' }}>[{idx + 1}구간] {route.stations[idx].name} → {route.stations[idx + 1].name}</div>
                 <div style={{ fontSize: '13px' }}>{leg?.time} → {leg?.arrival_time || '?'}</div>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{leg?.train_name}</div>
-                {(segment.departure_platform || segment.base_fare != null || segment.express_fare != null) && (
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', gap: '8px' }}>
-                    {segment.departure_platform && <span>Platform: {segment.departure_platform}</span>}
+                {(leg?.platform || segment.base_fare != null || segment.express_fare != null || segment.has_seat_selection) && (
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {leg?.platform && <span>Platform: {leg.platform}</span>}
                     {(segment.base_fare != null || segment.express_fare != null) && <span>Fare: ¥{((segment.base_fare || 0) + (segment.express_fare || 0)).toLocaleString()}</span>}
+                    {segment.has_seat_selection && <span>Seat: {selectedSeats[idx] === SeatPreference.NON_RESERVED ? 'Non-Reserved' : selectedSeats[idx] === SeatPreference.GREEN ? 'Green Car' : 'Reserved'}</span>}
                   </div>
                 )}
               </div>

@@ -18,6 +18,14 @@ export function getSegmentTimetable(routeId: string, segmentIndex: number): Prom
   return api.get<Timetable>(`/routes/${routeId}/segments/${segmentIndex}/timetable`);
 }
 
+export function getSegmentPlatform(routeId: string, segmentIndex: number, time: string, trainName: string, date?: string): Promise<{ platform: string | null }> {
+  const query = new URLSearchParams();
+  query.set('time', time);
+  query.set('train_name', trainName);
+  if (date) query.set('date', date);
+  return api.get<{ platform: string | null }>(`/routes/${routeId}/segments/${segmentIndex}/platform?${query.toString()}`);
+}
+
 export function createMovement(data: MovementRequest): Promise<MovementResponse> {
   return api.post<MovementResponse>('/movements', data);
 }

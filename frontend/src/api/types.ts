@@ -1,3 +1,12 @@
+export const SeatPreference = {
+  RESERVED: 'RESERVED',
+  NON_RESERVED: 'NON_RESERVED',
+  GREEN: 'GREEN',
+  NOT_APPLICABLE: 'NOT_APPLICABLE'
+} as const;
+
+export type SeatPreference = typeof SeatPreference[keyof typeof SeatPreference];
+
 export interface Station {
   id?: string;
   name: string;
@@ -28,6 +37,8 @@ export interface RouteSegment {
   departure_platform?: string | null;
   base_fare?: number | null;
   express_fare?: number | null;
+  has_seat_selection?: boolean;
+  selected_seat?: SeatPreference;
 }
 
 export interface PlannerMetadata {
@@ -77,6 +88,7 @@ export interface LegSelection {
   platform?: number;
   base_fare?: number;
   express_fare?: number;
+  selected_seat?: SeatPreference;
 }
 
 export interface MovementRequest {
