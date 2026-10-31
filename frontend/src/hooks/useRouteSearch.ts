@@ -7,5 +7,8 @@ export function useRouteSearch(params: SearchParams | null) {
     queryKey: ['routes', params],
     queryFn: () => searchRoutes(params!),
     enabled: !!params,
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
   });
 }

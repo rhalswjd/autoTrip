@@ -1,8 +1,9 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 from typing import List, Optional
 from enum import Enum
 from domain.station import Station
 from domain.planner import ScheduleCandidate, PlannerMetadata
+from domain.journey import PassengerLeg, passenger_legs
 
 class SeatPreference(str, Enum):
     RESERVED = "RESERVED"
@@ -17,6 +18,9 @@ class RouteSegment(BaseModel):
     railway_name: str
     railway_name_jp: str = ""
     duration: str = ""
+    departure_time: str = ""
+    arrival_time: str = ""
+    railway_id: str = ""
     is_through: bool = False
     schedule_candidates: Optional[List[ScheduleCandidate]] = None
     departure_platform: Optional[str] = None
@@ -38,9 +42,25 @@ class Route(BaseModel):
     departure_time: str = ""
     arrival_time: str = ""
     total_duration: str
+    onboard_duration: str = ""
+    non_riding_duration: str = ""
     total_fare: int
     transfer_count: int
     polyline: str
+    search_date: Optional[str] = None
+    search_time: Optional[str] = None
+    search_source: Optional[str] = None
+    source_rank: Optional[int] = None
     stations: List[Station] = []
     segments: List[RouteSegment] = []
     planner_metadata: Optional[PlannerMetadata] = None
+    family_key: str = ""
+    categories: List[str] = []
+    waiting_duration: str = ""
+    fare_status: str = "indicative"
+    timing_status: str = "indicative"
+
+    @computed_field
+    @property
+    def passenger_legs(self) -> List[PassengerLeg]:
+        return passenger_legs(self)

@@ -29,10 +29,13 @@ export function RouteCard({ route, isSelected, onClick }: RouteCardProps) {
       onClick={() => onClick(route)}
       onKeyDown={handleKeyDown}
       aria-selected={isSelected}
+      data-testid="route-family-card"
+      data-route-id={route.id}
     >
       <div className="route-card-header">
         <span className="route-card-duration">{route.total_duration}</span>
         <div className="route-card-meta">
+          {route.categories?.map(category => <Badge key={category} variant="default">{category}</Badge>)}
           {route.transfer_count === 0 ? (
             <Badge variant="success">Direct</Badge>
           ) : (
@@ -44,7 +47,7 @@ export function RouteCard({ route, isSelected, onClick }: RouteCardProps) {
       </div>
       <div className="route-card-footer">
         <span className="route-card-route-name">{route.railway_name}</span>
-        <span className="route-card-fare">{formatFare(route.total_fare)}</span>
+        <span className="route-card-fare">검색 시 예상 {formatFare(route.total_fare)}</span>
       </div>
     </Card>
   );

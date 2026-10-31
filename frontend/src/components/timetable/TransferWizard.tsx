@@ -1,336 +1,153 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Route, DepartureInfo } from '../../api/types';
 import { SeatPreference } from '../../api/types';
-import { useSegmentTimetable, useMovement, useToast } from '../../hooks';
-import { getSegmentPlatform } from '../../api';
+import { useMovement } from '../../hooks';
+import { usePassengerTimetable } from '../../hooks/useTimetable';
+import { Button, Input } from '../ui';
 import { TimetableCard } from './TimetableCard';
 import { TimetableLoading } from './TimetableLoading';
-import { TimetableEmpty } from './TimetableEmpty';
-import { Button, Input } from '../ui';
-import { isTimeAfterOrEqual } from '../../utils/time';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { selectedTimetableBucket } from '../../utils/timetable';
+import { itineraryPreview, operatingMinute, selectedPassengerLegs } from '../../utils/itinerary';
 import './Timetable.css';
-
-const TRANSFER_BUFFER_MINUTES = 0;
 
 export interface TransferWizardProps {
   route: Route;
+  onItineraryChange?: (route: Route) => void;
 }
 
-export function TransferWizard({ route }: TransferWizardProps) {
+export function TransferWizard({ route, onItineraryChange }: TransferWizardProps) {
+  const legs = route.passenger_legs || [];
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedLegs, setSelectedLegs] = useState<Record<number, DepartureInfo>>({});
   const [selectedSeats, setSelectedSeats] = useState<Record<number, SeatPreference>>({});
-  
+  const [opened, setOpened] = useState(false);
   const [notionUrl, setNotionUrl] = useState('');
-  const [urlError, setUrlError] = useState('');
-  
-  const { mutate, isPending, isSuccess, data } = useMovement();
-  const { success, error: toastError } = useToast();
-
-  const isSummaryStep = currentStep === route.segments.length;
-  
-  // API call for current segment
-  const { data: timetable, isLoading, isError, error } = useSegmentTimetable(
-    !isSummaryStep ? route.id : null,
-    !isSummaryStep ? currentStep : null
-  );
+  const [formError, setFormError] = useState('');
+  const { mutate, isPending, isSuccess, data, error: saveError, reset } = useMovement();
+  const leg = legs[currentStep];
+  const isWalk = leg?.segment_type === 'walk';
+  const isSummary = currentStep === legs.length;
+  const query = usePassengerTimetable(route.id, currentStep, route.search_date, Boolean(leg && !isWalk && opened));
 
   useEffect(() => {
-    if (isError && error) {
-      toastError('Timetable Error', error.message || 'Failed to load timetable.');
-    }
-  }, [isError, error, toastError]);
+    setCurrentStep(0);
+    setSelectedLegs({});
+    setSelectedSeats({});
+    setOpened(false);
+    setFormError('');
+    reset();
+  }, [route.id, reset]);
 
   useEffect(() => {
-    if (isSuccess && data) {
-      success('Movement Created', 'Successfully added to Notion!');
-    }
-  }, [isSuccess, data, success]);
+    onItineraryChange?.(Object.keys(selectedLegs).length ? itineraryPreview(route, selectedLegs) : route);
+  }, [route, selectedLegs, onItineraryChange]);
 
-  const validateUrl = (url: string) => {
-    if (!url) return true;
-    if (!url.includes('notion.so') && !url.includes('notion.site') && !url.includes('app.notion.com')) return false;
-    return true;
+  if (!legs.length) {
+    return <div role="alert">경로의 탑승 구간 정보가 없습니다. 경로를 다시 검색해 주세요.</div>;
+  }
+
+  const timetable = query.data?.pages[0];
+  const departures = query.data?.pages.flatMap(page => selectedTimetableBucket(page).departures) || [];
+  const unique = [...new Map(departures.map(item => [item.id, item])).values()];
+  const previousRide = [...legs.slice(0, currentStep)].reverse().find(item => item.segment_type !== 'walk');
+  const previousArrival = previousRide ? selectedLegs[previousRide.index]?.arrival_time : undefined;
+  const walkMinutes = legs.slice(previousRide ? previousRide.index + 1 : 0, currentStep)
+    .filter(item => item.segment_type === 'walk')
+    .reduce((sum, item) => sum + Number(item.duration.match(/(\d+)m/)?.[1] || 0), 0);
+  const available = unique.filter(item => !previousArrival || operatingMinute(item.time) >= operatingMinute(previousArrival) + walkMinutes);
+  const selected = selectedLegs[currentStep];
+  const ready = legs.filter(item => item.segment_type !== 'walk').every(item => selectedLegs[item.index]?.arrival_time);
+
+  const selectDeparture = (departure: DepartureInfo) => {
+    // Changing an earlier train invalidates every later selection.
+    setSelectedLegs(previous => Object.fromEntries([
+      ...Object.entries(previous).filter(([key]) => Number(key) < currentStep),
+      [String(currentStep), departure],
+    ]));
   };
 
-  const handleNext = () => {
-    if (currentStep < route.segments.length) {
-      setCurrentStep(c => c + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(c => c - 1);
-    }
-  };
-  
-  const handleSelect = async (departure: DepartureInfo) => {
-    setSelectedLegs(prev => ({ ...prev, [currentStep]: departure }));
-    
-    // Fetch platform dynamically in the background
-    try {
-      // Use today's date or leave empty for backend default
-      const res = await getSegmentPlatform(route.id, currentStep, departure.time, departure.train_name);
-      if (res.platform) {
-        setSelectedLegs(prev => {
-          const current = prev[currentStep];
-          if (current?.id === departure.id) {
-            return { ...prev, [currentStep]: { ...current, platform: res.platform || undefined } };
-          }
-          return prev;
-        });
+  const submit = () => {
+    if (!ready) return;
+    if (notionUrl) {
+      try {
+        const url = new URL(notionUrl);
+        if (!['notion.so', 'www.notion.so', 'notion.site', 'app.notion.com'].includes(url.hostname) && !url.hostname.endsWith('.notion.site')) throw new Error();
+      } catch {
+        setFormError('올바른 Notion 페이지 링크를 입력해 주세요.');
+        return;
       }
-    } catch (e) {
-      console.error("Failed to fetch platform:", e);
     }
-  };
-
-  const handleSubmit = () => {
-    if (notionUrl && !validateUrl(notionUrl)) {
-      setUrlError('올바른 Notion 페이지 링크를 입력해 주세요.');
-      return;
-    }
-    setUrlError('');
-
-    // Map selectedLegs to LegSelection
-    const legs = route.segments.map((segment, index) => {
-      const legDeparture = selectedLegs[index];
-      // Only use the platform explicitly provided by the Timetable. Do not fallback to the searched route's platform.
-      const platStr = legDeparture.platform;
-      return {
-        segment_index: index,
-        departure_station: route.stations[index].name,
-        arrival_station: route.stations[index + 1].name,
-        departure_time: legDeparture.time,
-        arrival_time: legDeparture.arrival_time,
-        transport_name: legDeparture.train_name,
-        platform: platStr ? parseInt(platStr as string, 10) : undefined,
-        base_fare: segment.base_fare != null ? segment.base_fare : undefined,
-        express_fare: segment.express_fare != null ? segment.express_fare : undefined,
-        selected_seat: segment.has_seat_selection ? (selectedSeats[index] || SeatPreference.RESERVED) : SeatPreference.NOT_APPLICABLE
-      };
+    const selections = selectedPassengerLegs(route, selectedLegs).map(item => ({
+      ...item, selected_seat: legs[item.passenger_leg_index!].has_seat_selection
+        ? selectedSeats[item.passenger_leg_index!] || SeatPreference.RESERVED : SeatPreference.NOT_APPLICABLE,
+    }));
+    mutate({
+      route_id: route.id, departure_station: route.departure_station, arrival_station: route.arrival_station,
+      selected_departure_time: selections[0].departure_time,
+      selected_arrival_time: selections.at(-1)!.arrival_time!,
+      search_date: route.search_date, search_time: route.search_time,
+      notion_page_url: notionUrl || undefined, legs: selections,
     });
-
-    const firstLeg = selectedLegs[0];
-    const lastLeg = selectedLegs[route.segments.length - 1];
-
-    mutate(
-      {
-        route_id: route.id,
-        selected_departure_time: firstLeg.time,
-        selected_arrival_time: lastLeg.arrival_time || 'N/A (Calculated by backend)',
-        departure_station: route.departure_station,
-        arrival_station: route.arrival_station,
-        notion_page_url: notionUrl || undefined,
-        legs: legs,
-      },
-      {
-        onError: (err: Error) => {
-          toastError('Movement Failed', err.message || 'Could not create movement');
-        },
-      }
-    );
   };
 
-  if (isSuccess) {
-    return (
-      <div className="timetable-container" style={{ padding: '24px', textAlign: 'center' }}>
-        <CheckCircle className="movement-success-icon" style={{ margin: '0 auto', display: 'block', marginBottom: '16px' }} />
-        <h4 className="movement-success-title">Success</h4>
-        <p className="movement-success-desc">
-          환승 여정이 Notion에 저장되었습니다.
-        </p>
-        <div style={{ marginTop: '16px' }}>
-          {data?.notion_url && (
-            <Button
-              variant="secondary"
-              onClick={() => window.open(data.notion_url, '_blank')}
-            >
-              Open Notion
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
+  if (isSuccess) return <section aria-label="Saved itinerary"><p>Notion에 저장되었습니다.</p>
+    {data?.notion_url && <a href={data.notion_url} target="_blank" rel="noreferrer">Open Notion</a>}</section>;
 
-  // Filter departures for current step based on previous arrival time
-  let availableDepartures = timetable?.weekday || [];
-  let prevArrivalTime = '';
-  
-  if (currentStep > 0) {
-    const prevLeg = selectedLegs[currentStep - 1];
-    prevArrivalTime = prevLeg?.arrival_time || '';
-    if (prevArrivalTime) {
-      availableDepartures = availableDepartures.filter((dep: DepartureInfo) => 
-        isTimeAfterOrEqual(dep.time, prevArrivalTime, TRANSFER_BUFFER_MINUTES)
-      );
-    }
-  }
-
-  return (
-    <div className="timetable-container">
-      <div className="wizard-header" style={{ marginBottom: '24px' }}>
-        <h3 className="timetable-title" style={{ marginBottom: '12px' }}>환승 시간표 선택</h3>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {Array.from({ length: route.segments.length + 1 }).map((_, idx) => {
-            const isActive = currentStep === idx;
-            const isCompleted = currentStep > idx;
-            let label = idx < route.segments.length ? `${idx + 1}구간` : '확인';
-            return (
-              <div key={idx} style={{ 
-                display: 'flex', alignItems: 'center', 
-                color: isActive ? 'var(--primary-color)' : isCompleted ? 'var(--success-color)' : 'var(--text-secondary)',
-                fontWeight: isActive ? 600 : 400,
-                fontSize: '14px'
-              }}>
-                {isCompleted ? '✓ ' : isActive ? '● ' : '○ '}
-                {label}
-                {idx < route.segments.length && <span style={{ margin: '0 8px', color: 'var(--border-color)' }}>-</span>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {!isSummaryStep ? (
-        <div className="wizard-step-content">
-          <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-              {route.stations[currentStep].name} → {route.stations[currentStep + 1].name}
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              {route.segments[currentStep].railway_name}
-            </div>
+  return <section className="timetable-container" aria-label="Passenger timetable">
+    <h3>{isSummary ? '선택 일정 확인' : '구간별 시간표'}</h3>
+    <p>{route.search_date} · {legs.filter(item => item.segment_type !== 'walk').length}개 탑승 구간</p>
+    {!isSummary && leg && <>
+      <h4 data-testid="passenger-leg-heading">{leg.departure_station.name} → {leg.arrival_station.name}</h4>
+      <p>{leg.railway_names.join(' / ')}</p>
+      {leg.through_boundaries.length > 0 && <p>Remain on board: {leg.through_boundaries.map(station => station.name).join(', ')}</p>}
+      {isWalk ? <p>도보 이동 · {leg.duration || '시간 미확인'}</p> : <>
+        {!opened && <Button onClick={() => setOpened(true)}>View Timetable</Button>}
+        {opened && query.isPending && <TimetableLoading />}
+        {opened && query.isError && <div role="alert">
+          <p>시간표 조회 실패: {query.error.message}</p>
+          <Button variant="secondary" onClick={() => query.refetch()}>다시 조회</Button>
+        </div>}
+        {opened && timetable && !query.isError && <>
+          <p>{timetable.source === 'jr_odekake' ? 'JR 오데카케 공식 시간표' : 'Yahoo 시간표'} · {selectedTimetableBucket(timetable).label}</p>
+          {timetable.status !== 'available' && <p role="status">{timetable.message || '이 구간의 시간표 공급자가 지원되지 않습니다.'}</p>}
+          {previousArrival && <p>이전 구간 도착 {previousArrival} 이후의 출발편 · 환승 여유시간을 확인해 주세요.</p>}
+          <div role="listbox" aria-label="Available departures">
+            {available.map(departure => <TimetableCard key={departure.id} departure={departure}
+              isSelected={selected?.id === departure.id} onClick={selectDeparture} />)}
           </div>
-
-          {route.segments[currentStep].has_seat_selection && (
-            <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ fontSize: '13px', fontWeight: 600 }}>좌석 타입 (Seat Type)</label>
-              <select 
-                className="input"
-                style={{ width: 'auto', padding: '4px 8px', fontSize: '13px' }}
-                value={selectedSeats[currentStep] || SeatPreference.RESERVED}
-                onChange={(e) => setSelectedSeats(prev => ({ ...prev, [currentStep]: e.target.value as SeatPreference }))}
-              >
-                <option value={SeatPreference.RESERVED}>지정석 (Reserved)</option>
-                <option value={SeatPreference.NON_RESERVED}>자유석 (Non-Reserved)</option>
-                <option value={SeatPreference.GREEN}>그린샤 (Green Car)</option>
-              </select>
-            </div>
-          )}
-          
-          {currentStep > 0 && !prevArrivalTime && (
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--warning-bg, #fff3cd)', color: 'var(--warning-text, #856404)', borderRadius: '8px', marginBottom: '16px' }}>
-               <AlertTriangle size={16} />
-               <span style={{ fontSize: '13px' }}>이전 열차의 도착 시간을 알 수 없어, 이후 모든 시간표가 표시됩니다. 환승 시간을 직접 확인해주세요.</span>
-             </div>
-          )}
-
-          {isLoading ? (
-            <TimetableLoading />
-          ) : availableDepartures.length === 0 ? (
-            <TimetableEmpty />
-          ) : (
-            <div className="timetable-list" role="listbox">
-              {availableDepartures.map((departure: DepartureInfo) => (
-                <TimetableCard
-                  key={departure.id}
-                  departure={departure}
-                  platform={departure.platform}
-                  fare={(route.segments[currentStep].base_fare || 0) + (route.segments[currentStep].express_fare || 0) || undefined}
-                  isSelected={selectedLegs[currentStep]?.id === departure.id}
-                  onClick={handleSelect}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="wizard-summary-content">
-          <h4 style={{ marginBottom: '16px' }}>여정 확인</h4>
-          {route.segments.map((segment, idx) => {
-            const leg = selectedLegs[idx];
-            return (
-              <div key={idx} style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', textAlign: 'left' }}>
-                <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px', color: 'var(--primary-color)' }}>[{idx + 1}구간] {route.stations[idx].name} → {route.stations[idx + 1].name}</div>
-                <div style={{ fontSize: '13px' }}>{leg?.time} → {leg?.arrival_time || '?'}</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{leg?.train_name}</div>
-                {(leg?.platform || segment.base_fare != null || segment.express_fare != null || segment.has_seat_selection) && (
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {leg?.platform && <span>Platform: {leg.platform}</span>}
-                    {(segment.base_fare != null || segment.express_fare != null) && <span>Fare: ¥{((segment.base_fare || 0) + (segment.express_fare || 0)).toLocaleString()}</span>}
-                    {segment.has_seat_selection && <span>Seat: {selectedSeats[idx] === SeatPreference.NON_RESERVED ? 'Non-Reserved' : selectedSeats[idx] === SeatPreference.GREEN ? 'Green Car' : 'Reserved'}</span>}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          
-          <div className="movement-dialog-input-section" style={{ marginTop: '24px', textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-              Notion 여행 페이지
-            </label>
-            <Input 
-              type="text" 
-              placeholder="Notion 페이지 링크를 붙여넣어 주세요" 
-              value={notionUrl}
-              onChange={(e) => {
-                setNotionUrl(e.target.value);
-                if (urlError) setUrlError('');
-              }}
-              error={!!urlError}
-            />
-            {urlError ? (
-              <p style={{ fontSize: '12px', color: 'var(--danger-color)', marginTop: '4px' }}>
-                {urlError}
-              </p>
-            ) : (
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Notion에서 여행 페이지를 열고 링크를 복사해 붙여넣으면 됩니다.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="wizard-actions" style={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        gap: '8px', 
-        marginTop: '24px',
-        position: 'sticky',
-        bottom: '0',
-        background: 'var(--bg-primary, #ffffff)',
-        padding: '16px 0',
-        borderTop: '1px solid var(--border-color)',
-        zIndex: 10
-      }}>
-        {currentStep > 0 && (
-          <Button variant="ghost" onClick={handlePrev} disabled={isPending}>
-            이전
-          </Button>
-        )}
-        {!isSummaryStep ? (
-          <Button 
-            variant="primary" 
-            onClick={handleNext} 
-            disabled={!selectedLegs[currentStep]}
-          >
-            다음
-          </Button>
-        ) : (
-          <Button 
-            variant="primary" 
-            onClick={handleSubmit} 
-            loading={isPending}
-          >
-            Notion에 저장
-          </Button>
-        )}
-      </div>
+          {available.length === 0 && <p role="status">{query.hasNextPage ? '이 페이지에는 목적지에 정차하는 출발편이 없습니다. 다음 출발편을 조회할 수 있습니다.' : '선택한 날짜와 구간에 맞는 출발편을 찾지 못했습니다.'}</p>}
+          {query.hasNextPage && <Button variant="secondary" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>다음 출발편 더 보기</Button>}
+        </>}
+        {leg.has_seat_selection && <label>Seat preference <select aria-label="Seat preference"
+          value={selectedSeats[currentStep] || SeatPreference.RESERVED}
+          onChange={event => setSelectedSeats(previous => ({ ...previous, [currentStep]: event.target.value as SeatPreference }))}>
+          <option value={SeatPreference.RESERVED}>Reserved</option>
+          <option value={SeatPreference.NON_RESERVED}>Non-Reserved</option>
+          <option value={SeatPreference.GREEN}>Green</option>
+        </select></label>}
+      </>}
+    </>}
+    {Object.keys(selectedLegs).length > 0 && <section aria-label="Selected itinerary">
+      <h4>선택한 일정</h4>
+      {legs.filter(item => selectedLegs[item.index]).map(item => {
+        const departure = selectedLegs[item.index];
+        return <div key={item.index}>
+          <p>{item.departure_station.name} → {item.arrival_station.name}: {departure.time} → {departure.arrival_time}</p>
+          <p>{departure.train_name} · 출발 플랫폼 {departure.platform || 'UNKNOWN'} · 도착 플랫폼 {departure.arrival_platform || 'UNKNOWN'}</p>
+        </div>;
+      })}
+      <p>선택 열차 운임은 확인되지 않은 경우 미확정으로 표시됩니다.</p>
+    </section>}
+    {isSummary && <>
+      <Input label="Notion page URL (optional)" value={notionUrl} onChange={event => setNotionUrl(event.target.value)} />
+      {(formError || saveError) && <p role="alert">{formError || saveError?.message}</p>}
+      <Button disabled={!ready} loading={isPending} onClick={submit}>Add to Notion</Button>
+    </>}
+    <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+      {currentStep > 0 && <Button variant="secondary" onClick={() => { setCurrentStep(step => step - 1); setOpened(false); }}>이전 구간</Button>}
+      {!isSummary && <Button disabled={!isWalk && !selected?.arrival_time} onClick={() => { setCurrentStep(step => step + 1); setOpened(false); }}>
+        {currentStep === legs.length - 1 ? '일정 확인' : '다음 구간'}
+      </Button>}
     </div>
-  );
+  </section>;
 }

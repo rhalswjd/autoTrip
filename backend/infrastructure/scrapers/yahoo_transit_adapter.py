@@ -1,18 +1,26 @@
 import httpx
 from bs4 import BeautifulSoup
+import asyncio
+import json
 import re
 from typing import List
+from urllib.parse import urljoin
 import uuid
 
 from application.ports.scraper_port import ScraperPort, ScraperException
 from domain.route import Route, RouteSegment
 from domain.station import Station
 from domain.timetable import Timetable
+from domain.journey import canonical_station
 from core.logger import logger
 
 class YahooTransitAdapter(ScraperPort):
+    MAX_PAGES_PER_SOURCE = 2
+
     def __init__(self, timetable_scraper=None):
         self.timetable_scraper = timetable_scraper
+        self.request_count = 0
+        self.rate_limited = False
         self.base_url = "https://transit.yahoo.co.jp/search/result"
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
@@ -21,9 +29,47 @@ class YahooTransitAdapter(ScraperPort):
         from infrastructure.services.translation_service import TranslationService
         self.translation_service = TranslationService()
 
-    async def _fetch_yahoo_tab(self, params: dict, client: httpx.AsyncClient) -> List[Route]:
-        logger.debug(f"Fetching Yahoo Transit with params: {params}")
-        response = await client.get(self.base_url, params=params, follow_redirects=True)
+    @staticmethod
+    def _format_duration(value: str) -> str:
+        value = str(value or "").strip()
+        if not value:
+            return ""
+        hours = re.search(r"(\d+)時間", value)
+        minutes = re.search(r"(\d+)分", value)
+        parts = []
+        if hours:
+            parts.append(f"{int(hours.group(1))}h")
+        if minutes:
+            parts.append(f"{int(minutes.group(1))}m")
+        return " ".join(parts) if parts else value
+
+    @staticmethod
+    def _duration_minutes(value: str) -> int | None:
+        value = str(value or "")
+        hours = re.search(r"(\d+)時間", value)
+        minutes = re.search(r"(\d+)分", value)
+        if not hours and not minutes:
+            return None
+        return (int(hours.group(1)) * 60 if hours else 0) + (int(minutes.group(1)) if minutes else 0)
+
+    async def _fetch_yahoo_page(
+        self,
+        url: str,
+        params: dict | None,
+        route_params: dict,
+        client: httpx.AsyncClient,
+        search_date: str,
+        search_time: str,
+        source: str,
+        rank_offset: int,
+    ) -> tuple[List[Route], str | None]:
+        logger.debug(f"Fetching Yahoo Transit page: {url} params={params}")
+        if self.rate_limited:
+            raise ScraperException('Yahoo HTTP 429: further route requests stopped')
+        response = await client.get(url, params=params, follow_redirects=True)
+        self.request_count += 1 + len(getattr(response, 'history', []))
+        if response.status_code == 429:
+            self.rate_limited = True
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -32,8 +78,10 @@ class YahooTransitAdapter(ScraperPort):
         script = soup.select_one("script#__NEXT_DATA__")
         next_data = None
         if script:
-            import json
             next_data = json.loads(script.string)
+
+        search_data = next_data.get("props", {}).get("pageProps", {}).get("naviSearchParam", {}) if next_data else {}
+        feature_list = search_data.get("featureInfoList", [])
             
         for i in range(1, 10):
             route_div = soup.select_one(f'#route0{i}')
@@ -46,25 +94,28 @@ class YahooTransitAdapter(ScraperPort):
                 
             time_text = summary.select_one('.time').text if summary.select_one('.time') else ""
             
-            # Rule: 1. Try to extract Ride Time (乗車 X時間Y分 / 乗車 X分)
-            ride_match = re.search(r'乗車\s*([0-9]+時間[0-9]+分|[0-9]+分)', time_text)
-            if ride_match:
-                duration = ride_match.group(1)
-            else:
-                # Rule 2: Fallback to Total Time or direct time
-                duration_match = re.search(r'着(.+?)（', time_text)
-                duration = duration_match.group(1) if duration_match else "0 min"
-                if duration == "0 min":
-                    dur_match = re.search(r'([0-9]+時間[0-9]+分|[0-9]+分)', time_text)
-                    if dur_match:
-                        duration = dur_match.group(1)
-            
-            # Translate duration to English manually
-            duration = duration.replace('時間', 'h ').replace('分', 'm').strip()
+            feature = feature_list[i - 1] if len(feature_list) >= i else {}
+            summary_info = feature.get("summaryInfo", {})
+            elapsed_raw = str(summary_info.get("totalTime") or "")
+            if not elapsed_raw:
+                elapsed_match = re.search(r'([0-9]+時間(?:[0-9]+分)?|[0-9]+分)', time_text)
+                elapsed_raw = elapsed_match.group(1) if elapsed_match else ""
+            onboard_raw = str(summary_info.get("timeOnBoard") or "")
+            if not onboard_raw:
+                onboard_match = re.search(r'乗車\s*([0-9]+時間(?:[0-9]+分)?|[0-9]+分)', time_text)
+                onboard_raw = onboard_match.group(1) if onboard_match else ""
+
+            duration = self._format_duration(elapsed_raw)
+            onboard_duration = self._format_duration(onboard_raw)
+            elapsed_minutes = self._duration_minutes(elapsed_raw)
+            onboard_minutes = self._duration_minutes(onboard_raw)
+            non_riding_duration = ""
+            if elapsed_minutes is not None and onboard_minutes is not None and elapsed_minutes >= onboard_minutes:
+                non_riding_duration = self._format_duration(f"{elapsed_minutes - onboard_minutes}分")
             
             times = re.findall(r'\d{1,2}:\d{2}', time_text)
-            dep_time = times[0] if times else ""
-            arr_time = times[-1] if len(times) > 1 else (times[0] if times else "")
+            dep_time = str(summary_info.get("departureTime") or (times[0] if times else ""))
+            arr_time = str(summary_info.get("arrivalTime") or (times[-1] if len(times) > 1 else (times[0] if times else "")))
             
             fare_elem = summary.select_one('.fare')
             fare_text = fare_elem.text if fare_elem else summary.text
@@ -96,7 +147,9 @@ class YahooTransitAdapter(ScraperPort):
             domain_stations = []
             for idx, s_name in enumerate(station_names):
                 en_name = self.translation_service.get_english_name(s_name)
-                domain_stations.append(Station(id=f"st_{i}_{idx}", name=en_name, name_jp=s_name))
+                edge_station = next((edge for edge in feature.get("edgeInfoList", [])
+                                     if canonical_station(str(edge.get("stationName", ""))) == canonical_station(s_name)), {})
+                domain_stations.append(Station(id=str(edge_station.get("stationCode") or ""), name=en_name, name_jp=s_name))
                 
             en_trains = [self.translation_service.translate_train(t) for t in trains]
                 
@@ -110,8 +163,7 @@ class YahooTransitAdapter(ScraperPort):
             polyline = " -> ".join(en_trains)
             
             # Parse platforms and fares from __NEXT_DATA__
-            feature_list = next_data.get("props", {}).get("pageProps", {}).get("naviSearchParam", {}).get("featureInfoList", []) if next_data else []
-            edge_list = feature_list[i-1].get("edgeInfoList", []) if len(feature_list) >= i else []
+            edge_list = feature.get("edgeInfoList", [])
             
             platforms = []
             fares = []
@@ -196,9 +248,21 @@ class YahooTransitAdapter(ScraperPort):
                     express_fare=seg_fares[1] if seg_fares else None,
                     has_seat_selection=seg_has_seat
                 ))
+
+                def station_times(station_name):
+                    return [str(info.get("time", "")) for edge in edge_list
+                            if canonical_station(str(edge.get("stationName", ""))) == canonical_station(station_name)
+                            for info in edge.get("timeInfo", []) if info.get("time")]
+
+                if j + 1 < len(station_names):
+                    start_times, end_times = station_times(station_names[j]), station_times(station_names[j + 1])
+                    segments[-1] = segments[-1].model_copy(update={
+                        "departure_time": start_times[-1] if start_times else "",
+                        "arrival_time": end_times[0] if end_times else "",
+                    })
             
-            dep_en = self.translation_service.get_english_name(params.get("from", ""))
-            arr_en = self.translation_service.get_english_name(params.get("to", ""))
+            dep_en = self.translation_service.get_english_name(route_params.get("from", ""))
+            arr_en = self.translation_service.get_english_name(route_params.get("to", ""))
             
             routes.append(Route(
                 id=str(uuid.uuid4()),
@@ -208,16 +272,73 @@ class YahooTransitAdapter(ScraperPort):
                 departure_time=dep_time,
                 arrival_time=arr_time,
                 total_duration=duration,
+                onboard_duration=onboard_duration,
+                non_riding_duration=non_riding_duration,
                 total_fare=fare,
                 transfer_count=transfers,
                 polyline=polyline,
+                search_date=search_date,
+                search_time=search_time,
+                search_source=source,
+                source_rank=rank_offset + len(routes) + 1,
                 stations=domain_stations,
                 segments=segments
             ))
             
+        pager_info = search_data.get("pagerInfo", {})
+        next_url = None
+        if int(pager_info.get("end") or 0) < int(pager_info.get("count") or 0):
+            next_url = pager_info.get("prevNextThreeUrl") or None
+        return routes, next_url
+
+    async def _fetch_yahoo_tab(
+        self,
+        params: dict,
+        client: httpx.AsyncClient,
+        search_date: str | None = None,
+        search_time: str | None = None,
+        source: str = "",
+    ) -> List[Route]:
+        if not search_date or not search_time:
+            raise ValueError("Yahoo route search requires an explicit date and time")
+
+        routes: List[Route] = []
+        visited_requests = set()
+        url = self.base_url
+        request_params: dict | None = params
+
+        for _page_number in range(self.MAX_PAGES_PER_SOURCE):
+            request_key = (
+                url,
+                tuple(sorted((request_params or {}).items())),
+            )
+            if request_key in visited_requests:
+                break
+            visited_requests.add(request_key)
+
+            page_routes, next_url = await self._fetch_yahoo_page(
+                url,
+                request_params,
+                params,
+                client,
+                search_date,
+                search_time,
+                source,
+                len(routes),
+            )
+            routes.extend(page_routes)
+            if not next_url:
+                break
+            url = urljoin(self.base_url, next_url)
+            request_params = None
+
         return routes
 
     async def search_routes(self, departure: str, arrival: str, time: str | None = None, date: str | None = None) -> List[Route]:
+        before_requests = self.request_count
+        if not time or not date:
+            raise ScraperException("Yahoo route search requires an explicit departure date and time")
+
         base_params = {
             "from": departure, 
             "to": arrival,
@@ -227,19 +348,16 @@ class YahooTransitAdapter(ScraperPort):
             "al": "1"
         }
         
-        if time and date:
-            hh, mm = time.split(':')
-            base_params.update({
-                "y": date[0:4],
-                "m": date[5:7],
-                "d": date[8:10],
-                "hh": hh,
-                "m1": mm[0],
-                "m2": mm[1],
-                "type": "1"
-            })
-        else:
-            base_params["type"] = "5"
+        hh, mm = time.split(':')
+        base_params.update({
+            "y": date[0:4],
+            "m": date[5:7],
+            "d": date[8:10],
+            "hh": hh,
+            "m1": mm[0],
+            "m2": mm[1],
+            "type": "1"
+        })
             
         try:
             logger.debug(f"Fetching Yahoo Transit multi-tabs: {departure} to {arrival}")
@@ -254,31 +372,75 @@ class YahooTransitAdapter(ScraperPort):
                 params_trans = dict(base_params)
                 params_trans["s"] = "2"
                 
-                import asyncio
                 results = await asyncio.gather(
-                    self._fetch_yahoo_tab(params_rec, client),
-                    self._fetch_yahoo_tab(params_trans, client),
-                    self._fetch_yahoo_tab(params_cheap, client)
+                    self._fetch_yahoo_tab(
+                        params_rec,
+                        client,
+                        search_date=date,
+                        search_time=time,
+                        source="earliest",
+                    ),
+                    self._fetch_yahoo_tab(
+                        params_cheap,
+                        client,
+                        search_date=date,
+                        search_time=time,
+                        source="cheapest",
+                    ),
+                    self._fetch_yahoo_tab(
+                        params_trans,
+                        client,
+                        search_date=date,
+                        search_time=time,
+                        source="fewest_transfers",
+                    ),
+                    return_exceptions=True,
                 )
+
+                source_names = ("earliest", "cheapest", "fewest_transfers")
+                successful_results = []
+                failures = []
+                for source_name, result in zip(source_names, results):
+                    if isinstance(result, BaseException):
+                        failures.append(result)
+                        logger.error(f"Yahoo Transit source {source_name} failed: {result}")
+                    else:
+                        successful_results.append(result)
+
+                if not successful_results:
+                    failure_summary = "; ".join(str(failure) for failure in failures)
+                    raise ScraperException(f"All Yahoo Transit sources failed: {failure_summary}")
                 
                 # Merge and deduplicate
                 merged_routes = []
                 seen_signatures = set()
                 
-                for route_list in results:
+                for route_list in successful_results:
                     for r in route_list:
-                        # signature based on fare, duration, transfers and polyline
-                        sig = f"{r.total_fare}_{r.total_duration}_{r.transfer_count}_{r.polyline}"
+                        # Exact provider-candidate dedup precedes passenger-family grouping.
+                        # Translated presentation strings and prices are not identities.
+                        sig = (tuple(canonical_station(s.name_jp or s.name) for s in r.stations),
+                               tuple((s.railway_name_jp, s.is_through) for s in r.segments),
+                               r.departure_time, r.arrival_time)
                         if sig not in seen_signatures:
                             seen_signatures.add(sig)
                             merged_routes.append(r)
                             
+                logger.info('Yahoo route requests: %d; candidates=%d', self.request_count - before_requests, len(merged_routes))
                 return merged_routes
         except Exception as e:
             logger.error(f"Yahoo Transit Scraper Error: {e}")
             raise ScraperException(f"Yahoo Transit scraping failed: {str(e)}") from e
 
-    async def get_timetable(self, route_id: str, departure: str = "", arrival: str = "", timetable_id: str | None = None, railway_name_jp: str = "") -> Timetable:
+    async def get_timetable(
+        self,
+        route_id: str,
+        departure: str = "",
+        arrival: str = "",
+        timetable_id: str | None = None,
+        railway_name_jp: str = "",
+        search_date: str | None = None,
+    ) -> Timetable:
         if not self.timetable_scraper:
             raise NotImplementedError("TimetableScraper not injected")
         if not departure or not arrival:
@@ -286,7 +448,23 @@ class YahooTransitAdapter(ScraperPort):
             
         logger.info(f"Scraping Timetable for {departure} -> {arrival}")
         # Use the injected timetable scraper
-        res = await self.timetable_scraper.get_timetable(route_id, departure, arrival, timetable_id=timetable_id, railway_name_jp=railway_name_jp)
+        res = await self.timetable_scraper.get_timetable(
+            route_id,
+            departure,
+            arrival,
+            timetable_id=timetable_id,
+            railway_name_jp=railway_name_jp,
+            search_date=search_date,
+        )
         
-        logger.info(f"YahooTransitAdapter returning Timetable: type={type(res)}, weekday length={len(res.weekday)}")
+        logger.info(
+            "YahooTransitAdapter returning timetable: search_date=%s "
+            "selected_calendar=%s weekday=%d saturday=%d holiday=%d selected=%d",
+            search_date,
+            res.selected_calendar.value,
+            len(res.weekday),
+            len(res.saturday),
+            len(res.holiday),
+            len(res.selected_departures()),
+        )
         return res

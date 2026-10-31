@@ -5,8 +5,8 @@ export function searchRoutes(params: SearchParams): Promise<Route[]> {
   const query = new URLSearchParams();
   query.set('departure_station', params.departure_station);
   query.set('arrival_station', params.arrival_station);
-  if (params.departure_time) query.set('departure_time', params.departure_time);
-  if (params.departure_date) query.set('departure_date', params.departure_date);
+  query.set('departure_time', params.departure_time);
+  query.set('departure_date', params.departure_date);
   return api.get<Route[]>(`/search?${query.toString()}`);
 }
 
@@ -16,6 +16,10 @@ export function getTimetable(routeId: string): Promise<Timetable> {
 
 export function getSegmentTimetable(routeId: string, segmentIndex: number): Promise<Timetable> {
   return api.get<Timetable>(`/routes/${routeId}/segments/${segmentIndex}/timetable`);
+}
+
+export function getPassengerTimetable(routeId: string, legIndex: number, cursor = 0): Promise<Timetable> {
+  return api.get<Timetable>(`/routes/${routeId}/legs/${legIndex}/timetable?cursor=${cursor}`);
 }
 
 export function getSegmentPlatform(routeId: string, segmentIndex: number, time: string, trainName: string, date?: string): Promise<{ platform: string | null }> {

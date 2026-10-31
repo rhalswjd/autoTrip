@@ -7,6 +7,7 @@
 .input-label {
   font-size: var(--font-size-footnote);
   font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--color-text-primary);
 }
 
@@ -16,34 +17,47 @@
   align-items: center;
 }
 
+/*
+ * Apple: input fields respond on focus with a smooth border-color and ring transition.
+ * The ring appears immediately (--duration-instant) so it feels like direct response.
+ * Don't wait for animation to complete — feedback must be continuous during interaction.
+ */
 .input-field {
   width: 100%;
-  height: 32px;
+  height: 34px;
   padding: 0 var(--space-12);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   color: var(--input-text);
   font-family: var(--font-family-system);
   font-size: var(--font-size-body);
-  transition: var(--transition-fast);
+  letter-spacing: var(--letter-spacing-normal);
+  /* Border and ring respond instantly; box-shadow eases in slightly */
+  transition:
+    border-color var(--duration-instant) var(--ease-press),
+    box-shadow var(--duration-fast) var(--ease-default);
   box-shadow: var(--elevation-raised);
+  -webkit-appearance: none;
 }
 
 .input-field::placeholder {
   color: var(--input-placeholder);
+  letter-spacing: var(--letter-spacing-normal);
 }
 
+/* Focus ring — instant border, slightly eased ring expansion */
 .input-field:focus {
   outline: none;
   border-color: var(--input-border-focus);
-  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  box-shadow: 0 0 0 3px var(--color-focus-ring), var(--elevation-raised);
 }
 
 .input-field:disabled {
   background: var(--color-bg-surface);
   color: var(--color-text-tertiary);
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .input-has-left .input-field {
@@ -62,6 +76,13 @@
   justify-content: center;
   color: var(--color-text-tertiary);
   pointer-events: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+/* When focused, icon gets a hint of primary color */
+.input-container:focus-within .input-icon-left,
+.input-container:focus-within .input-icon-right {
+  color: var(--color-primary);
 }
 
 .input-icon-left {
@@ -82,9 +103,16 @@
 
 .input-helper {
   font-size: var(--font-size-caption);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--color-text-secondary);
 }
 
 .input-helper.error {
   color: var(--color-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input-field {
+    transition: none;
+  }
 }

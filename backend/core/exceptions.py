@@ -2,10 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from application.ports.notion_port import NotionException
 from application.ports.scraper_port import ScraperException
-
-class DomainException(Exception):
-    """Base exception for Domain logic errors."""
-    pass
+from domain.exceptions import DomainException
 
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(DomainException)

@@ -16,11 +16,27 @@ async def get_timetable(
     route_id: str = Path(..., description="The unique route identifier.", json_schema_extra={"examples": ["route_12345"]}),
     service: TimetableService = Depends(get_timetable_service)
 ):
-    timetable = await service.get_timetable(route_id)
-    return timetable
+    try:
+        return await service.get_timetable(route_id)
+    except ValueError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404 if "not found" in str(exc) else 400, detail=str(exc)) from exc
 
 from typing import Optional
 from fastapi import Query
+
+@router.get("/{route_id}/legs/{leg_index}/timetable", response_model=TimetableResponseSchema)
+async def get_passenger_leg_timetable(
+    route_id: str,
+    leg_index: int = Path(..., ge=0),
+    cursor: int = Query(0, ge=0),
+    service: TimetableService = Depends(get_timetable_service),
+):
+    try:
+        return await service.get_leg_timetable(route_id, leg_index, cursor)
+    except ValueError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404 if "not found" in str(exc) else 400, detail=str(exc)) from exc
 
 @router.get(
     "/{route_id}/segments/{segment_index}/timetable", 
@@ -40,13 +56,13 @@ async def get_segment_timetable(
         return timetable
     except ValueError as e:
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=404 if "not found" in str(e) else 400, detail=str(e))
 
 @router.get(
     "/{route_id}/segments/{segment_index}/platform", 
     response_model=dict,
     summary="Get Platform for Selected Train",
-    description="Dynamically looks up the platform for a specific train by performing a targeted search.",
+    description="Reads the exact selected timetable departure's platform without fuzzy route searches.",
     responses=ERROR_RESPONSES
 )
 async def get_segment_platform(

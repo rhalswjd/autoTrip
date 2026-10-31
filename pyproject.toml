@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=84.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,18 +7,15 @@ name = "autotrip"
 version = "1.0.0"
 description = "Personal railway travel planner API"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "httpx>=0.25.0",
-    "beautifulsoup4>=4.12.0",
-    "anyio>=3.7.0",
-    "playwright>=1.40.0",
-    "playwright-stealth>=1.0.6"
-]
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+exclude = ["tests", "tests.*"]
 
 [project.optional-dependencies]
 test = [
@@ -36,3 +33,4 @@ pythonpath = [
     "backend"
 ]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

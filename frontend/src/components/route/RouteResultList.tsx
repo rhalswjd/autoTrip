@@ -86,7 +86,7 @@ export function RouteResultList({
             cursor: 'pointer'
           }}
         >
-          <option value="best">Best Route</option>
+          <option value="best">Journey duration</option>
           <option value="transfers">Least Transfers</option>
           <option value="walking">Least Walking</option>
           <option value="fare">Lowest Fare</option>

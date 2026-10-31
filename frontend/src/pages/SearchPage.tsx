@@ -1,13 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import type { Route } from '../api/types';
 import { Sidebar } from '../layouts/Sidebar';
 import { SearchBar, SearchResultList } from '../components/search';
 import { RouteSearchForm, RouteResultList, RouteTimelineV2, RouteSummary } from '../components/route';
-import { TimetableList, TransferWizard } from '../components/timetable';
+import { TransferWizard } from '../components/timetable';
 import { Divider } from '../components/ui';
 import { useStationSearch, useRoutePanel } from '../hooks';
 
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [previewRoute, setPreviewRoute] = useState<Route | null>(null);
   
   const {
     departureStation,
@@ -24,9 +26,7 @@ export function SearchPage() {
 
   const { data, isLoading, error, refetch } = useStationSearch(searchQuery);
 
-  console.log("SearchPage data:", data);
-  console.log("SearchPage data.weekday:", (data as any)?.weekday);
-  console.log("SearchPage data.data:", (data as any)?.data);
+  useEffect(() => setPreviewRoute(null), [selectedRoute?.id]);
 
   const handleEscape = useCallback(() => {
     setSearchQuery('');
@@ -80,14 +80,10 @@ export function SearchPage() {
             <>
               <Divider />
               <RouteTimelineV2 route={selectedRoute} />
-              <RouteSummary route={selectedRoute} />
+              <RouteSummary route={previewRoute || selectedRoute} />
               
               <Divider style={{ margin: '16px 0' }} />
-              {selectedRoute.segments.filter(s => s.segment_type !== 'walk').length > 1 ? (
-                <TransferWizard route={selectedRoute} />
-              ) : (
-                <TimetableList route={selectedRoute} />
-              )}
+              <TransferWizard route={selectedRoute} onItineraryChange={setPreviewRoute} />
             </>
           )}
         </div>

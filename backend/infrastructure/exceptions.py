@@ -1,4 +1,4 @@
-from core.exceptions import DomainException
+from domain.exceptions import DomainException
 
 class InfrastructureException(Exception):
     """Base exception for Infrastructure errors."""

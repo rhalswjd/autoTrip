@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Prevent Python from writing .pyc files and enable unbuffered logging
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -11,10 +11,13 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade "pip>=26.2" "setuptools>=84.1.0" \
+    && python -m pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright Chromium browser and OS dependencies
 RUN playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml .
 
 # Copy backend source code
 COPY backend /app/backend

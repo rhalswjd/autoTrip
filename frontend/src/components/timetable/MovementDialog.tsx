@@ -19,10 +19,7 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
   const [notionUrl, setNotionUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   
-  // Calculate a mock arrival time based on route.total_duration for the API requirement
-  // Since we don't have real math here, we just pass the duration or a dummy string.
-  // The backend MovementRequest expects `selected_arrival_time`
-  const mockArrivalTime = departure.arrival_time || 'N/A (Calculated by backend)'; 
+  const arrivalTime = departure.arrival_time || '';
 
   useEffect(() => {
     if (isSuccess && data) {
@@ -39,6 +36,10 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
   };
 
   const handleConfirm = () => {
+    if (!arrivalTime) {
+      toastError('Movement Failed', '실제 도착시각이 확인된 열차를 선택해 주세요.');
+      return;
+    }
     if (notionUrl && !validateUrl(notionUrl)) {
       setUrlError('올바른 Notion 페이지 링크를 입력해 주세요.');
       return;
@@ -49,7 +50,7 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
       {
         route_id: route.id,
         selected_departure_time: departure.time,
-        selected_arrival_time: mockArrivalTime,
+        selected_arrival_time: arrivalTime,
         departure_station: route.departure_station,
         arrival_station: route.arrival_station,
         notion_page_url: notionUrl || undefined,

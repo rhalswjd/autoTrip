@@ -26,6 +26,15 @@ class NotionClient:
             "Content-Type": "application/json"
         }
 
+    def _status_failure(self, response: httpx.Response, operation: str, attempt: int) -> NotionClientException:
+        # Upstream bodies/URLs may contain private workspace IDs or echoed content.
+        logger.error("Notion %s failed: HTTP %d (attempt %d/%d)",
+                     operation, response.status_code, attempt + 1, self.retries)
+        return NotionClientException(
+            f"Notion API request failed (HTTP {response.status_code}). "
+            "Check the integration permissions and request fields."
+        )
+
     async def post_page(self, database_id: str, properties: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{self.base_url}/pages"
         payload = {
@@ -46,16 +55,15 @@ class NotionClient:
                 except httpx.TimeoutException as e:
                     logger.warning(f"Notion HTTP Timeout (attempt {attempt + 1}/{self.retries}): {url}")
                     if attempt == self.retries - 1:
-                        raise NotionClientException(f"Timeout: {e}")
+                        raise NotionClientException("Notion API request timed out") from e
                 except httpx.HTTPStatusError as e:
-                    error_body = e.response.text
-                    logger.error(f"Notion HTTP Error (attempt {attempt + 1}/{self.retries}): {url} - Status {e.response.status_code} - Body: {error_body}")
+                    failure = self._status_failure(e.response, "create page", attempt)
                     if attempt == self.retries - 1:
-                        raise NotionClientException(f"Failed to post page: {error_body}")
+                        raise failure from e
                 except httpx.HTTPError as e:
-                    logger.warning(f"Notion HTTP Error (attempt {attempt + 1}/{self.retries}): {url} - {e}")
+                    logger.warning("Notion create-page network failure: %s", type(e).__name__)
                     if attempt == self.retries - 1:
-                        raise NotionClientException(f"Failed to post page: {e}")
+                        raise NotionClientException("Notion API network request failed") from e
                         
                 logger.debug(f"Retry Notion Request (attempt {attempt + 2}/{self.retries})")
                 await asyncio.sleep(1)
@@ -79,9 +87,7 @@ class NotionClient:
                     try:
                         response = await client.get(url, params=params)
                         if response.status_code in (400, 401, 403, 404):
-                            error_body = response.text
-                            logger.error(f"Notion API Error {response.status_code} for page {page_id}. Body: {error_body}")
-                            raise NotionClientException(f"Failed to access page {page_id}. Please check ID and Notion integration permissions. Error: {error_body}")
+                            raise self._status_failure(response, "read page children", attempt)
                         response.raise_for_status()
                         data = response.json()
                         
@@ -96,17 +102,21 @@ class NotionClient:
                         next_cursor = data.get("next_cursor")
                         break # Break retry loop on success
                     except httpx.TimeoutException as e:
-                        logger.warning(f"Notion HTTP Timeout (attempt {attempt + 1}/{self.retries}): {url}")
+                        logger.warning("Notion page-children timeout (attempt %d/%d)", attempt + 1, self.retries)
                         if attempt == self.retries - 1:
-                            raise NotionClientException(f"Timeout: {e}")
+                            raise NotionClientException("Notion API request timed out") from e
+                    except httpx.HTTPStatusError as e:
+                        failure = self._status_failure(e.response, "read page children", attempt)
+                        if attempt == self.retries - 1:
+                            raise failure from e
                     except httpx.HTTPError as e:
-                        logger.warning(f"Notion HTTP Error (attempt {attempt + 1}/{self.retries}): {url} - {e}")
+                        logger.warning("Notion page-children network failure: %s", type(e).__name__)
                         if attempt == self.retries - 1:
-                            raise NotionClientException(f"Failed to fetch page children: {e}")
+                            raise NotionClientException("Notion API network request failed") from e
                             
                     await asyncio.sleep(1)
 
-        raise NotionClientException(f"Child database '{database_title}' not found in page {page_id}")
+        raise NotionClientException(f"Child database '{database_title}' not found in the selected page")
 
     async def get_database_schema(self, database_id: str) -> Dict[str, Any]:
         """Fetches the schema (properties) of a Notion database."""
@@ -120,13 +130,17 @@ class NotionClient:
                     data = response.json()
                     return data.get("properties", {})
                 except httpx.TimeoutException as e:
-                    logger.warning(f"Notion HTTP Timeout (attempt {attempt + 1}/{self.retries}): {url}")
+                    logger.warning("Notion schema timeout (attempt %d/%d)", attempt + 1, self.retries)
                     if attempt == self.retries - 1:
-                        raise NotionClientException(f"Timeout: {e}")
+                        raise NotionClientException("Notion API request timed out") from e
+                except httpx.HTTPStatusError as e:
+                    failure = self._status_failure(e.response, "read database schema", attempt)
+                    if attempt == self.retries - 1:
+                        raise failure from e
                 except httpx.HTTPError as e:
-                    logger.warning(f"Notion HTTP Error (attempt {attempt + 1}/{self.retries}): {url} - {e}")
+                    logger.warning("Notion schema network failure: %s", type(e).__name__)
                     if attempt == self.retries - 1:
-                        raise NotionClientException(f"Failed to fetch database schema: {e}")
+                        raise NotionClientException("Notion API network request failed") from e
                         
                 await asyncio.sleep(1)
 

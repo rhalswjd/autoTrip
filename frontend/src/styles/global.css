@@ -8,26 +8,134 @@ body {
   font-family: var(--font-family-system);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-normal);
   color: var(--color-text-primary);
   background: var(--color-bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
 }
 
-::selection { background: var(--color-state-selection); color: var(--color-text-primary); }
+/* Selection */
+::selection {
+  background: var(--color-state-selection);
+  color: var(--color-text-primary);
+}
 
+/* Focus ring — use box-shadow so it works on non-rectangular shapes */
 :focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-focus-ring);
   border-radius: var(--radius-sm);
 }
 
-::-webkit-scrollbar { width: 6px; }
+/* Scrollbar — thin and unobtrusive */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-pill); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  transition: background var(--duration-fast) var(--ease-default);
+}
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
 
+/* Accessibility */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ─── Typography Utility Classes ─── */
+/* Apple rule: tracking is size-specific — never one value for all sizes */
+
+.text-display {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-display);
+  letter-spacing: var(--letter-spacing-display);
+  font-optical-sizing: auto;
+}
+
+.text-title-1 {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-title-1);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-title);
+}
+
+.text-title-2 {
+  font-size: var(--font-size-title-2);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.text-title-3 {
+  font-size: var(--font-size-title-3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.text-headline {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-body {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-footnote {
+  font-size: var(--font-size-footnote);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.text-caption {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.text-caps {
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-caps);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ─── Reduced Motion ─── */
+/*
+ * Apple rule: reduced-motion ≠ no feedback.
+ * Replace slides/springs with cross-fades. Keep opacity/color changes.
+ * Drop elastic overshoot. Keep instant pointer-down feedback.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    /* Don't zero out — use a very short fade instead */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced transparency — solid surfaces, no blur */
+@media (prefers-reduced-transparency: reduce) {
+  .material-thin,
+  .material-regular,
+  .material-thick {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }

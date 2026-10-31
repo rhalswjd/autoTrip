@@ -6,30 +6,55 @@
 }
 
 /* ─── Sidebar (Left Panel) ─── */
+/*
+ * Apple material rule: translucent sidebar = lighter material (less backdrop blur).
+ * Content scrolls underneath, visible through the frosted glass.
+ * A bright top-edge border simulates light hitting the material surface.
+ * Never stack two translucent surfaces of the same weight.
+ */
 .sidebar {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
   height: 100vh;
-  background: var(--color-bg-sidebar);
+  background: var(--material-bg-regular);
   backdrop-filter: var(--material-regular);
   -webkit-backdrop-filter: var(--material-regular);
-  border-right: 1px solid var(--color-border);
+  border-right: var(--material-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  position: relative;
+  z-index: 10;
+}
+
+/* Scroll-edge fade: content blurs into chrome rather than a hard divider */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: linear-gradient(to bottom, transparent, var(--material-bg-regular));
+  pointer-events: none;
+  z-index: 1;
 }
 
 .sidebar-header {
-  padding: var(--space-6) var(--space-4) var(--space-4);
+  padding: var(--space-16) var(--space-12) var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .sidebar-logo {
-  font-size: var(--font-size-sm);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-headline);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-secondary);
-  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 /* ─── Sidebar Navigation ─── */
@@ -37,22 +62,36 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-8);
 }
 
+/*
+ * Apple: respond on pointer-down, not release. Use transition-instant.
+ * Enter/exit along the same path — background fades in-place (no slide).
+ */
 .sidebar-nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-footnote);
   font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--color-text-secondary);
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--duration-fast) var(--easing-default),
-              color var(--duration-fast) var(--easing-default);
+  /* Two independent transitions — background and color can settle at different rates */
+  transition:
+    background var(--duration-instant) var(--ease-press),
+    color var(--duration-instant) var(--ease-press);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pointer-down feedback — instant, 1:1 with gesture */
+.sidebar-nav-item:active {
+  background: var(--color-state-pressed) !important;
 }
 
 .sidebar-nav-item:hover {
@@ -62,7 +101,7 @@
 
 .sidebar-nav-item.active {
   background: var(--sidebar-active-bg);
-  color: var(--color-text-primary);
+  color: var(--color-primary);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -70,20 +109,37 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  /* Icon color tracks parent color transition */
+  transition: color var(--duration-instant) var(--ease-press);
 }
 
 /* ─── Sidebar Divider ─── */
 .sidebar-divider {
   height: 1px;
   background: var(--color-divider);
-  margin: var(--space-3) var(--space-4);
+  margin: var(--space-8) var(--space-12);
 }
 
 /* ─── Sidebar Content (page-specific) ─── */
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 var(--space-2);
+  padding: var(--space-4) var(--space-8);
+  /* Mask top/bottom edges for smooth scroll-edge effect instead of hard clip */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--space-8),
+    black calc(100% - var(--space-32)),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--space-8),
+    black calc(100% - var(--space-32)),
+    transparent 100%
+  );
 }
 
 /* ─── Detail Panel (Right Panel) ─── */
@@ -93,11 +149,13 @@
   flex-direction: column;
   overflow-y: auto;
   background: var(--color-bg-base);
+  /* Subtle inner shadow where sidebar meets panel — not a hard divider */
+  box-shadow: inset 4px 0 8px -4px rgba(0, 0, 0, 0.04);
 }
 
 .detail-panel-inner {
   max-width: var(--content-max-width);
-  padding: var(--space-8) var(--space-6);
+  padding: var(--space-32) var(--space-24);
 }
 
 /* ─── Placeholder ─── */
@@ -108,26 +166,78 @@
   justify-content: center;
   height: 100%;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  gap: var(--space-2);
+  font-size: var(--font-size-footnote);
+  gap: var(--space-8);
+  text-align: center;
+  padding: var(--space-48);
 }
 
 .placeholder-icon {
-  width: 32px;
-  height: 32px;
-  opacity: 0.4;
+  width: 36px;
+  height: 36px;
+  opacity: 0.35;
 }
 
 .placeholder-text {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-footnote);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--color-text-tertiary);
 }
 
+/* ─── Material utility classes ─── */
+/*
+ * Apply to floating panels, sheets, popovers.
+ * Bigger = thicker blur + deeper shadow (more visual weight = more separation).
+ */
+.material-thin {
+  background: var(--material-bg-thin);
+  backdrop-filter: var(--material-thin);
+  -webkit-backdrop-filter: var(--material-thin);
+  border: var(--material-border);
+}
+
+.material-regular {
+  background: var(--material-bg-regular);
+  backdrop-filter: var(--material-regular);
+  -webkit-backdrop-filter: var(--material-regular);
+  border-top: var(--material-border-top);
+  border: var(--material-border);
+}
+
+.material-thick {
+  background: var(--material-bg-thick);
+  backdrop-filter: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-thick);
+  border-top: var(--material-border-top);
+  border: var(--material-border);
+  box-shadow: var(--elevation-modal);
+}
+
 /* ─── Reduced Motion ─── */
+/*
+ * Replace slides/springs with short opacity cross-fades.
+ * Keep color and size changes that aid comprehension.
+ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .sidebar,
+  .sidebar-nav-item,
+  .detail-panel {
+    transition: none !important;
+  }
+}
+
+/* Reduced transparency — solid sidebar, no blur */
+@media (prefers-reduced-transparency: reduce) {
+  .sidebar {
+    background: var(--color-bg-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .sidebar::after {
+    display: none;
+  }
+  .sidebar-content {
+    mask-image: none;
+    -webkit-mask-image: none;
   }
 }

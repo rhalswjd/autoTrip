@@ -7,6 +7,17 @@ venv/
 env/
 ENV/
 .venv/
+.venv*/
+
+# Local-only investigations, backups, provider dumps and audit output
+/.local/
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+**/storage-state*.json
+**/storage_state*.json
 
 # Python
 __pycache__/
@@ -61,6 +72,9 @@ Icon
 *.db
 *.sqlite
 *.sqlite3
+*.db-*
+*.sqlite-*
+*.sqlite3-*
 
 # Node / Frontend
 node_modules/
@@ -92,9 +106,7 @@ autotrip_bus.db
 
 # Temporary testing & scripting files
 analyze_direct*.py
-test_*.py
-**/test*.py
-!backend/tests/test_*.py
+# Tests are intentionally NOT ignored: nested regression/security suites belong in Git.
 emulate_react*.js
 test_timeline.js
 test_render.js
@@ -112,3 +124,10 @@ response*.json
 *.html
 *.png
 !frontend/index.html
+!backend/tests/**/*.html
+!backend/tests/**/*.png
+!frontend/public/**/*.png
+!frontend/src/**/*.png
+
+# Private local engineering retrospective
+docs/troubleshooting.md

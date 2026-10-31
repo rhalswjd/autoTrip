@@ -5,9 +5,10 @@ from domain.enums import SearchMode
 from domain.route import Route
 from application.ports.scraper_port import ScraperPort
 from application.ports.cache_port import CachePort
-from core.exceptions import DomainException
+from domain.exceptions import DomainException
 
 from core.logger import logger
+from application.services.route_families import group_route_families, categorize_routes
 
 class SearchModeResolver:
     @staticmethod
@@ -35,7 +36,7 @@ class SearchService:
         self.cache_ttl = cache_ttl
         
     def _generate_cache_key(self, request: SearchRequest) -> str:
-        raw_key = f"{request.departure_station}_{request.arrival_station}_{request.departure_time or 'NONE'}_{request.departure_date or 'NONE'}"
+        raw_key = f"families-v2_{request.departure_station}_{request.arrival_station}_{request.departure_time or 'NONE'}_{request.departure_date or 'NONE'}"
         return hashlib.md5(raw_key.encode()).hexdigest()
 
     async def _get_jp_name(self, name_en: str) -> str:
@@ -98,6 +99,8 @@ class SearchService:
         
         if request.departure_station == request.arrival_station:
             raise DomainException("Departure and arrival stations cannot be the same.")
+        if not request.departure_date or not request.departure_time:
+            raise DomainException("Route search requires an explicit departure date and time.")
 
         cache_key = self._generate_cache_key(request)
         cached_routes = await self.cache_port.get(cache_key)
@@ -124,8 +127,20 @@ class SearchService:
         
         if not routes:
             return []
+
+        # The application request is the source of truth for both the cached route
+        # and every later exact-date timetable lookup.
+        routes = [
+            route.model_copy(update={
+                "search_date": request.departure_date,
+                "search_time": request.departure_time,
+            })
+            for route in routes
+        ]
             
-        await self._populate_independent_fares(routes, request.departure_time, request.departure_date)
+        # Route fares describe the discovery sample only. Re-searching every raw
+        # segment amplified requests and still could not price a later selected train.
+        routes = categorize_routes(group_route_families(routes))
             
         await self.cache_port.set(cache_key, routes, ttl_seconds=self.cache_ttl)
         for r in routes:
@@ -134,14 +149,7 @@ class SearchService:
         return routes
 
     async def get_route(self, route_id: str) -> Route:
-        return Route(
-            id=route_id,
-            departure_station="MockDep",
-            arrival_station="MockArr",
-            railway_name="Mock Railway",
-            total_duration="1h",
-            total_fare=500,
-            transfer_count=0,
-            polyline="mock_polyline",
-            stations=[]
-        )
+        route = await self.cache_port.get(route_id)
+        if not isinstance(route, Route):
+            raise DomainException("Route expired or missing; search again")
+        return route

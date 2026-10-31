@@ -1,9 +1,8 @@
 import React from 'react';
 import type { Route, RouteSegment } from '../../../api/types';
-import { TrainFront, BusFront, Footprints, AlertCircle } from 'lucide-react';
+import { TrainFront, BusFront, Footprints } from 'lucide-react';
 import './RouteTimelineV2.css';
 import { getLineColor } from './utils';
-import { usePlannerRoute } from '../../../hooks';
 
 export interface RouteTimelineV2Props {
   route: Route;
@@ -16,9 +15,7 @@ function getPrimaryRouteIcon(segments: RouteSegment[]) {
 }
 
 export function RouteTimelineV2({ route }: RouteTimelineV2Props) {
-  const { data: plannerRoute, isLoading, error } = usePlannerRoute(route.id);
-
-  const activeRoute = (plannerRoute && !error) ? plannerRoute : route;
+  const activeRoute = route;
   const { stations = [], segments = [], planner_metadata } = activeRoute;
 
   return (
@@ -27,8 +24,6 @@ export function RouteTimelineV2({ route }: RouteTimelineV2Props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {getPrimaryRouteIcon(segments)}
           <span className="rt-header-title">Route Detail</span>
-          {isLoading && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Loading planner...</span>}
-          {error && <AlertCircle size={14} color="var(--color-danger)" />}
         </div>
         {planner_metadata && (
           <div style={{ display: 'flex', gap: '6px' }}>

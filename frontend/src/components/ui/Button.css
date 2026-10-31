@@ -1,34 +1,51 @@
+/*
+ * Apple rule: respond on pointer-down, not release.
+ * Scale feedback on :active — instant, continuous, 1:1 with gesture.
+ * Use transition-instant for hover/press; transition-fast for value changes.
+ * Avoid animating anything on click-completion — it's already too late.
+ */
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-8);
+  gap: var(--space-6);
   border-radius: var(--radius-md);
   font-family: var(--font-family-system);
   font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-normal);
   cursor: pointer;
   border: 1px solid transparent;
-  transition: var(--transition-fast);
+  /* Two properties, two speeds: color snaps; background eases */
+  transition:
+    background var(--duration-instant) var(--ease-press),
+    color var(--duration-instant) var(--ease-press),
+    box-shadow var(--duration-fast) var(--ease-default),
+    transform var(--duration-instant) var(--ease-press);
   white-space: nowrap;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 
+/* Pointer-down: scale shrinks instantly — 1:1 with press */
 .btn:active:not(:disabled) {
-  transform: var(--motion-scale-in);
+  transform: scale(var(--scale-press));
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* Sizes */
 .btn-sm {
-  height: 24px;
-  padding: 0 var(--space-8);
+  height: 26px;
+  padding: 0 var(--space-10, 10px);
   font-size: var(--font-size-caption);
   border-radius: var(--radius-sm);
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .btn-md {
@@ -47,10 +64,11 @@
 .btn-primary {
   background: var(--button-bg-primary);
   color: var(--button-text-primary);
-  box-shadow: var(--elevation-raised);
+  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3), 0 0 0 1px rgba(0, 122, 255, 0.15);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--button-bg-primary-hover);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35), 0 0 0 1px rgba(0, 122, 255, 0.2);
 }
 
 .btn-secondary {
@@ -63,22 +81,33 @@
 
 .btn-ghost {
   background: transparent;
-  color: var(--button-text-secondary);
+  color: var(--color-text-secondary);
 }
 .btn-ghost:hover:not(:disabled) {
   background: var(--button-bg-secondary-hover);
-  color: var(--button-text-primary);
+  color: var(--color-text-primary);
 }
 
 .btn-danger {
   background: var(--button-bg-danger);
   color: var(--button-text-danger);
-  box-shadow: var(--elevation-raised);
+  box-shadow: 0 1px 3px rgba(255, 59, 48, 0.3);
 }
 .btn-danger:hover:not(:disabled) {
   background: var(--button-bg-danger-hover);
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.35);
 }
 
 .btn-loading {
   pointer-events: none;
+}
+
+/* Reduced motion: keep the background color change, drop the scale */
+@media (prefers-reduced-motion: reduce) {
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
+  .btn {
+    transition: background var(--duration-fast) var(--ease-default);
+  }
 }

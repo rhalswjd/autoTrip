@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from typing import List, Optional
+from typing import List
 from api.schemas import RouteResponseSchema, ERROR_RESPONSES
 from application.services.search_service import SearchService
 from api.dependencies import get_search_service
@@ -11,14 +11,14 @@ router = APIRouter(prefix="/search", tags=["Search"])
     "", 
     response_model=List[RouteResponseSchema],
     summary="Search for Railway Routes",
-    description="Searches for train routes between two stations based on optional time and date. Utilizes an internal cache to reduce external scraper load.",
+    description="Searches for train routes between two stations for an explicit departure date and time. Utilizes an internal cache to reduce external scraper load.",
     responses=ERROR_RESPONSES
 )
 async def search_routes(
     departure_station: str = Query(..., description="The departure station name.", json_schema_extra={"examples": ["Osaka"]}),
     arrival_station: str = Query(..., description="The arrival station name.", json_schema_extra={"examples": ["Kyoto"]}),
-    departure_time: Optional[str] = Query(None, description="Departure time in HH:MM format.", json_schema_extra={"examples": ["10:00"]}),
-    departure_date: Optional[str] = Query(None, description="Departure date in YYYY-MM-DD format.", json_schema_extra={"examples": ["2024-10-01"]}),
+    departure_time: str = Query(..., pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$", description="Departure time in HH:MM format.", json_schema_extra={"examples": ["10:00"]}),
+    departure_date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$", description="Departure date in YYYY-MM-DD format.", json_schema_extra={"examples": ["2024-10-01"]}),
     service: SearchService = Depends(get_search_service)
 ):
     req = SearchRequest(

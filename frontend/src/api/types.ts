@@ -28,6 +28,9 @@ export interface ScheduleCandidate {
 }
 
 export interface RouteSegment {
+  railway_id: string;
+  departure_time: string;
+  arrival_time: string;
   segment_type: string;
   railway_name: string;
   railway_name_jp: string;
@@ -47,20 +50,42 @@ export interface PlannerMetadata {
 }
 
 export interface Route {
+  timing_status: string;
+  passenger_legs: PassengerLeg[];
+  family_key: string;
+  categories: string[];
+  waiting_duration: string;
+  fare_status: string;
   id: string;
   departure_station: string;
   arrival_station: string;
   railway_name: string;
+  departure_time: string;
+  arrival_time: string;
   total_duration: string;
+  onboard_duration: string;
+  non_riding_duration: string;
   total_fare: number;
   transfer_count: number;
   polyline: string;
+  search_date?: string;
+  search_time?: string;
+  search_source?: string;
+  source_rank?: number;
   stations: Station[];
   segments: RouteSegment[];
   planner_metadata?: PlannerMetadata;
 }
 
 export interface DepartureInfo {
+  operating_date: string;
+  arrival_platform: string;
+  source: string;
+  source_url: string;
+  train_number: string;
+  base_fare: number | null;
+  express_fare: number | null;
+  fare_status: string;
   id: string;
   time: string;
   arrival_time?: string;
@@ -72,19 +97,30 @@ export interface DepartureInfo {
 }
 
 export interface Timetable {
+  source: string;
+  source_url: string;
+  status: string;
+  message: string;
+  complete: boolean;
+  next_cursor: number | null;
+  total_candidates: number;
   route_id: string;
+  selected_calendar: 'weekday' | 'saturday' | 'holiday';
   weekday: DepartureInfo[];
   saturday: DepartureInfo[];
   holiday: DepartureInfo[];
 }
 
 export interface LegSelection {
+  passenger_leg_index?: number;
+  exact_departure_id?: string;
   segment_index: number;
   departure_station: string;
   arrival_station: string;
   departure_time: string;
   arrival_time?: string;
   transport_name?: string;
+  railway_name?: string;
   platform?: number;
   base_fare?: number;
   express_fare?: number;
@@ -104,6 +140,8 @@ export interface MovementRequest {
 }
 
 export interface MovementResponse {
+  parent_page_id?: string | null;
+  child_page_ids?: string[];
   route_id: string;
   departure_station: string;
   arrival_station: string;
@@ -112,6 +150,21 @@ export interface MovementResponse {
   search_mode: string;
   status: string;
   notion_url: string;
+}
+
+export interface PassengerLeg {
+  index: number;
+  raw_segment_indices: number[];
+  departure_station: Station;
+  arrival_station: Station;
+  segment_type: string;
+  railway_names: string[];
+  railway_names_jp: string[];
+  through_boundaries: Station[];
+  has_seat_selection: boolean;
+  departure_time: string;
+  arrival_time: string;
+  duration: string;
 }
 
 export interface StationSearchResult {
@@ -124,6 +177,6 @@ export interface StationSearchResult {
 export interface SearchParams {
   departure_station: string;
   arrival_station: string;
-  departure_time?: string;
-  departure_date?: string;
+  departure_time: string;
+  departure_date: string;
 }

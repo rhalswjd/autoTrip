@@ -1,6 +1,9 @@
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 import logging
+import re
+from datetime import date
+from domain.journey import canonical_station, station_names_match
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +45,7 @@ class JROdekakeParser:
             if name_div:
                 span = name_div.find('span')
                 if span:
-                    train_type = span.get_text(strip=True)
+                    train_type = name_div.get_text(strip=True)
                     train_type_classes = span.get('class', [])
                 else:
                     train_type = name_div.get_text(strip=True)
@@ -76,7 +79,7 @@ class JROdekakeParser:
             metadata.update(data_attrs)
             
             departures.append({
-                "time": departure_time,
+                "time": departure_time.zfill(5),
                 "train_name": train_type, # JR Odekake에서는 '普通', '快速' 등이 train-name div에 들어감
                 "destination": destination.replace('行', ''), # '行' 제거
                 "platform": platform,
@@ -85,3 +88,86 @@ class JROdekakeParser:
             
         logger.info(f"[JROdekakeParser] Parsed {len(departures)} departures.")
         return departures
+
+    def parse_train(self, html: str, departure: str, arrival: str, search_date: str | None = None) -> Dict[str, Any]:
+        """Read exact stops only; the pass-through marker レ is not a station call."""
+        soup = BeautifulSoup(html, "html.parser")
+        if search_date:
+            requested = date.fromisoformat(search_date)
+            calendars = soup.select('tr.month')
+            for heading in calendars:
+                month = re.search(r'(\d{4})年(\d{1,2})月', heading.get_text())
+                if not month or (int(month[1]), int(month[2])) != (requested.year, requested.month):
+                    continue
+                table = heading.find_parent('table')
+                day_cell = next((cell for cell in table.select('tr.day td')
+                                 if cell.get_text(strip=True) == str(requested.day)), None)
+                if day_cell is None or 'drivingday-01' not in day_cell.get('class', []):
+                    return {}
+                break
+            else:
+                if calendars:
+                    return {}  # Outside the published operating calendar.
+        info = {}
+        for row in soup.select("tbody.train-details tr"):
+            heading, values = row.find("th"), row.find_all("td", recursive=False)
+            if heading and values:
+                info[heading.get_text(strip=True)] = [value.get_text(" ", strip=True) for value in values]
+        stops = []
+        active_column = None
+        boarded_column = None
+        through_boundaries = []
+        visited_columns = []
+        for row in soup.select("tbody.time-details tr"):
+            cells = row.find_all("td", recursive=False)
+            if len(cells) < 2:
+                continue
+            station = canonical_station(cells[0].get_text(strip=True))
+            columns = [(cells[index].get_text("", strip=True),
+                        cells[index + 1].get_text(strip=True) if index + 1 < len(cells) else "")
+                       for index in range(1, len(cells), 2)]
+            if active_column is None:
+                if not station_names_match(departure, station):
+                    continue
+                boarding_columns = [index for index, (text, _) in enumerate(columns)
+                                    if re.search(r'\d{1,2}:\d{2}発', text)]
+                if len(boarding_columns) != 1:
+                    return {}  # Ambiguous parallel departures are not interchangeable.
+                active_column = boarded_column = boarding_columns[0]
+                visited_columns.append(active_column)
+            if active_column >= len(columns):
+                continue
+            text, platform = columns[active_column]
+            arrive = re.search(r"(\d{1,2}:\d{2})着", text)
+            depart = re.search(r"(\d{1,2}:\d{2})発", text)
+            if '直通' in text and not depart:
+                continuations = [(index, value, track) for index, (value, track) in enumerate(columns)
+                                 if index != active_column and '直通' in value
+                                 and re.search(r'\d{1,2}:\d{2}発', value)]
+                if len(continuations) == 1:
+                    active_column, continuation, _ = continuations[0]
+                    depart = re.search(r"(\d{1,2}:\d{2})発", continuation)
+                    visited_columns.append(active_column)
+                    through_boundaries.append(station)
+            if not arrive and not depart:
+                continue
+            stops.append({"station": station,
+                          "arrival": arrive[1].zfill(5) if arrive else "",
+                          "departure": depart[1].zfill(5) if depart else "",
+                          "platform": platform})
+        origin = next((i for i, s in enumerate(stops) if station_names_match(departure, s["station"])), None)
+        target = next((i for i, s in enumerate(stops) if station_names_match(arrival, s["station"])), None)
+        if origin is None or target is None or target <= origin:
+            return {}
+        if not stops[origin]["departure"] or not stops[target]["arrival"]:
+            return {}
+        def value_at(label, column):
+            values = info.get(label, [])
+            return values[column] if column is not None and column < len(values) else ""
+
+        return {"departure_time": stops[origin]["departure"], "arrival_time": stops[target]["arrival"],
+                "platform": stops[origin]["platform"], "arrival_platform": stops[target]["platform"],
+                "train_name": value_at("列車名", boarded_column) or value_at("列車種別", boarded_column),
+                "train_number": " / ".join(filter(None, (value_at("列車番号", column) for column in visited_columns))),
+                "stop_sequence": [s["station"] for s in stops], "stops": stops,
+                "through_boundaries": through_boundaries}

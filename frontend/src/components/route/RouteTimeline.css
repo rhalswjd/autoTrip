@@ -26,6 +26,11 @@
 }
 
 /* ─── Route Card ─── */
+/*
+ * Apple: respond on pointer-down (not release).
+ * Scale gives immediate 1:1 tactile feedback — don't wait for click completion.
+ * Selected state expands in-place (spatial consistency — no positional jump).
+ */
 .route-card {
   display: flex;
   flex-direction: column;
@@ -33,6 +38,17 @@
   padding: var(--space-16);
   cursor: pointer;
   outline: none;
+  /* Background and transform tracked independently — each can settle at its own rate */
+  transition:
+    background var(--duration-instant) var(--ease-press),
+    transform var(--duration-instant) var(--ease-press),
+    box-shadow var(--duration-fast) var(--ease-default);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Pointer-down: immediate scale feedback */
+.route-card:active {
+  transform: scale(0.99);
 }
 
 .route-card-header {
@@ -41,11 +57,13 @@
   justify-content: space-between;
 }
 
+/* Duration text — large, so tighten tracking */
 .route-card-duration {
   font-size: var(--font-size-headline);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   letter-spacing: var(--letter-spacing-tight);
+  font-variant-numeric: tabular-nums;
 }
 
 .route-card-meta {
@@ -62,15 +80,18 @@
 
 .route-card-route-name {
   font-size: var(--font-size-footnote);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
 }
 
+/* Fare uses monospaced — tabular digits align across cards */
 .route-card-fare {
   font-size: var(--font-size-footnote);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─── Route Timeline ─── */
@@ -92,6 +113,7 @@
 .route-timeline-title {
   font-size: var(--font-size-headline);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-primary);
 }
 
@@ -215,12 +237,14 @@
 .timeline-station-name {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-normal);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
 }
 
 .timeline-station-platform {
   font-size: var(--font-size-caption);
+  letter-spacing: var(--letter-spacing-wide);
   color: var(--color-text-tertiary);
 }
 
@@ -283,15 +307,17 @@
   padding: var(--space-20);
   background: var(--color-bg-surface);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
   margin-top: var(--space-24);
 }
 
+/* Caps labels — slight positive tracking for legibility at small size */
 .route-summary-title {
-  font-size: var(--font-size-footnote);
+  font-size: var(--font-size-caption);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-caps);
 }
 
 .route-summary-grid {
@@ -350,19 +376,24 @@
 }
 
 /* ─── Route Detail Section inside Detail Panel ─── */
+/*
+ * Hint in the direction: content arrives from slightly below (translateY),
+ * suggesting it's coming up from beneath the screen.
+ * No overshoot here — this isn't a gesture-driven interaction.
+ */
 .route-detail-section {
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
   padding: var(--space-24);
   max-width: var(--content-max-width);
-  animation: route-detail-fade-in var(--duration-normal) var(--ease-slide) forwards;
+  animation: route-detail-arrive var(--duration-normal) var(--ease-slide) both;
 }
 
-@keyframes route-detail-fade-in {
+@keyframes route-detail-arrive {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -395,5 +426,11 @@
 @media (prefers-reduced-motion: reduce) {
   .route-detail-section {
     animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .route-card {
+    transition: background var(--duration-fast) var(--ease-default);
+    transform: none !important;
   }
 }

@@ -1,18 +1,50 @@
+/*
+ * Apple: A modal task pairs the surface with a dimming scrim and
+ * "pushes the background back/down" — not just darkens it.
+ * The overlay both dims AND applies a slight blur to the background,
+ * creating the illusion that the layer system has depth.
+ *
+ * backdrop-filter here blurs the underlying content (the main UI),
+ * reinforcing that the modal is "above" everything else spatially.
+ */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay, 200);
   background: var(--overlay-bg);
-  backdrop-filter: var(--material-thick);
-  -webkit-backdrop-filter: var(--material-thick);
-  animation: overlay-fade-in var(--duration-normal) var(--ease-fade) forwards;
+  /* Blur the background content — visually pushes it back */
+  backdrop-filter: blur(4px) saturate(80%);
+  -webkit-backdrop-filter: blur(4px) saturate(80%);
+  animation: overlay-appear var(--duration-normal) var(--ease-default) both;
 }
 
-@keyframes overlay-fade-in {
+.overlay.overlay-exit {
+  animation: overlay-disappear var(--duration-fast) var(--ease-default) both;
+}
+
+@keyframes overlay-appear {
   from {
     opacity: 0;
+    backdrop-filter: blur(0px) saturate(100%);
+    -webkit-backdrop-filter: blur(0px) saturate(100%);
   }
   to {
     opacity: 1;
+    backdrop-filter: blur(4px) saturate(80%);
+    -webkit-backdrop-filter: blur(4px) saturate(80%);
+  }
+}
+
+@keyframes overlay-disappear {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Reduced motion: simple opacity fade, no blur animation */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    animation-duration: 0.01ms !important;
   }
 }

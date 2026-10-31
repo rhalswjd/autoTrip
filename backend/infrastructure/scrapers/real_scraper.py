@@ -32,7 +32,15 @@ class RealScraperAdapter(ScraperPort):
         except InfrastructureException as e:
             raise ScraperException(f"Route search failed: {str(e)}") from e
         
-    async def get_timetable(self, route_id: str) -> Timetable:
+    async def get_timetable(
+        self,
+        route_id: str,
+        departure: str = "",
+        arrival: str = "",
+        timetable_id: str | None = None,
+        railway_name_jp: str = "",
+        search_date: str | None = None,
+    ) -> Timetable:
         try:
             # 1. Fetch HTML
             html = await self.http_client.get(f"{self.base_url}timetable", params={"id": route_id})

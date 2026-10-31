@@ -23,6 +23,9 @@ from infrastructure.scrapers.timetable.odekake_scraper import JROdekakeTimetable
 from infrastructure.adapters.yahoo_timetable_source import YahooTimetableSource
 
 from core.config import settings
+from functools import lru_cache
+from infrastructure.adapters.transport_scraper import TransportScraperAdapter
+from infrastructure.scrapers.timetable.odekake_downloader import JROdekakeDownloader
 
 # --- Configuration Toggle for Dependency Injection ---
 USE_REAL_SCRAPER = settings.use_real_scraper
@@ -40,10 +43,13 @@ sqlite_station_repo = SqliteStationRepository(db_path=settings.sqlite_station_db
 
 from infrastructure.scrapers.timetable.yahoo_timetable_scraper import YahooTimetableScraper
 
+@lru_cache
 def get_scraper_port() -> ScraperPort:
     if USE_REAL_SCRAPER:
-        timetable_scraper_facade = YahooTimetableScraper()
-        return YahooTransitAdapter(timetable_scraper_facade)
+        yahoo = YahooTimetableScraper()
+        official = JROdekakeTimetableScraper(JROdekakeDownloader(cache=get_cache_port()))
+        return TransportScraperAdapter(YahooTransitAdapter(yahoo), official, yahoo,
+                                       official_metrics=official.downloader.statistics)
     return fake_scraper
 
 def get_notion_port() -> NotionPort:
