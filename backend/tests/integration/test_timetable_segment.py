@@ -79,6 +79,7 @@ def test_get_entire_timetable(mock_cache, mock_scraper):
         timetable_id=None,
         railway_name_jp="新幹線",
         search_date="2026-08-26",
+        station_context=(mock_cache.get.return_value.stations[0], mock_cache.get.return_value.stations[1]),
     )
     
     teardown_dependencies()
@@ -97,6 +98,7 @@ def test_get_segment_timetable_0(mock_cache, mock_scraper):
         timetable_id="12345",
         railway_name_jp="新幹線",
         search_date="2026-08-26",
+        station_context=(mock_cache.get.return_value.stations[0], mock_cache.get.return_value.stations[1]),
     )
     
     teardown_dependencies()
@@ -115,6 +117,7 @@ def test_get_segment_timetable_1(mock_cache, mock_scraper):
         timetable_id="67890",
         railway_name_jp="スーパーおき",
         search_date="2026-08-26",
+        station_context=(mock_cache.get.return_value.stations[1], mock_cache.get.return_value.stations[2]),
     )
     
     teardown_dependencies()

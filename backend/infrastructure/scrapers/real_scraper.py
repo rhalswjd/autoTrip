@@ -40,6 +40,8 @@ class RealScraperAdapter(ScraperPort):
         timetable_id: str | None = None,
         railway_name_jp: str = "",
         search_date: str | None = None,
+        station_context=None,
+        not_before=None,
     ) -> Timetable:
         try:
             # 1. Fetch HTML

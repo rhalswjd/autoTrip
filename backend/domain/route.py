@@ -29,6 +29,15 @@ class RouteSegment(BaseModel):
     has_seat_selection: bool = False
     selected_seat: Optional[SeatPreference] = None
 
+class FareBreakdown(BaseModel):
+    """Source-proven quote; seat basis is not a separate seat surcharge."""
+    base: Optional[int] = None
+    surcharge: Optional[int] = None
+    seat_supplement: Optional[int] = None
+    total: Optional[int] = None
+    seat_basis: str = ''
+
+
 class Route(BaseModel):
     """
     Represents a pure, physical railway route.
@@ -58,7 +67,11 @@ class Route(BaseModel):
     categories: List[str] = []
     waiting_duration: str = ""
     fare_status: str = "indicative"
+    fare_breakdown: Optional[FareBreakdown] = None
     timing_status: str = "indicative"
+    result_kind: str = 'requested'
+    alternative_reason: str = ''
+    evidence_url: str = ''
 
     @computed_field
     @property

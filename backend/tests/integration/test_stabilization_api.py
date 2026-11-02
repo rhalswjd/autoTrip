@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from api.dependencies import get_cache_port, get_scraper_port, get_notion_port
-from api.schemas import RouteResponseSchema, RouteSegmentSchema, DepartureInfoSchema, TimetableResponseSchema
+from api.dependencies import get_cache_port, get_scraper_port, get_notion_port, get_station_repository_port
+from api.schemas import RouteResponseSchema, RouteSegmentSchema, DepartureInfoSchema, TimetableResponseSchema, StationSearchResponseSchema, StationSchema, SearchRequestSchema, LegSelection
 from domain.timetable import DepartureInfo, Timetable
 from infrastructure.fakes.fake_cache import FakeCacheAdapter
 from infrastructure.notion.notion_mapper import NotionMapper
@@ -28,9 +28,12 @@ def through_api(client):
                 metadata={'stop_sequence': [departure, arrival]})])
     scraper.get_timetable.side_effect = timetable
     notion = AsyncMock()
+    station_repo = AsyncMock()
+    station_repo.search_stations.return_value = []
     notion.save_movement.return_value = {'notion_url': 'https://notion.so/test-only'}
     client.app.dependency_overrides.update({get_cache_port: lambda: cache,
-        get_scraper_port: lambda: scraper, get_notion_port: lambda: notion})
+        get_scraper_port: lambda: scraper, get_notion_port: lambda: notion,
+        get_station_repository_port: lambda: station_repo})
     yield client, scraper, notion
     client.app.dependency_overrides.clear()
 
@@ -48,7 +51,10 @@ def test_real_api_pipeline_uses_passenger_legs_and_safe_notion_mapping(through_a
         timetable = client.get(f"/api/v1/routes/{route['id']}/legs/{index}/timetable")
         assert timetable.status_code == 200
         options.append(timetable.json()['saturday'][0])
-    assert scraper.get_timetable.await_args_list[1].args[1:3] == ('福井', '金沢')
+    # Candidate discovery may independently probe the full destination first.
+    # Exact selection must still fetch precisely the two actual passenger legs.
+    assert [call.args[1:3] for call in scraper.get_timetable.await_args_list[-2:]] == [
+        ('敦賀', '福井'), ('福井', '金沢')]
     legs = [{
         'passenger_leg_index': index, 'segment_index': route['passenger_legs'][index]['raw_segment_indices'][0],
         'exact_departure_id': item['id'], 'departure_station': 'untrusted', 'arrival_station': 'untrusted',
@@ -76,7 +82,9 @@ def test_frontend_contract_exposes_every_public_timetable_and_route_field():
         pytest.skip('Frontend is not mounted in this Docker test environment; run the host contract check')
     source = types_path.read_text()
     for name, schema in [('Route', RouteResponseSchema), ('RouteSegment', RouteSegmentSchema),
-                          ('DepartureInfo', DepartureInfoSchema), ('Timetable', TimetableResponseSchema)]:
+                          ('DepartureInfo', DepartureInfoSchema), ('Timetable', TimetableResponseSchema),
+                          ('StationSearchResult', StationSearchResponseSchema), ('Station', StationSchema),
+                          ('SearchParams', SearchRequestSchema), ('LegSelection', LegSelection)]:
         interface = re.search(r'export interface ' + name + r' \{(.*?)\n\}', source, re.S)
         assert interface
         fields = set(re.findall(r'^\s+(\w+)\??:', interface[1], re.M))

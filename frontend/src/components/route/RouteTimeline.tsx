@@ -1,4 +1,5 @@
 import type { Route, Station, RouteSegment } from '../../api/types';
+import { stationDisplayName } from '../../utils/stationDisplay';
 import { RouteLeg } from './RouteLeg';
 import './RouteTimeline.css';
 
@@ -15,7 +16,7 @@ interface TimelineStop {
 function buildTimelineStops(stations: Station[], segments: RouteSegment[]): TimelineStop[] {
   if (stations.length === 0) return [];
   if (stations.length === 1) {
-    return [{ station: stations[0], type: 'departure', displayName: stations[0].name }];
+    return [{ station: stations[0], type: 'departure', displayName: stationDisplayName(stations[0]) }];
   }
 
   return stations.map((station, index) => {
@@ -32,7 +33,7 @@ function buildTimelineStops(stations: Station[], segments: RouteSegment[]): Time
       }
     }
 
-    return { station, type, displayName: station.name };
+    return { station, type, displayName: stationDisplayName(station) };
   });
 }
 

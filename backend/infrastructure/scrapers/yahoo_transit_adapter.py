@@ -8,14 +8,34 @@ from urllib.parse import urljoin
 import uuid
 
 from application.ports.scraper_port import ScraperPort, ScraperException
-from domain.route import Route, RouteSegment
+from domain.route import Route, RouteSegment, FareBreakdown
 from domain.station import Station
 from domain.timetable import Timetable
 from domain.journey import canonical_station
+from domain.station_identity import qualified_station_name
 from core.logger import logger
 
 class YahooTransitAdapter(ScraperPort):
     MAX_PAGES_PER_SOURCE = 2
+
+    @staticmethod
+    def station_alias(name: str) -> str:
+        return qualified_station_name(name)
+
+    @staticmethod
+    def _fare_breakdown(summary: dict, edges: list) -> FareBreakdown:
+        def amount(value):
+            digits = str(value or '').replace(',', '')
+            return int(digits) if digits.isdigit() else None
+        detail = str(summary.get('totalPriceDetail') or '')
+        base = re.search(r'乗車券([0-9,]+)円', detail)
+        surcharge = re.search(r'特別料金([0-9,]+)円', detail)
+        seats = list(dict.fromkeys(str((e.get('priceInfo') or {}).get('expType')) for e in edges
+                                 if (e.get('priceInfo') or {}).get('expType')
+                                 and (amount((e.get('priceInfo') or {}).get('expPrice')) or 0) > 0))
+        return FareBreakdown(total=amount(summary.get('totalPrice')),
+            base=amount(base.group(1)) if base else None,
+            surcharge=amount(surcharge.group(1)) if surcharge else None, seat_basis=' / '.join(seats))
 
     def __init__(self, timetable_scraper=None):
         self.timetable_scraper = timetable_scraper
@@ -121,6 +141,9 @@ class YahooTransitAdapter(ScraperPort):
             fare_text = fare_elem.text if fare_elem else summary.text
             fare_match = re.search(r'([0-9,]+)円', fare_text)
             fare = int(fare_match.group(1).replace(',', '')) if fare_match else 0
+            fare_breakdown = self._fare_breakdown(summary_info, feature.get('edgeInfoList', []))
+            if fare_breakdown.total is not None:
+                fare = fare_breakdown.total
             
             transfer_match = re.search(r'乗換：(\d+)回', fare_text) if not fare_elem else re.search(r'乗換：(\d+)回', summary.text)
             transfers = int(transfer_match.group(1)) if transfer_match else 0
@@ -149,7 +172,9 @@ class YahooTransitAdapter(ScraperPort):
                 en_name = self.translation_service.get_english_name(s_name)
                 edge_station = next((edge for edge in feature.get("edgeInfoList", [])
                                      if canonical_station(str(edge.get("stationName", ""))) == canonical_station(s_name)), {})
-                domain_stations.append(Station(id=str(edge_station.get("stationCode") or ""), name=en_name, name_jp=s_name))
+                station_code = str(edge_station.get("stationCode") or "")
+                domain_stations.append(Station(id=station_code, name=en_name, name_jp=s_name,
+                    provider_ids={'yahoo': station_code} if station_code else {}, provider_aliases={'yahoo': s_name}))
                 
             en_trains = [self.translation_service.translate_train(t) for t in trains]
                 
@@ -275,6 +300,8 @@ class YahooTransitAdapter(ScraperPort):
                 onboard_duration=onboard_duration,
                 non_riding_duration=non_riding_duration,
                 total_fare=fare,
+                fare_breakdown=fare_breakdown,
+                fare_status='indicative' if fare > 0 else 'unknown',
                 transfer_count=transfers,
                 polyline=polyline,
                 search_date=search_date,
@@ -340,8 +367,8 @@ class YahooTransitAdapter(ScraperPort):
             raise ScraperException("Yahoo route search requires an explicit departure date and time")
 
         base_params = {
-            "from": departure, 
-            "to": arrival,
+            "from": self.station_alias(departure),
+            "to": self.station_alias(arrival),
             "shin": "1",
             "ex": "1",
             "hb": "1",
@@ -440,6 +467,8 @@ class YahooTransitAdapter(ScraperPort):
         timetable_id: str | None = None,
         railway_name_jp: str = "",
         search_date: str | None = None,
+        station_context=None,
+        not_before=None,
     ) -> Timetable:
         if not self.timetable_scraper:
             raise NotImplementedError("TimetableScraper not injected")

@@ -33,3 +33,11 @@ docs/troubleshooting.md
 **/dump_*.py
 **/investigate_*.py
 **/tests/manual
+**/test-results
+**/playwright-report
+**/blob-report
+**/playwright-traces
+**/trace*.zip
+**/*.webm
+**/*.har
+**/.DS_Store

@@ -1,15 +1,23 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from domain.route import SeatPreference
+from domain.route import SeatPreference, FareBreakdown
 from domain.journey import PassengerLeg
+from domain.platform import PlatformStatus
 
 class SearchRequestSchema(BaseModel):
+    departure_station_id: Optional[str] = None
+    arrival_station_id: Optional[str] = None
     departure_station: str = Field(..., title="Departure Station", description="The name of the departure station in English.", json_schema_extra={"examples": ["Osaka"]})
     arrival_station: str = Field(..., title="Arrival Station", description="The name of the arrival station in English.", json_schema_extra={"examples": ["Kyoto"]})
     departure_time: str = Field(..., title="Departure Time", description="Departure time in HH:MM format.", json_schema_extra={"examples": ["10:00"]})
     departure_date: str = Field(..., title="Departure Date", description="Departure date in YYYY-MM-DD format.", json_schema_extra={"examples": ["2024-10-01"]})
 
 class StationSchema(BaseModel):
+    display_name_en: str = ''
+    prefecture: str = ''
+    railway_company: str = ''
+    provider_ids: dict[str, str] = Field(default_factory=dict)
+    provider_aliases: dict[str, str] = Field(default_factory=dict)
     id: str = ""
     name_jp: str = ""
     name: str = Field(..., title="Station Name", description="The name of the station.", json_schema_extra={"examples": ["Osaka"]})
@@ -48,6 +56,10 @@ class RouteSegmentSchema(BaseModel):
     schedule_candidates: Optional[List[ScheduleCandidateSchema]] = Field(None, title="Schedule Candidates", description="Optional list of alternative times.")
 
 class RouteResponseSchema(BaseModel):
+    fare_breakdown: Optional[FareBreakdown] = None
+    result_kind: str = 'requested'
+    alternative_reason: str = ''
+    evidence_url: str = ''
     passenger_legs: List[PassengerLeg] = Field(default_factory=list)
     family_key: str = ""
     categories: List[str] = Field(default_factory=list)
@@ -75,6 +87,10 @@ class RouteResponseSchema(BaseModel):
     planner_metadata: Optional[PlannerMetadataSchema] = Field(None, title="Planner Metadata", description="Optional planner state and mode.")
 
 class DepartureInfoSchema(BaseModel):
+    platform_status: PlatformStatus = PlatformStatus.LOOKUP_FAILED
+    arrival_platform_status: PlatformStatus = PlatformStatus.LOOKUP_FAILED
+    departure_datetime: str = ''
+    arrival_datetime: str = ''
     operating_date: str = ""
     arrival_platform: str = ""
     source: str = ""
@@ -93,6 +109,8 @@ class DepartureInfoSchema(BaseModel):
     metadata: dict = Field(default_factory=dict, title="Metadata", description="Additional properties (reserved_seat, cars, remarks, etc).")
 
 class TimetableResponseSchema(BaseModel):
+    search_date: str = ''
+    availability: str = 'SUPPORTED'
     source: str = ""
     source_url: str = ""
     status: str = "available"
@@ -107,6 +125,13 @@ class TimetableResponseSchema(BaseModel):
     holiday: List[DepartureInfoSchema] = Field(default=[], description="Holiday departures")
 
 class LegSelection(BaseModel):
+    source: str = ''
+    platform_status: Optional[PlatformStatus] = None
+    arrival_platform_status: Optional[PlatformStatus] = None
+    arrival_platform: Optional[int | str] = None
+    timetable_date: Optional[str] = None
+    departure_datetime: Optional[str] = None
+    arrival_datetime: Optional[str] = None
     passenger_leg_index: Optional[int] = None
     exact_departure_id: Optional[str] = None
     segment_index: int
@@ -116,7 +141,7 @@ class LegSelection(BaseModel):
     arrival_time: Optional[str] = None
     transport_name: Optional[str] = None
     railway_name: Optional[str] = None
-    platform: Optional[int] = None
+    platform: Optional[int | str] = None
     base_fare: Optional[int] = None
     express_fare: Optional[int] = None
     selected_seat: Optional[SeatPreference] = None
@@ -146,6 +171,13 @@ class MovementResponseSchema(BaseModel):
     child_page_ids: Optional[List[str]] = Field(None, title="Child Page IDs", description="Notion page IDs of the child legs.")
 
 class StationSearchResponseSchema(BaseModel):
+    display_name_en: str = ''
+    prefecture: str = ''
+    region: str = ''
+    railway_company: str = ''
+    display_label: str = ''
+    provider_ids: dict[str, str] = Field(default_factory=dict)
+    provider_aliases: dict[str, str] = Field(default_factory=dict)
     id: str = Field(..., title="Station ID", description="Unique identifier for the station.", json_schema_extra={"examples": ["st_123"]})
     english_name: str = Field(..., title="English Name", description="The English name of the station.", json_schema_extra={"examples": ["Osaka"]})
     japanese_name: str = Field(..., title="Japanese Name", description="The Japanese name of the station.", json_schema_extra={"examples": ["大阪"]})

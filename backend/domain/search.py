@@ -11,6 +11,8 @@ class SearchRequest(BaseModel):
 
     departure_station: str
     arrival_station: str
+    departure_station_id: Optional[str] = None
+    arrival_station_id: Optional[str] = None
     departure_time: Optional[str] = None
     departure_date: Optional[str] = None
 

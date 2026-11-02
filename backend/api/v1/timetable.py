@@ -30,10 +30,12 @@ async def get_passenger_leg_timetable(
     route_id: str,
     leg_index: int = Path(..., ge=0),
     cursor: int = Query(0, ge=0),
+    date: str | None = Query(None, pattern=r'^\d{4}-\d{2}-\d{2}$'),
+    not_before: str | None = Query(None),
     service: TimetableService = Depends(get_timetable_service),
 ):
     try:
-        return await service.get_leg_timetable(route_id, leg_index, cursor)
+        return await service.get_leg_timetable(route_id, leg_index, cursor, service_date=date, not_before=not_before)
     except ValueError as exc:
         from fastapi import HTTPException
         raise HTTPException(status_code=404 if "not found" in str(exc) else 400, detail=str(exc)) from exc

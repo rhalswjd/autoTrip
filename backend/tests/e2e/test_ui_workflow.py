@@ -18,6 +18,9 @@ def page():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={'width': 1440, 'height': 1000})
         page.set_default_timeout(45000)
+        # Later test-specific routes may replace this with a mock response, but
+        # no browser test may accidentally fall through to a real Notion save.
+        page.route('**/api/v1/movements', lambda request: request.abort())
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         yield page
@@ -38,6 +41,35 @@ def search(page, origin, destination, day, time='06:00'):
         page.get_by_role('button', name='Search Routes', exact=True).click()
     page.get_by_test_id('route-family-card').first.wait_for()
     return searched.value.json()
+
+
+@pytest.mark.parametrize('source', ['jr_odekake', 'yahoo'])
+@pytest.mark.parametrize('status', ['SOURCE_NOT_PROVIDED', 'LOOKUP_FAILED'])
+def test_platform_provenance_display_does_not_block_valid_save(page, source, status):
+    route = journey(['Station A', 'Station B'], ['Rail']).model_copy(update={'search_date': '2026-11-02'})
+    exact = DepartureInfo(id='platform-exact', time='08:00', arrival_time='09:00', train_name='Train', source=source,
+        operating_date='2026-11-02', platform='31', platform_status='KNOWN', arrival_platform_status=status)
+    def api(request):
+        path = urlparse(request.request.url).path
+        if path.endswith('/stations/search'):
+            name = parse_qs(urlparse(request.request.url).query)['q'][0]
+            data = [{'id': name, 'english_name': name, 'japanese_name': name}]
+        elif path.endswith('/search'): data = [route.model_dump(mode='json')]
+        elif '/timetable' in path: data = Timetable(route_id=route.id, weekday=[exact]).model_dump(mode='json')
+        else:
+            request.abort(); return
+        request.fulfill(status=200, content_type='application/json', body=json.dumps(data))
+    page.route('**/api/v1/**', api)
+    search(page, 'Station A', 'Station B', '2026-11-02')
+    page.get_by_test_id('route-family-card').first.click()
+    page.get_by_role('button', name='View Timetable').click()
+    card = page.get_by_test_id('departure-card').first
+    card.wait_for()
+    wording = '조회 실패' if status == 'LOOKUP_FAILED' else '공식 정보 미제공' if source == 'jr_odekake' else '출처 정보 미제공'
+    assert '출발 플랫폼 31' in card.inner_text() and f'도착 플랫폼 {wording}' in card.inner_text()
+    card.click()
+    page.get_by_role('button', name='일정 확인', exact=True).click()
+    assert page.get_by_role('button', name='Add to Notion', exact=True).is_enabled()
 
 
 @pytest.mark.parametrize('day', ['2026-10-31', '2026-11-02', '2026-11-01', '2026-11-03'])
@@ -142,7 +174,7 @@ def test_live_thunderbird_search_timetable_and_selection(page):
 @pytest.mark.skipif(os.environ.get('AUTOTRIP_LIVE_UI') != '1', reason='Opt-in bounded live-provider UI matrix')
 @pytest.mark.parametrize(('origin', 'destination', 'family', 'source', 'through'), [
     ('新大阪', '敦賀', 'Special Rapid', 'jr_odekake', False),
-    ('新大阪', '名古屋', 'Shinkansen', 'jr_odekake', False),
+    ('新大阪', '名古屋', 'Shinkansen', 'yahoo', False),
     ('京都', '関西空港', 'Haruka', 'jr_odekake', False),
     ('福井', '金沢', 'Hapirain Fukui', 'yahoo', True),
     ('東舞鶴', '若狭本郷', 'Obama', 'jr_odekake', False),
@@ -154,7 +186,7 @@ def test_live_representative_ui(page, origin, destination, family, source, throu
     page.on('response', lambda response: failures.append(response.status)
             if '/api/' in response.url and response.status >= 400 else None)
     routes = search(page, origin, destination, '2026-10-31')
-    more = page.get_by_role('button', name='Show More Routes', exact=True)
+    more = page.get_by_role('button', name='Show more', exact=True)
     if more.count():
         more.click()
     cards = page.get_by_test_id('route-family-card').filter(has_text=family)
@@ -206,7 +238,7 @@ def test_live_direct_and_transfer_families_and_all_actual_selections(page):
     assert direct and transfers
     assert direct[0]['family_key'] != transfers[0]['family_key']
     chosen = transfers[0]
-    more = page.get_by_role('button', name='Show More Routes', exact=True)
+    more = page.get_by_role('button', name='Show more', exact=True)
     if more.count():
         more.click()
     page.locator(f'[data-route-id="{chosen["id"]}"]').click()

@@ -16,3 +16,8 @@ Set `AUTOTRIP_UI_URL` when the application uses a different URL; tests otherwise
 
 Temporary investigation scripts, provider dumps and old manual Notion scripts are
 preserved under ignored `.local/`; they are not tests and must not be committed.
+
+Ordinary pytest runs block real Python HTTP transports; use fake/mock transports.
+Real Notion HTTP is blocked even in opt-in live runs, and the shared browser fixture
+blocks movement saves unless the individual test supplies a mock response.
+Platform provenance fixtures and cache-version regressions run without providers.

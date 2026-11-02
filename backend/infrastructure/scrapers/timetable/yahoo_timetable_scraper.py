@@ -10,8 +10,12 @@ from datetime import date as Date
 from urllib.parse import parse_qsl, urlencode, urlunparse
 
 from domain.timetable import Timetable, DepartureInfo, calendar_type_for_date
+from domain.station_identity import qualified_station_name
+from domain.service_identity import has_named_service, service_match_strength, service_identities
 from core.logger import logger
 from application.ports.scraper_port import ScraperException
+from domain.platform import PlatformStatus
+from infrastructure.services.platform_information import read_platform
 
 class YahooTimetableScraper:
     CANDIDATE_VALIDATION_CONCURRENCY = 2
@@ -25,11 +29,27 @@ class YahooTimetableScraper:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-        self.client = httpx.AsyncClient(follow_redirects=True, headers=self.headers, timeout=15.0)
+        self._requests = {'station': 0, 'timetable': 0, 'detail': 0, 'total': 0, 'cache_hits': 0}
+        self.client = httpx.AsyncClient(follow_redirects=True, headers=self.headers, timeout=15.0,
+            event_hooks={'response': [self._record_response]})
         from infrastructure.services.translation_service import TranslationService
         self.translation_service = TranslationService()
         self._train_detail_cache: Dict[tuple[str, str, str], dict] = {}
         self._rate_limited = False
+
+    async def _record_response(self, response: httpx.Response) -> None:
+        path = response.url.path
+        is_detail = '/train/' in path or re.fullmatch(r'/timetable/\d+/\d+/\d+/?', path)
+        kind = 'station' if '/station/' in path else 'detail' if is_detail else 'timetable'
+        self._requests[kind] += 1
+        self._requests['total'] += 1
+        status = f'http_{response.status_code}'
+        self._requests[status] = self._requests.get(status, 0) + 1
+        if response.status_code == 429:
+            self._rate_limited = True
+
+    def statistics(self) -> dict:
+        return dict(self._requests)
 
     def _raise_for_rate_limit(self, response: Any) -> None:
         if getattr(response, "status_code", None) == 429:
@@ -81,7 +101,7 @@ class YahooTimetableScraper:
 
     @staticmethod
     def _canonical_station_name(station_name: str) -> str:
-        normalized = unicodedata.normalize("NFKC", station_name or "")
+        normalized = qualified_station_name(station_name)
         normalized = re.sub(r"\s*【\s*乗換不要\s*】\s*", "", normalized)
         return normalized.strip()
 
@@ -126,17 +146,8 @@ class YahooTimetableScraper:
 
     @classmethod
     def _station_names_match(cls, expected: str, actual: str) -> bool:
-        expected_name = cls._canonical_station_name(expected)
-        actual_name = cls._canonical_station_name(actual)
-        if expected_name == actual_name:
-            return True
-        prefecture_qualifier = re.compile(
-            r"\((?:北海道|東京都|京都府|大阪府|.{2,3}県)\)$"
-        )
-        return (
-            prefecture_qualifier.sub("", expected_name)
-            == prefecture_qualifier.sub("", actual_name)
-        )
+        from domain.station_identity import station_orthography_matches
+        return station_orthography_matches(cls._canonical_station_name(expected), cls._canonical_station_name(actual))
 
     @staticmethod
     def _normalize_identity(value: str) -> str:
@@ -201,29 +212,28 @@ class YahooTimetableScraper:
 
         matching_entries = []
         for entry in entries:
-            kind_identity = cls._normalize_identity(entry.get("kind_name", ""))
-            train_identity = cls._normalize_identity(entry.get("trainName", ""))
-            train_identity = re.sub(r"\d+号?$", "", train_identity)
-            matched_identities = [
-                identity
-                for identity in (kind_identity, train_identity)
-                if identity and identity in selected_identity
-            ]
-            if matched_identities:
-                matching_entries.append((entry, max(len(identity) for identity in matched_identities)))
+            # A supplied train name outranks the broad kind field: a different
+            # named 特急 must never fall back to its generic 特急 category.
+            label = str(entry.get('trainName') or entry.get('kind_name') or '')
+            strength = service_match_strength(railway_name_jp, label)
+            if strength:
+                matching_entries.append((entry, strength))
         if matching_entries:
-            # Yahoo service labels can overlap (for example 快速 and 新快速).
-            # Prefer the most specific structured identity instead of admitting a
-            # broader service merely because its name is a substring.
-            most_specific_length = max(length for _, length in matching_entries)
+            # Exact identities outrank category-only evidence. 快速 and 新快速
+            # are distinct classes, as are two different named limited expresses.
+            best_strength = max(strength for _, strength in matching_entries)
             return [
                 entry
-                for entry, length in matching_entries
-                if length == most_specific_length
+                for entry, strength in matching_entries
+                if strength == best_strength
             ]
 
+        if has_named_service(railway_name_jp):
+            return []
+        if any(identity.category and identity.category != '新幹線' for identity in service_identities(railway_name_jp)):
+            return []  # A matching corridor cannot turn 快速 into 新快速, etc.
         line_identity = cls._normalize_identity(item.get("railName", ""))
-        if line_identity and (line_identity in selected_identity or selected_identity in line_identity):
+        if line_identity and line_identity == selected_identity:
             return entries
 
         explicit_service_markers = ("特急", "新快速", "快速", "急行", "普通")
@@ -289,11 +299,7 @@ class YahooTimetableScraper:
         for entry in cls._selected_service_entries(item, railway_name_jp):
             destination = cls._normalize_identity(entry.get("destination_name", ""))
             kind = cls._normalize_identity(entry.get("kind_name", ""))
-            train = re.sub(
-                r"\d+号?$",
-                "",
-                cls._normalize_identity(entry.get("trainName", "")),
-            )
+            train = service_identities(str(entry.get('trainName') or entry.get('kind_name') or ''))
             group = (kind, train, destination)
             if group in seen_groups:
                 continue
@@ -328,6 +334,7 @@ class YahooTimetableScraper:
         railway_name_jp: str = "",
         search_date: str | None = None,
         detail_budget: dict | None = None,
+        prefetched_soup: BeautifulSoup | None = None,
     ) -> bool:
         try:
             exact_date_url = (
@@ -335,9 +342,12 @@ class YahooTimetableScraper:
                 if search_date
                 else timetable_url
             )
-            r = await self.client.get(urljoin(self.base_url, exact_date_url))
-            self._raise_for_rate_limit(r)
-            soup = BeautifulSoup(r.text, 'html.parser')
+            if prefetched_soup is None:
+                r = await self.client.get(urljoin(self.base_url, exact_date_url))
+                self._raise_for_rate_limit(r)
+                soup = BeautifulSoup(r.text, 'html.parser')
+            else:
+                soup = prefetched_soup
             item = self._timetable_item(soup)
             if item:
                 selected_entries = self._selected_service_entries(item, railway_name_jp)
@@ -378,7 +388,8 @@ class YahooTimetableScraper:
                     arrival_station,
                     semaphore,
                 )
-                if details.get("arrival_time"):
+                if (details.get("arrival_time") and (not has_named_service(railway_name_jp)
+                        or service_match_strength(railway_name_jp, details.get('train_name', '')) == 2)):
                     return True
             return False
         except Exception as e:
@@ -426,8 +437,40 @@ class YahooTimetableScraper:
                 return []
 
             candidates.sort(key=lambda candidate: candidate['score'], reverse=True)
+            unique_candidates = {}
+            for candidate in candidates:
+                identity = self._exact_date_timetable_url(candidate['url'], search_date)
+                unique_candidates.setdefault(identity, candidate)
+            candidates = list(unique_candidates.values())
             candidates = candidates[:self.CANDIDATE_TAB_VALIDATION_LIMIT]
             detail_budget = {"remaining": self.CANDIDATE_DETAIL_REQUEST_BUDGET}
+
+            # Read at most the existing tab limit before any detail request.
+            # Specific trainName metadata exists here, even when all station
+            # headings have zero line score. Strong evidence is inspected before
+            # category-only/HTML-only candidates can spend the shared budget.
+            if has_named_service(railway_name_jp):
+                prepared = []
+                for candidate in candidates:
+                    candidate_url = self._exact_date_timetable_url(candidate['url'], search_date)
+                    try:
+                        response = await self.client.get(urljoin(self.base_url, candidate_url))
+                        self._raise_for_rate_limit(response)
+                    except Exception as exc:
+                        if self._rate_limited:
+                            raise
+                        logger.warning('Timetable candidate metadata unavailable: %s (%s)', candidate_url, type(exc).__name__)
+                        continue
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    item = self._timetable_item(soup)
+                    entries = self._selected_service_entries(item, railway_name_jp) if item else []
+                    if item and not entries:
+                        continue
+                    strength = max((service_match_strength(railway_name_jp,
+                        str(e.get('trainName') or e.get('kind_name') or '')) for e in entries), default=0)
+                    destination = any(self._station_names_match(arrival_station, str(e.get('destination_name', ''))) for e in entries)
+                    prepared.append({**candidate, 'soup': soup, 'strength': strength, 'destination': destination})
+                candidates = sorted(prepared, key=lambda c: (c['strength'], c['destination']), reverse=True)
 
             # A selected RouteSegment needs one compatible direction tab. Check
             # candidates in score order and stop at the first proven match so a
@@ -439,7 +482,7 @@ class YahooTimetableScraper:
                     if search_date
                     else candidate['url']
                 )
-                if self._canonical_station_name(arrival_station) in self._canonical_station_name(candidate['dir']):
+                if not has_named_service(railway_name_jp) and self._canonical_station_name(arrival_station) in self._canonical_station_name(candidate['dir']):
                     return [candidate_url]
                 is_valid = await self._fast_check_direction_validity(
                     candidate_url,
@@ -448,6 +491,7 @@ class YahooTimetableScraper:
                     railway_name_jp,
                     search_date,
                     detail_budget,
+                    candidate.get('soup'),
                 )
                 if is_valid:
                     return [candidate_url]
@@ -466,12 +510,14 @@ class YahooTimetableScraper:
         )
         cached = self._train_detail_cache.get(cache_key)
         if cached is not None:
+            self._requests['cache_hits'] += 1
+        if cached is not None:
             return dict(cached)
 
         async with sem:
             try:
                 if self._rate_limited:
-                    return {"arrival_time": "", "train_name": ""}
+                    raise RuntimeError('Yahoo Transit rate limit (HTTP 429)')
                 r = await self.client.get(urljoin(self.base_url, train_url))
                 self._raise_for_rate_limit(r)
                 soup = BeautifulSoup(r.text, 'html.parser')
@@ -481,6 +527,9 @@ class YahooTimetableScraper:
                     "train_name": "",
                     "stop_sequence": [],
                     "final_destination": "",
+                    'platform': '', 'arrival_platform': '',
+                    'platform_status': PlatformStatus.LOOKUP_FAILED,
+                    'arrival_platform_status': PlatformStatus.LOOKUP_FAILED,
                 }
                 data = self._next_data(soup)
                 if data:
@@ -508,6 +557,10 @@ class YahooTimetableScraper:
                             arr_time = s.get("arrivalTime") or s.get("departureTime")
                             if arr_time:
                                 result["arrival_time"] = self._format_yahoo_time(arr_time)
+                                result['platform'], result['platform_status'] = read_platform(
+                                    stop_stations[dep_idx].get('trackNumber'), field_parsed=True)
+                                result['arrival_platform'], result['arrival_platform_status'] = read_platform(
+                                    s.get('trackNumber'), field_parsed=True)
                                 break
                     if stop_stations:
                         self._train_detail_cache[cache_key] = dict(result)
@@ -553,6 +606,9 @@ class YahooTimetableScraper:
                     "train_name": "",
                     "stop_sequence": [],
                     "final_destination": "",
+                    'platform': '', 'arrival_platform': '',
+                    'platform_status': PlatformStatus.LOOKUP_FAILED,
+                    'arrival_platform_status': PlatformStatus.LOOKUP_FAILED,
                 }
 
     @staticmethod
@@ -589,6 +645,7 @@ class YahooTimetableScraper:
 
             train_url = self._train_detail_url(url, train_id, hour, minute)
             translated_name = self.translation_service.translate_train(train_name_jp)
+            platform, platform_status = read_platform(entry.get('trackNumber'), field_parsed=True)
             departures.append(DepartureInfo(
                 id=train_id,
                 time=f"{int(hour):02d}:{int(minute):02d}",
@@ -596,9 +653,10 @@ class YahooTimetableScraper:
                 train_name=translated_name,
                 train_type=translated_name,
                 direction=str(entry.get("destination_name", "")),
+                platform=platform, platform_status=platform_status if platform else PlatformStatus.LOOKUP_FAILED,
                 metadata={
                     "url": train_url,
-                    "original_train_name": str(entry.get("kind_name") or train_name_jp),
+                    "original_train_name": train_name_jp,
                 },
             ))
         return departures
@@ -678,13 +736,13 @@ class YahooTimetableScraper:
             if departure.direction
             and self._station_names_match(arrival_station, departure.direction)
         }
-        destination_groups: Dict[tuple[str, str], List[DepartureInfo]] = {}
+        destination_groups: Dict[tuple, List[DepartureInfo]] = {}
         for departure in departures:
             if departure.id in selected_ids:
                 continue
             destination_key = self._normalize_identity(departure.direction)
             group_key = (
-                self._normalize_identity(
+                service_identities(
                     str(departure.metadata.get("original_train_name", departure.train_name))
                 ),
                 destination_key or departure.id,
@@ -706,7 +764,8 @@ class YahooTimetableScraper:
                 arrival_station,
                 semaphore,
             )
-            if details.get("arrival_time"):
+            if (details.get("arrival_time") and (not has_named_service(railway_name_jp)
+                    or service_match_strength(railway_name_jp, details.get('train_name', '')) == 2)):
                 selected_ids.update(departure.id for departure in group)
 
         matching_departures = [
@@ -733,16 +792,27 @@ class YahooTimetableScraper:
             arrival_time = details.get("arrival_time", "")
             if not arrival_time:
                 return None
+            if has_named_service(railway_name_jp) and service_match_strength(railway_name_jp, details.get('train_name', '')) != 2:
+                return None
             translated_name = (
                 self.translation_service.translate_train(details["train_name"])
                 if details.get("train_name")
                 else departure.train_name
             )
+            platform = details.get('platform', '')
+            platform_status = details.get('platform_status', PlatformStatus.LOOKUP_FAILED)
+            if platform_status != PlatformStatus.KNOWN and departure.platform_status == PlatformStatus.KNOWN:
+                # The same entry/train ID is verified by exact stop detail; its
+                # station-table trackNumber is independent, usable evidence.
+                platform, platform_status = departure.platform, departure.platform_status
             return departure.model_copy(update={
                 "arrival_time": arrival_time,
                 "train_name": translated_name,
                 "train_type": translated_name,
                 "source": "yahoo",
+                'platform': platform, 'platform_status': platform_status,
+                'arrival_platform': details.get('arrival_platform', ''),
+                'arrival_platform_status': details.get('arrival_platform_status', PlatformStatus.LOOKUP_FAILED),
                 "source_url": urljoin(self.base_url, train_url),
                 "metadata": {
                     **departure.metadata,

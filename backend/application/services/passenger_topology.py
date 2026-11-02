@@ -79,9 +79,12 @@ class PassengerTopologyClassifier:
                 and route.segments[next_leg_end + 1].is_through
             ):
                 next_leg_end += 1
-            later_leg_destinations.append(
-                cls._station_name(route, next_leg_end + 1)
-            )
+            # A rail service continuing beyond an optional rail→bus interchange
+            # does not invalidate alighting there. Only same-mode continuations
+            # can establish the alternative topology this filter separates.
+            if (route.segments[next_leg_start].segment_type == route.segments[segment_index].segment_type
+                    and route.segments[next_leg_start].segment_type != 'walk'):
+                later_leg_destinations.append(cls._station_name(route, next_leg_end + 1))
             next_leg_start = next_leg_end + 1
 
         return SegmentTopologyConstraint(

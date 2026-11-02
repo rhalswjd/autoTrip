@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
 import type { Route, DepartureInfo } from '../../api/types';
+import { routeEndpointDisplayName } from '../../utils/stationDisplay';
 import { Modal, Button, Input } from '../ui';
 import { useMovement, useToast } from '../../hooks';
 import { CheckCircle } from 'lucide-react';
@@ -108,11 +109,11 @@ export function MovementDialog({ route, departure, isOpen, onClose }: MovementDi
           </div>
           <div className="movement-detail-row">
             <span className="movement-detail-label">From</span>
-            <span className="movement-detail-value">{route.departure_station}</span>
+            <span className="movement-detail-value">{routeEndpointDisplayName(route, 'departure')}</span>
           </div>
           <div className="movement-detail-row">
             <span className="movement-detail-label">To</span>
-            <span className="movement-detail-value">{route.arrival_station}</span>
+            <span className="movement-detail-value">{routeEndpointDisplayName(route, 'arrival')}</span>
           </div>
           <div className="movement-detail-row">
             <span className="movement-detail-label">Departure</span>

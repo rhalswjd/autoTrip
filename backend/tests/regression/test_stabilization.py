@@ -129,7 +129,7 @@ async def test_equivalent_exact_departure_reuses_platform_across_parent_routes()
     b = await service.get_leg_timetable(second.id, 0)
     assert a.saturday[0].platform == b.saturday[0].platform == '5'
     assert scraper.get_timetable.await_count == 1
-    assert (await cache.get(exact_option_key(second.id, 0, 'exact-train'))).platform == '5'
+    assert (await cache.get(exact_option_key(second.id, 0, 'exact-train', second.search_date))).platform == '5'
 
 
 @pytest.mark.asyncio

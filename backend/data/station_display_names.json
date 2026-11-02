@@ -1,0 +1,17 @@
+[
+  {
+    "station_id": "1163907",
+    "name_jp": "紀伊勝浦",
+    "prefecture": "30",
+    "display_name_en": "Kii-Katsuura",
+    "source_url": "https://eki.jr-odekake.net/top?id=0622045"
+  },
+  {
+    "station_id": "9960914",
+    "name_jp": "夕日ヶ浦木津温泉",
+    "prefecture": "26",
+    "display_name_en": "Yuhigaura-Kitsuonsen",
+    "source_url": "https://trains.willer.co.jp/station/yuhigaura-kitsuonsen/",
+    "english_source_url": "https://www.kyototourism.org/wp/wp-content/uploads/2025/02/533331980bee3cf94beb748d83af8d2b.pdf"
+  }
+]

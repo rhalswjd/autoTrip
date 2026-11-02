@@ -8,6 +8,11 @@ export const SeatPreference = {
 export type SeatPreference = typeof SeatPreference[keyof typeof SeatPreference];
 
 export interface Station {
+  display_name_en?: string;
+  prefecture?: string;
+  railway_company?: string;
+  provider_ids?: Record<string, string>;
+  provider_aliases?: Record<string, string>;
   id?: string;
   name: string;
   name_jp?: string;
@@ -50,6 +55,10 @@ export interface PlannerMetadata {
 }
 
 export interface Route {
+  fare_breakdown?: { base: number | null; surcharge: number | null; seat_supplement: number | null; total: number | null; seat_basis: string } | null;
+  result_kind: 'requested' | 'daily_alternative' | 'later_practical';
+  alternative_reason: string;
+  evidence_url: string;
   timing_status: string;
   passenger_legs: PassengerLeg[];
   family_key: string;
@@ -77,7 +86,13 @@ export interface Route {
   planner_metadata?: PlannerMetadata;
 }
 
+export type PlatformStatus = 'KNOWN' | 'SOURCE_NOT_PROVIDED' | 'LOOKUP_FAILED';
+
 export interface DepartureInfo {
+  platform_status?: PlatformStatus;
+  arrival_platform_status?: PlatformStatus;
+  departure_datetime?: string;
+  arrival_datetime?: string;
   operating_date: string;
   arrival_platform: string;
   source: string;
@@ -97,6 +112,8 @@ export interface DepartureInfo {
 }
 
 export interface Timetable {
+  search_date?: string;
+  availability: 'SUPPORTED' | 'UNSUPPORTED' | 'PROVIDER_ERROR';
   source: string;
   source_url: string;
   status: string;
@@ -112,6 +129,13 @@ export interface Timetable {
 }
 
 export interface LegSelection {
+  source?: string;
+  platform_status?: PlatformStatus | null;
+  arrival_platform_status?: PlatformStatus | null;
+  arrival_platform?: number | string | null;
+  timetable_date?: string;
+  departure_datetime?: string;
+  arrival_datetime?: string;
   passenger_leg_index?: number;
   exact_departure_id?: string;
   segment_index: number;
@@ -121,7 +145,7 @@ export interface LegSelection {
   arrival_time?: string;
   transport_name?: string;
   railway_name?: string;
-  platform?: number;
+  platform?: number | string | null;
   base_fare?: number;
   express_fare?: number;
   selected_seat?: SeatPreference;
@@ -168,6 +192,13 @@ export interface PassengerLeg {
 }
 
 export interface StationSearchResult {
+  display_name_en?: string;
+  prefecture?: string;
+  region?: string;
+  railway_company?: string;
+  display_label?: string;
+  provider_ids?: Record<string, string>;
+  provider_aliases?: Record<string, string>;
   id: string;
   english_name: string;
   japanese_name: string;
@@ -175,6 +206,8 @@ export interface StationSearchResult {
 }
 
 export interface SearchParams {
+  departure_station_id?: string;
+  arrival_station_id?: string;
   departure_station: string;
   arrival_station: string;
   departure_time: string;

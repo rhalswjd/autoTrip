@@ -5,13 +5,14 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict
 from domain.station import Station
+from domain.station_identity import qualified_station_name, station_orthography_matches, station_base_name
 
 if TYPE_CHECKING:
     from domain.route import Route
 
 
 def canonical_station(value: str) -> str:
-    value = unicodedata.normalize("NFKC", value)
+    value = qualified_station_name(value)
     value = re.sub(r"\s*【\s*乗換不要\s*】\s*", "", value)
     # Provider entity-type annotations are not part of a railway station's name.
     # Keep geographic/operator qualifiers, which may distinguish homonymous stops.
@@ -19,17 +20,11 @@ def canonical_station(value: str) -> str:
 
 
 def unqualified_station_name(value: str) -> str:
-    return re.sub(r'\((?:北海道|東京都|京都府|大阪府|.{2,3}県)\)$', '', canonical_station(value))
+    return station_base_name(canonical_station(value))
 
 
 def station_names_match(expected: str, actual: str) -> bool:
-    expected, actual = canonical_station(expected), canonical_station(actual)
-    if expected == actual:
-        return True
-    left, right = unqualified_station_name(expected), unqualified_station_name(actual)
-    if left != expected and right != actual:
-        return False  # Explicitly different regions must not collapse.
-    return left == right
+    return station_orthography_matches(canonical_station(expected), canonical_station(actual))
 
 
 def service_family(value: str) -> str:

@@ -3,6 +3,7 @@ from typing import List
 from api.schemas import StationSearchResponseSchema, ERROR_RESPONSES
 from application.services.station_service import StationService
 from api.dependencies import get_station_service
+from domain.station_identity import prefecture_label
 
 router = APIRouter(prefix="/stations", tags=["Stations"])
 
@@ -22,7 +23,14 @@ async def search_stations(
         StationSearchResponseSchema(
             id=station.id,
             english_name=station.name,
+            display_name_en=station.display_name_en or station.name,
             japanese_name=station.name_jp,
+            prefecture=station.prefecture,
+            region=prefecture_label(station.prefecture),
+            railway_company=station.railway_company,
+            display_label=f'{station.display_name_en or station.name} · {prefecture_label(station.prefecture)}' if station.prefecture else station.display_name_en or station.name,
+            provider_ids=station.provider_ids,
+            provider_aliases=station.provider_aliases,
             has_midori_office=station.has_midori_office
         )
         for station in stations

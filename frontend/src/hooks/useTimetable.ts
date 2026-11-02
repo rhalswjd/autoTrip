@@ -2,11 +2,11 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { getTimetable, getSegmentTimetable } from '../api';
 import { getPassengerTimetable } from '../api/routes';
 
-export function usePassengerTimetable(routeId: string, legIndex: number, searchDate: string | undefined, enabled: boolean) {
+export function usePassengerTimetable(routeId: string, legIndex: number, searchDate: string | undefined, enabled: boolean, notBefore?: string) {
   return useInfiniteQuery({
-    queryKey: ['passenger-timetable', routeId, searchDate, legIndex],
+    queryKey: ['passenger-timetable', routeId, searchDate, legIndex, notBefore],
     initialPageParam: 0,
-    queryFn: ({ pageParam }) => getPassengerTimetable(routeId, legIndex, pageParam),
+    queryFn: ({ pageParam }) => getPassengerTimetable(routeId, legIndex, pageParam, searchDate, notBefore),
     getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
     enabled,
     retry: false,

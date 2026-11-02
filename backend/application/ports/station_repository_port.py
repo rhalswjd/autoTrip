@@ -5,3 +5,6 @@ class StationRepositoryPort(Protocol):
     """Interface for querying station information."""
     async def search_stations(self, query: str) -> List[Station]:
         ...
+
+    async def get_station_by_id(self, station_id: str) -> Station | None:
+        ...

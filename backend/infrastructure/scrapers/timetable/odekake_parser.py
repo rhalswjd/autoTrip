@@ -4,6 +4,9 @@ import logging
 import re
 from datetime import date
 from domain.journey import canonical_station, station_names_match
+from domain.chronology import dated_clock
+from datetime import timedelta
+from infrastructure.services.platform_information import read_platform
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +141,7 @@ class JROdekakeParser:
             if active_column >= len(columns):
                 continue
             text, platform = columns[active_column]
+            platform, platform_status = read_platform(platform, field_parsed=len(cells) > 2 + 2 * active_column)
             arrive = re.search(r"(\d{1,2}:\d{2})着", text)
             depart = re.search(r"(\d{1,2}:\d{2})発", text)
             if '直通' in text and not depart:
@@ -154,7 +158,7 @@ class JROdekakeParser:
             stops.append({"station": station,
                           "arrival": arrive[1].zfill(5) if arrive else "",
                           "departure": depart[1].zfill(5) if depart else "",
-                          "platform": platform})
+                          "platform": platform, "platform_status": platform_status})
         origin = next((i for i, s in enumerate(stops) if station_names_match(departure, s["station"])), None)
         target = next((i for i, s in enumerate(stops) if station_names_match(arrival, s["station"])), None)
         if origin is None or target is None or target <= origin:
@@ -165,8 +169,35 @@ class JROdekakeParser:
             values = info.get(label, [])
             return values[column] if column is not None and column < len(values) else ""
 
-        return {"departure_time": stops[origin]["departure"], "arrival_time": stops[target]["arrival"],
+        dated = {}
+        if search_date:
+            previous = None
+            for row in soup.select('tbody.time-details tr'):
+                cells = row.find_all('td', recursive=False)
+                column = 1 + 2 * boarded_column
+                if len(cells) <= column:
+                    continue
+                for clock in re.findall(r'\d{1,2}:\d{2}', cells[column].get_text(' ',strip=True)):
+                    value = dated_clock(search_date, clock)
+                    while previous and value < previous:
+                        value += timedelta(days=1)
+                    previous = value
+                if station_names_match(departure,cells[0].get_text(strip=True)):
+                    break
+            if previous:
+                dated['departure_datetime'] = previous.isoformat()
+                for stop in stops[origin + 1:target + 1]:
+                    for clock in (stop['arrival'], stop['departure'] if stop is not stops[target] else ''):
+                        if not clock:
+                            continue
+                        value = dated_clock(search_date,clock)
+                        while value < previous:
+                            value += timedelta(days=1)
+                        previous = value
+                dated['arrival_datetime'] = previous.isoformat()
+        return {**dated, "departure_time": stops[origin]["departure"], "arrival_time": stops[target]["arrival"],
                 "platform": stops[origin]["platform"], "arrival_platform": stops[target]["platform"],
+                "platform_status": stops[origin]['platform_status'], "arrival_platform_status": stops[target]['platform_status'],
                 "train_name": value_at("列車名", boarded_column) or value_at("列車種別", boarded_column),
                 "train_number": " / ".join(filter(None, (value_at("列車番号", column) for column in visited_columns))),
                 "stop_sequence": [s["station"] for s in stops], "stops": stops,

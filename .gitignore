@@ -47,6 +47,14 @@ MANIFEST
 .pytest_cache/
 .coverage
 htmlcov/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright-traces/
+trace*.zip
+*.webm
+*.har
 
 # macOS
 .DS_Store

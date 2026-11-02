@@ -1,4 +1,5 @@
 import type { StationSearchResult } from '../../api/types';
+import { stationDisplayName } from '../../utils/stationDisplay';
 import { Card, Badge } from '../ui';
 import './Search.css';
 
@@ -26,14 +27,16 @@ export function SearchResultItem({ station, isSelected = false, onClick }: Searc
       onKeyDown={handleKeyDown}
       aria-selected={isSelected}
       aria-current={isSelected ? 'true' : 'false'}
+      data-station-id={station.id}
     >
       <div className="search-result-item-header">
-        <span className="search-result-name">{station.english_name}</span>
+        <span className="search-result-name">{stationDisplayName(station)}</span>
         {station.has_midori_office && (
           <Badge variant="success">Midori Office</Badge>
         )}
       </div>
       <span className="search-result-jp">{station.japanese_name}</span>
+      {station.region && <span className="search-result-region">{station.region}</span>}
     </Card>
   );
 }

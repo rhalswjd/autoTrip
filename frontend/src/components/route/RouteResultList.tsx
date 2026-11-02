@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Route } from '../../api/types';
 import { RouteCard } from './RouteCard';
 import { RouteLoading } from './RouteLoading';
 import { RouteEmpty } from './RouteEmpty';
+import { sortRoutes, routeSections } from '../../utils/routePresentation';
+import type { RouteSort } from '../../utils/routePresentation';
 import { Button } from '../ui';
 import './RouteTimeline.css';
 
@@ -13,7 +15,6 @@ export interface RouteResultListProps {
   onSelectRoute: (route: Route) => void;
 }
 
-type SortOption = 'best' | 'transfers' | 'walking' | 'fare';
 
 export function RouteResultList({
   routes,
@@ -21,33 +22,12 @@ export function RouteResultList({
   selectedRoute,
   onSelectRoute,
 }: RouteResultListProps) {
+  const [sortOption, setSortOption] = useState<RouteSort>('time');
   const [showAll, setShowAll] = useState(false);
-  const [sortOption, setSortOption] = useState<SortOption>('best');
-
-  useEffect(() => {
-    setShowAll(false);
-    setSortOption('best');
-  }, [routes]);
-
-  const sortedRoutes = useMemo(() => {
-    if (!routes) return [];
-    if (sortOption === 'best') return routes;
-    
-    return [...routes].sort((a, b) => {
-      if (sortOption === 'transfers') {
-        return a.transfer_count - b.transfer_count;
-      }
-      if (sortOption === 'fare') {
-        return a.total_fare - b.total_fare;
-      }
-      if (sortOption === 'walking') {
-        const walkA = (a.polyline.match(/Walk/g) || []).length;
-        const walkB = (b.polyline.match(/Walk/g) || []).length;
-        return walkA - walkB;
-      }
-      return 0;
-    });
-  }, [routes, sortOption]);
+  useEffect(() => setShowAll(false), [routes]);
+  const sortedRoutes = useMemo(() => sortRoutes(routes || [], sortOption), [routes, sortOption]);
+  const requested = sortedRoutes.filter(route => (route.result_kind || 'requested') === 'requested');
+  const visibleRoutes = showAll ? sortedRoutes : (requested.length ? requested : sortedRoutes).slice(0, 3);
 
   if (isLoading) {
     return <RouteLoading />;
@@ -61,8 +41,6 @@ export function RouteResultList({
     return null;
   }
 
-  const visibleRoutes = showAll ? sortedRoutes : sortedRoutes.slice(0, 3);
-  const hasMore = routes.length > 3;
 
   return (
     <div>
@@ -73,9 +51,9 @@ export function RouteResultList({
             {routes.length} {routes.length === 1 ? 'result' : 'results'}
           </span>
         </div>
-        <select 
+        <label>Sort by: <select aria-label="Sort by"
           value={sortOption}
-          onChange={(e) => setSortOption(e.target.value as SortOption)}
+          onChange={(e) => setSortOption(e.target.value as RouteSort)}
           style={{
             padding: '4px 8px',
             borderRadius: '4px',
@@ -86,34 +64,39 @@ export function RouteResultList({
             cursor: 'pointer'
           }}
         >
-          <option value="best">Journey duration</option>
-          <option value="transfers">Least Transfers</option>
-          <option value="walking">Least Walking</option>
-          <option value="fare">Lowest Fare</option>
-        </select>
+          <option value="time">Travel time</option>
+          <option value="transfers">Fewest transfers</option>
+          <option value="fare">Lowest estimated fare</option>
+        </select></label>
       </div>
-      <div className="route-result-items" role="listbox" id="route-results" aria-live="polite" style={{ maxHeight: showAll ? '600px' : 'none', overflowY: showAll ? 'auto' : 'visible' }}>
-        {visibleRoutes.map((route) => (
+      <nav aria-label="Alternative service shortcuts" className="route-alternative-shortcuts">
+        {routeSections.filter(section => section.kind !== 'requested').map(section => {
+          const alternative = sortRoutes(routes.filter(route => route.result_kind === section.kind), 'time')[0];
+          return alternative && <button key={section.kind} type="button" onClick={() => onSelectRoute(alternative)}>
+            <strong>{section.title}: {alternative.railway_name}</strong>
+            <span>{alternative.search_date} · {alternative.departure_time} → {alternative.arrival_time} · {alternative.total_duration}</span>
+            <small>{alternative.alternative_reason}</small>
+          </button>;
+        })}
+      </nav>
+      <div className="route-result-items" id="route-results" aria-live="polite">
+        {routeSections.map(section => {
+          const items = visibleRoutes.filter(route => (route.result_kind || 'requested') === section.kind);
+          return items.length > 0 && <section key={section.kind} data-result-kind={section.kind}>
+            <h3 className="route-section-title">{section.title}</h3>
+            <div role="listbox" aria-label={section.title} className="route-result-items">
+        {items.map((route) => (
           <RouteCard
             key={route.id}
             route={route}
             isSelected={selectedRoute?.id === route.id}
             onClick={onSelectRoute}
           />
-        ))}
+        ))}</div></section>;
+        })}
       </div>
-      
-      {hasMore && (
-        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-          <Button 
-            variant="secondary" 
-            onClick={() => setShowAll(!showAll)}
-            style={{ width: '100%', maxWidth: '300px' }}
-          >
-            {showAll ? 'Show Less' : 'Show More Routes'}
-          </Button>
-        </div>
-      )}
+      {routes.length > 3 && <Button variant="secondary" aria-expanded={showAll} aria-controls="route-results"
+        onClick={() => setShowAll(value => !value)}>{showAll ? 'Show less' : 'Show more'}</Button>}
     </div>
   );
 }

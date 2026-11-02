@@ -11,6 +11,7 @@ A macOS utility-style application for searching Japanese train routes and seamle
 - **Route Timeline**: View your journey in a clean, Apple Maps-inspired vertical timeline.
 - **Timetable**: Browse date-specific exact departures, arrivals, available platforms and source links. JR West uses official JR Odekake data; other operators use Yahoo where supported. Non-JR sparse-service discovery remains bounded and is not guaranteed complete.
 - **Movement Creation**: Save selected passenger legs to Notion when real Notion integration is explicitly enabled. Unknown exact fares/platforms are not guessed.
+- **Platform provenance**: Distinguishes known values, successful source omission and lookup failure independently for departure and arrival. Notion retains numeric departure platforms and annotates missing/text/arrival information in its existing time fields.
 - **Notion Integration**: Bridge the gap between travel planning and workspace organization.
 
 <!-- ![AutoTrip Timetable](docs/images/timetable.png) - Coming Soon -->
@@ -108,17 +109,13 @@ Follow these steps to run AutoTrip locally.
 Copy the provided example environment file to configure your local setup.
 
 ```bash
-cp .env.example .env
+test -e backend/.env || cp backend/.env.example backend/.env
 ```
 
-**`.env.example`**
+Use `backend/.env.example` for the backend (Docker Compose loads `backend/.env`). The following is only a minimal example; keep real credentials local.
 ```env
 # Application
-PORT=8000
-ENVIRONMENT=development
-
-# Database
-DB_PATH=data/autotrip.db
+ENVIRONMENT=local
 
 # Notion API (Do not put actual tokens here)
 NOTION_API_KEY=secret_your_notion_api_key_here

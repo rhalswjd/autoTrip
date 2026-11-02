@@ -45,3 +45,18 @@ def test_mapper_debug_log_contains_no_journey_values(caplog):
     with caplog.at_level(logging.DEBUG, logger='autotrip'):
         NotionMapper.map_parent_movement(movement)
     assert private_marker not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_ordinary_tests_reject_real_network_before_any_request():
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(pytest.fail.Exception, match='Real HTTP is disabled'):
+            await client.get('https://example.com/no-network-should-occur')
+
+
+@pytest.mark.asyncio
+async def test_real_notion_io_remains_blocked_even_with_live_provider_opt_in(monkeypatch):
+    monkeypatch.setenv('AUTOTRIP_LIVE_UI', '1')
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(pytest.fail.Exception, match='Real Notion I/O is never allowed'):
+            await client.post('https://api.notion.com/v1/pages', json={})

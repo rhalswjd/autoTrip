@@ -19,13 +19,17 @@ async def search_routes(
     arrival_station: str = Query(..., description="The arrival station name.", json_schema_extra={"examples": ["Kyoto"]}),
     departure_time: str = Query(..., pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$", description="Departure time in HH:MM format.", json_schema_extra={"examples": ["10:00"]}),
     departure_date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$", description="Departure date in YYYY-MM-DD format.", json_schema_extra={"examples": ["2024-10-01"]}),
+    departure_station_id: str | None = Query(None, description='Stable selected station ID; names are presentation only when supplied.'),
+    arrival_station_id: str | None = Query(None, description='Stable selected destination station ID.'),
     service: SearchService = Depends(get_search_service)
 ):
     req = SearchRequest(
         departure_station=departure_station,
         arrival_station=arrival_station,
         departure_time=departure_time,
-        departure_date=departure_date
+        departure_date=departure_date,
+        departure_station_id=departure_station_id,
+        arrival_station_id=arrival_station_id
     )
     routes = await service.search(req)
     return routes

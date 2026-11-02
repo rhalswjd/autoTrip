@@ -4,11 +4,14 @@ from urllib.parse import urlencode, urljoin, urlparse, parse_qsl, urlunparse
 
 from bs4 import BeautifulSoup
 
-from application.ports.scraper_port import ScraperException
-from domain.journey import canonical_station, service_family, unqualified_station_name
+from application.ports.scraper_port import ScraperException, UnsupportedTimetable
+from domain.journey import canonical_station, service_family, unqualified_station_name, station_names_match
 from domain.timetable import Timetable, DepartureInfo, calendar_type_for_date
 from infrastructure.scrapers.timetable.odekake_downloader import JROdekakeDownloader
 from infrastructure.scrapers.timetable.odekake_parser import JROdekakeParser
+from domain.chronology import dated_clock
+from domain.service_identity import has_named_service, service_match_strength
+from datetime import datetime
 
 
 def service_identity(value: str) -> str:
@@ -47,6 +50,12 @@ class JROdekakeTimetableScraper:
         query.append(("date", search_date.replace("-", "")))
         return urlunparse(parsed._replace(query=urlencode(query)))
 
+    @staticmethod
+    def _station_result_name(label: str) -> str:
+        # Search results add kana readings; qualifiers containing kanji are not readings.
+        name = canonical_station(label)
+        return re.sub(r'\([ぁ-ゖァ-ヺー・\s]+\)$', '', name).removesuffix('駅').strip()
+
     async def _station_index(self, departure: str) -> str:
         station_query = unqualified_station_name(departure)
         url = self.STATION_HOST + "/search_free?" + urlencode({"keyword": station_query})
@@ -59,9 +68,9 @@ class JROdekakeTimetableScraper:
             return await self.downloader.fetch_html(timetable)
         station_links = list(dict.fromkeys(a.get("href", "") for a in soup.select("a[href]")
                              if "/top?" in a.get("href", "")
-                             and canonical_station(a.get_text(strip=True).removesuffix("駅")) == station_query))
+                             and station_names_match(departure, self._station_result_name(a.get_text(strip=True)))))
         if len(station_links) != 1:
-            raise ScraperException(f"JR Odekake does not publish a matching station timetable for {departure}")
+            raise UnsupportedTimetable(f"JR Odekake does not publish an unambiguous station timetable for {departure}")
         html = await self.downloader.fetch_html(urljoin(self.STATION_HOST, station_links[0]))
         soup = BeautifulSoup(html, "html.parser")
         timetable = next((a.get("href", "") for a in soup.select("a[href]")
@@ -70,11 +79,13 @@ class JROdekakeTimetableScraper:
             return await self.downloader.fetch_html(urljoin(self.STATION_HOST, timetable))
         return html
 
-    def _tabs(self, html: str, railway: str, arrival: str) -> list[str]:
+    def _tabs(self, html: str, railway: str, arrival: str, *, include_conventional: bool = False) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
         result = []
         is_shinkansen = "新幹線" in railway
         is_express = "特急" in railway or "急行" in railway
+        dedicated_express = any(('特急' in th.get_text() or '急行' in th.get_text())
+                                and '新幹線' not in th.get_text() for th in soup.select('tr th'))
         for link in soup.select("a[href]"):
             href = link.get("href", "")
             match = re.fullmatch(r"link\((\d+)\)", link.get("onclick", "").strip().rstrip(";"))
@@ -87,22 +98,29 @@ class JROdekakeTimetableScraper:
             if heading:
                 if is_shinkansen != ("新幹線" in heading):
                     continue
-                if not is_shinkansen and is_express != ("特急" in heading or "急行" in heading):
-                    continue
+                if not is_shinkansen:
+                    express_heading = '特急' in heading or '急行' in heading
+                    if not is_express and express_heading:
+                        continue
+                    if is_express and dedicated_express and not express_heading and not include_conventional:
+                        continue
+                    # Smaller stations publish all services under a line heading.
+                    # Exact service identity and stop reachability still decide entries.
             priority = 0 if canonical_station(arrival) in link.get_text(strip=True) else 1
-            result.append((priority, urljoin(self.HOST, href)))
+            result.append((priority + (0 if ('特急' in heading or '急行' in heading) else 1), urljoin(self.HOST, href)))
         return list(dict.fromkeys(url for _, url in sorted(result, key=lambda pair: pair[0])))[:self.MAX_TABS]
 
     async def get_timetable(self, route_id: str, departure: str, arrival: str,
                             timetable_id=None, railway_name_jp: str = "",
-                            search_date: str | None = None, cursor: int = 0) -> Timetable:
+                            search_date: str | None = None, cursor: int = 0, not_before: str | None = None) -> Timetable:
         if not search_date:
             raise ValueError("Official timetable requires the Route search date")
         selected_calendar = calendar_type_for_date(search_date)
         if timetable_id:
             tabs = [self.HOST + "/station-timetable/" + str(timetable_id)]
         else:
-            tabs = self._tabs(await self._station_index(departure), railway_name_jp, arrival)
+            tabs = self._tabs(await self._station_index(departure), railway_name_jp, arrival,
+                              include_conventional=has_named_service(railway_name_jp))
         if not tabs:
             return Timetable(route_id=route_id, source="jr_odekake", selected_calendar=selected_calendar,
                              status="unsupported", message="JR Odekake has no compatible published direction for this leg")
@@ -118,19 +136,20 @@ class JROdekakeTimetableScraper:
                 if actual and f"{int(actual[1]):04}-{int(actual[2]):02}-{int(actual[3]):02}" != search_date:
                     raise ScraperException("JR Odekake returned a different operating date")
             for item in self.parser.parse(html):
-                actual_identity = service_identity(item["train_name"])
-                if expected_identity == "新幹線":
-                    pass  # The verified direction tab supplies the Shinkansen corridor.
-                elif expected_identity and actual_identity != expected_identity:
-                    if not any(marker in expected_identity for marker in ("線", "鉄道")):
-                        continue
+                strength = (1 if expected_identity == '新幹線' else
+                            service_match_strength(railway_name_jp, item['train_name']))
+                if not strength:
+                    continue
                 link = item["metadata"].get("link")
                 if not link:
                     continue
                 item["source_url"] = self.exact_date_url(urljoin(self.HOST, link), search_date)
+                item['service_strength'] = strength
                 entries.append(item)
         unique = {item["source_url"]: item for item in entries}
         entries = sorted(unique.values(), key=lambda item: (
+            -item['service_strength'],
+            bool(not_before and dated_clock(search_date,item['time']) < datetime.fromisoformat(not_before)),
             destination_identity(item["destination"]) != canonical_station(arrival), item["time"]))
         page = entries[cursor:cursor + self.DETAILS_PER_PAGE]
         departures = []
@@ -138,12 +157,16 @@ class JROdekakeTimetableScraper:
             details = self.parser.parse_train(await self.downloader.fetch_html(item["source_url"]), departure, arrival, search_date)
             if not details or details["departure_time"] != item["time"]:
                 continue
+            if has_named_service(railway_name_jp) and service_match_strength(railway_name_jp, details['train_name']) != 2:
+                continue
             departures.append(DepartureInfo(
                 id=item["source_url"], time=details["departure_time"], arrival_time=details["arrival_time"],
                 train_name=details["train_name"] or item["train_name"], train_type=service_identity(item["train_name"]),
                 platform=details["platform"], arrival_platform=details["arrival_platform"],
+                platform_status=details['platform_status'], arrival_platform_status=details['arrival_platform_status'],
                 direction=item["destination"], source="jr_odekake", source_url=item["source_url"],
                 operating_date=search_date, train_number=details["train_number"],
+                departure_datetime=details.get('departure_datetime',''), arrival_datetime=details.get('arrival_datetime',''),
                 metadata={"stop_sequence": details["stop_sequence"], "stops": details["stops"]},
             ))
         next_cursor = cursor + len(page)

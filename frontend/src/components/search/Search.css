@@ -20,6 +20,10 @@
  * 1:1 tracking during the interaction, not just at the end.
  */
 .search-result-item {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -42,10 +46,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
 }
+.search-result-item-header .badge { max-width: 100%; white-space: normal; flex-shrink: 0; }
+.search-result-region { font-size: 12px; color: var(--color-text-secondary); }
 
 /* Station name — body size, near-zero tracking */
 .search-result-name {
+  min-width: 0;
+  flex: 1 1 125px;
+  overflow-wrap: anywhere;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-normal);

@@ -25,8 +25,15 @@ class RealNotionAdapter(NotionPort):
             if target_page_id:
                 target_database_id = await self.client.get_child_database_id(target_page_id, "Transportation")
                 
-            # Step 2: Parent payload creation
-            parent_properties = self.mapper.map_parent_movement(movement)
+            rides = [leg for leg in movement.route.passenger_legs if leg.segment_type != 'walk']
+            single_ride = len(rides) == 1 or (not rides and movement.route.transfer_count == 0)
+            selected_leg = legs[0] if single_ride and legs else None
+            parent_property_name = None
+            if legs and not single_ride:
+                parent_property_name = await self.client.get_parent_item_property(target_database_id)
+                if not parent_property_name:
+                    raise NotionException('Parent relation is missing; transfer journey was not saved.')
+            parent_properties = self.mapper.map_parent_movement(movement, selected_leg)
             
             # Step 3: Create Parent Page
             response = await self.client.post_page(
@@ -38,17 +45,7 @@ class RealNotionAdapter(NotionPort):
             parent_page_id = response.get("id")
             
             # If no legs or no target_page_id (i.e. single row save), return just the parent info
-            if not target_page_id or not legs:
-                return {
-                    "notion_url": parent_page_url,
-                    "parent_page_id": parent_page_id,
-                    "child_page_ids": []
-                }
-                
-            # Step 4: Parent property verification
-            parent_property_name = await self.client.get_parent_item_property(target_database_id)
-            if not parent_property_name:
-                logger.warning(f"Parent item relation property not found in database {target_database_id}. Saving parent only.")
+            if single_ride or not legs:
                 return {
                     "notion_url": parent_page_url,
                     "parent_page_id": parent_page_id,

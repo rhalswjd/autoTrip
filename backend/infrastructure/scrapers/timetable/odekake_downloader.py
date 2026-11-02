@@ -20,9 +20,10 @@ class JROdekakeDownloader:
         self.cache_hits = 0
         self.redirects = 0
         self.kinds = {"station": 0, "timetable": 0, "detail": 0}
+        self.statuses = {}
 
     def statistics(self) -> dict[str, int]:
-        return {**self.kinds, "total": self.requests, "cache_hits": self.cache_hits, "redirects": self.redirects}
+        return {**self.kinds, **self.statuses, "total": self.requests, "cache_hits": self.cache_hits, "redirects": self.redirects}
 
     async def fetch_html(self, url: str) -> str:
         if urlparse(url).scheme != "https" or urlparse(url).hostname not in self.ALLOWED_HOSTS:
@@ -42,6 +43,8 @@ class JROdekakeDownloader:
                     self.requests += 1 + len(response.history)
                     self.redirects += len(response.history)
                     for transaction in [*response.history, response]:
+                        status = f'http_{transaction.status_code}'
+                        self.statuses[status] = self.statuses.get(status, 0) + 1
                         path = transaction.request.url.path
                         kind = 'detail' if '/train-timetable/' in path else 'timetable' if '/station-timetable/' in path else 'station'
                         self.kinds[kind] += 1

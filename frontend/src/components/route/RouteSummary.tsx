@@ -1,4 +1,5 @@
 import type { Route } from '../../api/types';
+import { routeEndpointDisplayName } from '../../utils/stationDisplay';
 import './RouteTimeline.css';
 
 export interface RouteSummaryProps {
@@ -51,11 +52,11 @@ export function RouteSummary({ route }: RouteSummaryProps) {
         </div>
         <div className="route-summary-item">
           <span className="route-summary-label">From</span>
-          <span className="route-summary-value">{route.departure_station}</span>
+          <span className="route-summary-value">{routeEndpointDisplayName(route, 'departure')}</span>
         </div>
         <div className="route-summary-item">
           <span className="route-summary-label">To</span>
-          <span className="route-summary-value">{route.arrival_station}</span>
+          <span className="route-summary-value">{routeEndpointDisplayName(route, 'arrival')}</span>
         </div>
       </div>
     </div>

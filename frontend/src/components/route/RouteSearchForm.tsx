@@ -6,6 +6,7 @@ import { Button, Input } from '../ui';
 import { useToast } from '../../hooks/useToast';
 import { useRouteSearch } from '../../hooks/useRouteSearch';
 import type { Route } from '../../api/types';
+import { selectedSearchParams } from '../../utils/stationSelection';
 import './Route.css';
 
 export interface RouteSearchFormProps {
@@ -69,12 +70,7 @@ export function RouteSearchForm({
 
   const handleSearch = () => {
     if (isReady) {
-      const params = {
-        departure_station: departure.japanese_name,
-        arrival_station: arrival.japanese_name,
-        departure_date: departureDate,
-        departure_time: departureTime,
-      };
+      const params = selectedSearchParams(departure, arrival, departureDate, departureTime);
       if (JSON.stringify(params) === JSON.stringify(submittedParams)) refetch();
       else setSubmittedParams(params);
     }

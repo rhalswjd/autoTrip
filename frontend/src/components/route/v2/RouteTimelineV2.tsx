@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Route, RouteSegment } from '../../../api/types';
+import { stationDisplayName } from '../../../utils/stationDisplay';
 import { TrainFront, BusFront, Footprints } from 'lucide-react';
 import './RouteTimelineV2.css';
 import { getLineColor } from './utils';
@@ -89,7 +90,7 @@ export function RouteTimelineV2({ route }: RouteTimelineV2Props) {
               </div>
               <div className="rt-content">
                 <div className="rt-station-header">
-                  <span className="rt-station-name">{station.name}</span>
+                  <span className="rt-station-name">{stationDisplayName(station)}</span>
                   {/* Time would go here if available, e.g., <span className="rt-station-time">5:35 AM</span> */}
                 </div>
                 {nodeType === 'through' && (
