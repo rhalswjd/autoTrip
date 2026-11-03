@@ -132,6 +132,7 @@ response*.json
 *.html
 *.png
 !frontend/index.html
+!frontend/tests/ui/*.html
 !backend/tests/**/*.html
 !backend/tests/**/*.png
 !frontend/public/**/*.png

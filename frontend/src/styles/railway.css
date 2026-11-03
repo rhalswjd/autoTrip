@@ -1,0 +1,255 @@
+/* Route-planning tokens are scoped: other screens keep their existing design. */
+.rail-ui, .rail-timeline {
+  --rail-blue-900: #123c71;
+  --rail-blue-700: #1456a0;
+  --rail-blue-500: #176ac2;
+  --rail-surface: #fff;
+  --rail-surface-muted: #f3f6fa;
+  --rail-selection: #edf4fc;
+  --rail-border: #d7e0e9;
+  --rail-text: #1c2b3d;
+  --rail-muted: #5c6b7c;
+  --rail-success: #187047;
+  --rail-warning: #86560a;
+  --rail-warning-bg: #fff6e5;
+  --rail-error: #a12e2e;
+  --rail-error-bg: #fff2f1;
+  --rail-motion: 160ms;
+  --rail-ease: cubic-bezier(.2, 0, 0, 1);
+  color: var(--rail-text); color-scheme: light; font-size: 14px; line-height: 1.5;
+}
+.rail-ui *, .rail-timeline * { box-sizing: border-box; }
+.rail-ui button, .rail-ui select { font: inherit; }
+.rail-ui button { cursor: pointer; }
+.rail-ui button:disabled { cursor: not-allowed; }
+.rail-ui :is(button, a, select, summary):focus-visible, .rail-timeline button:focus-visible { outline: 3px solid var(--rail-blue-500); outline-offset: 3px; }
+.rail-ui h2, .rail-ui h3, .rail-ui h4, .rail-ui p { margin: 0; }
+.rail-ui small { font-size: 12px; }
+.rail-ui .btn-primary { background: var(--rail-blue-700); color: #fff; }
+.rail-ui .btn-secondary { background: var(--rail-surface-muted); color: var(--rail-text); border: 1px solid var(--rail-border); }
+.rail-ui .btn { border-radius: 6px; transform: none; }
+.rail-ui .btn:disabled { opacity: 1; background: var(--rail-surface-muted); color: var(--rail-muted); border: 1px solid var(--rail-border); }
+.rail-ui select { border: 1px solid var(--rail-border); color: var(--rail-text); border-radius: 4px; background: var(--rail-surface); padding: 6px 28px 6px 9px; max-width: 100%; }
+.rail-eyebrow { display: block; color: var(--rail-blue-700); font-size: 10px; font-weight: 750; letter-spacing: .13em; }
+.rail-results { padding-top: 8px; }
+.rail-results-header { display: flex; gap: 16px; justify-content: space-between; align-items: end; margin-bottom: 20px; }
+.rail-results-header h2 { font-size: 23px; font-weight: 720; letter-spacing: -.025em; }
+.rail-results-header h2 > span { display: inline-block; font-size: 12px; color: var(--rail-muted); font-weight: 400; margin-left: 8px; letter-spacing: 0; }
+.rail-sort { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--rail-muted); }
+.rail-result-section { margin-top: 18px; }
+.rail-result-section > h3 { color: var(--rail-muted); font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.rail-result-section[data-result-kind="daily_alternative"], .rail-result-section[data-result-kind="later_practical"] { border-top: 1px solid var(--rail-border); padding-top: 16px; }
+.rail-route-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.rail-route-list > li { min-width: 0; animation: rail-enter var(--rail-motion) var(--rail-ease); }
+.rail-route-card { position: relative; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 24px; text-align: left; color: var(--rail-text); background: var(--rail-surface); border: 0; border-bottom: 1px solid var(--rail-border); border-radius: 0; padding: 18px 18px 12px; overflow: hidden; transition: border-color var(--rail-motion), background var(--rail-motion), transform var(--rail-motion); }
+.rail-route-card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; border-radius: 0 2px 2px 0; background: var(--rail-blue-700); transform: scaleY(0); transition: transform var(--rail-motion); }
+.rail-route-card:hover { background: var(--rail-surface-muted); }
+.rail-route-card:active { transform: translateY(0); background: var(--rail-selection); }
+.rail-route-card.is-selected { background: var(--rail-selection); border-bottom-color: transparent; border-radius: 0 6px 0 0; }
+.rail-route-card.is-selected::before { transform: scaleY(1); }
+.rail-results-selected .rail-route-list > li:not(.is-active) .rail-route-card { color: var(--rail-muted); }
+.rail-results-selected .rail-route-list > li:not(.is-active) .rail-route-times strong { color: var(--rail-text); }
+.rail-route-main { min-width: 0; }
+.rail-route-times { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); gap: 10px; align-items: start; }
+.rail-route-times > span { display: flex; flex-direction: column; min-width: 0; }
+.rail-route-times strong { font-size: 29px; font-weight: 720; line-height: 1.15; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.rail-route-times > svg { color: var(--rail-muted); margin-top: 8px; }
+.rail-route-times > span > span { overflow-wrap: anywhere; font-size: 12px; margin-top: 4px; }
+.rail-service-chips { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 12px; }
+.rail-service-chips > span { font-size: 12px; color: var(--rail-muted); }
+.rail-service-chips > span + span::before { content: "·"; margin-right: 10px; color: var(--rail-blue-700); }
+.rail-route-metrics { display: flex; flex-direction: column; gap: 3px; text-align: right; font-size: 12px; }
+.rail-route-metrics > strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+.rail-fare { color: var(--rail-muted); }
+.rail-route-footer { grid-column: 1 / -1; padding-top: 3px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rail-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rail-badges > span { font-size: 10px; line-height: 1.6; font-weight: 600; color: var(--rail-blue-700); background: var(--rail-selection); border-radius: 3px; padding: 1px 5px; }
+.rail-badges > small { font-size: 11px; color: var(--rail-muted); }
+.rail-route-action { display: flex; align-items: center; gap: 6px; color: var(--rail-blue-700); font-size: 12px; font-weight: 650; }
+.rail-route-action svg { transition: transform var(--rail-motion); }
+.is-selected .rail-route-action svg { transform: rotate(180deg); }
+.rail-wait-warning { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; background: transparent; color: var(--rail-warning); padding: 2px 8px; font-size: 12px; border-left: 2px solid var(--rail-warning); }
+.rail-route-reason { grid-column: 1 / -1; font-size: 12px; color: var(--rail-muted); }
+.rail-expansion { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 200ms var(--rail-ease); }
+.rail-expansion[data-open="true"] { grid-template-rows: 1fr; }
+.rail-expansion > div { min-height: 0; overflow: hidden; }
+.rail-route-detail { padding: 0 20px 18px; border: 0; border-left: 1px solid var(--rail-border); border-bottom: 1px solid var(--rail-border); background: var(--rail-surface); }
+.rail-show-more { display: flex; width: 100%; align-items: center; justify-content: center; gap: 8px; border: 0; border-top: 1px solid var(--rail-border); background: var(--rail-surface); color: var(--rail-blue-700); border-radius: 0; margin-top: 14px; padding: 11px; }
+.rail-show-more span { color: var(--rail-muted); font-size: 12px; }
+.rail-text-button { border: 0; padding: 4px 0; background: transparent; color: var(--rail-blue-700); font-size: 12px; font-weight: 650; display: inline-flex; align-items: center; gap: 5px; text-align: left; }
+.rail-text-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rail-overview { border-bottom: 1px solid var(--rail-border); }
+.rail-overview > summary { cursor: pointer; padding: 13px 0; font-size: 13px; font-weight: 650; }
+.rail-overview > summary > span { color: var(--rail-muted); font-size: 11px; font-weight: 400; margin-left: 10px; }
+.rail-section-heading { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.rail-section-heading h3 { font-size: 18px; letter-spacing: -.02em; }
+.rail-section-heading > span { font-size: 11px; color: var(--rail-muted); }
+.rail-timeline { padding: 8px 0 20px; }
+.rail-timeline .rail-section-heading h3 { font-size: 13px; }
+.rail-timeline ol { list-style: none; padding: 0 0 0 8px; margin: 0; }
+.rail-timeline li { position: relative; border-left: 3px solid var(--rail-blue-700); padding: 0 0 0 19px; margin-bottom: 18px; }
+.rail-timeline li:last-child { margin-bottom: 0; }
+.rail-timeline li.is-walk { border-left: 2px dashed var(--rail-muted); color: var(--rail-muted); }
+.rail-leg-stations { display: flex; align-items: start; gap: 14px; position: relative; }
+.rail-leg-stations::before { content: ''; position: absolute; left: -26px; top: 5px; width: 11px; height: 11px; border: 2px solid var(--rail-blue-700); border-radius: 50%; background: var(--rail-surface); }
+.rail-leg-clock { min-width: 43px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.rail-station-name { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.rail-station-name > small { font-weight: 400; color: var(--rail-muted); font-size: 11px; }
+.rail-leg-service { display: flex; gap: 9px; align-items: center; padding: 12px 0; }
+.rail-leg-service > svg { flex-shrink: 0; color: var(--rail-blue-700); }
+.rail-leg-service > div { flex: 1; min-width: 0; }
+.rail-leg-service strong { font-size: 12px; font-weight: 600; }
+.rail-leg-service small { display: block; font-size: 11px; color: var(--rail-muted); }
+.rail-transfer { font-size: 11px; color: var(--rail-muted); margin: 0 0 12px -22px; padding: 5px 10px; border-left: 3px dotted var(--rail-border); }
+.rail-through { display: flex; align-items: start; gap: 6px; padding: 6px 0 6px 8px; margin: 0 0 10px; border-left: 1px solid var(--rail-border); font-size: 11px; color: var(--rail-muted); }
+.rail-through strong { color: var(--rail-blue-700); font-weight: 600; }
+.rail-through small { display: block; margin-top: 2px; }
+.rail-wizard { padding: 22px 0 12px; gap: 0; }
+.rail-progress ol { padding: 0; margin: 0 0 18px; list-style: none; }
+.rail-progress li { border-bottom: 1px solid var(--rail-border); border-left: 3px solid transparent; transition: background var(--rail-motion), border-color var(--rail-motion); }
+.rail-progress li.is-current { background: var(--rail-selection); border-left-color: var(--rail-blue-700); }
+.rail-progress li > button { display: flex; gap: 9px; align-items: center; padding: 10px 9px; width: 100%; text-align: left; border: 0; background: transparent; color: var(--rail-text); font-size: 12px; }
+.rail-progress li > button:hover { background: var(--rail-selection); }
+.rail-progress li > button > span:nth-child(2) { flex: 1; overflow-wrap: anywhere; }
+.rail-progress li > button > small { font-size: 10px; color: var(--rail-muted); }
+.rail-step-number { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 23px; height: 23px; border: 1px solid var(--rail-border); border-radius: 50%; font-variant-numeric: tabular-nums; font-size: 11px; }
+.is-current .rail-step-number { background: var(--rail-blue-700); color: #fff; border-color: var(--rail-blue-700); }
+.is-complete .rail-step-number { background: var(--rail-success); color: #fff; border-color: var(--rail-success); }
+.rail-current-leg { animation: rail-enter var(--rail-motion) var(--rail-ease); }
+.rail-station-sign { background: var(--rail-blue-900); color: #fff; padding: 14px 18px 12px; border-top: 2px solid #4e9de7; border-radius: 0 7px 7px 0; }
+.rail-station-sign .rail-eyebrow { color: #c4defb; }
+.rail-station-sign h4 { display: grid; grid-template-columns: 1fr auto 1fr; gap: 15px; align-items: start; margin-top: 8px; font-size: 21px; line-height: 1.25; letter-spacing: -.02em; }
+.rail-station-sign h4:focus { outline: none; }
+.rail-station-sign .rail-station-name small { color: #c4defb; margin-top: 4px; font-size: 12px; }
+.rail-station-sign p { font-size: 11px; color: #d8e8fb; border-top: 1px solid #4a6b96; margin-top: 12px; padding-top: 8px; }
+.rail-connection-context { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; padding: 12px 0; border-bottom: 1px solid var(--rail-border); font-size: 11px; color: var(--rail-muted); }
+.rail-connection-context strong { display: block; color: var(--rail-text); font-size: 15px; font-variant-numeric: tabular-nums; }
+.rail-connection-context small { grid-column: 1 / -1; font-size: 11px; }
+.rail-timetable-prompt { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 18px 0; }
+.rail-timetable-prompt p { color: var(--rail-muted); font-size: 12px; }
+.rail-timetable-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 12px 0; color: var(--rail-muted); font-size: 11px; }
+.rail-source { display: inline-flex; align-items: center; gap: 5px; color: var(--rail-muted); font-size: 11px; line-height: 1.6; }
+.rail-source::before { content: ""; width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
+.rail-source.is-official { color: var(--rail-blue-700); font-weight: 550; }
+.rail-departures { display: grid; gap: 0; margin-bottom: 12px; border-top: 1px solid var(--rail-border); }
+.rail-departure { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; border: 0; border-bottom: 1px solid var(--rail-border); background: var(--rail-surface); border-radius: 0; padding: 15px 12px 13px; transition: border-color var(--rail-motion), background var(--rail-motion); animation: rail-enter var(--rail-motion) var(--rail-ease); }
+.rail-departure:hover { background: var(--rail-surface-muted); }
+.rail-departure.is-selected { background: var(--rail-selection); box-shadow: inset 3px 0 var(--rail-blue-700); }
+.rail-departure-times { display: grid; grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr); gap: 12px; }
+.rail-departure-times > div > strong { display: block; font-size: 26px; font-weight: 720; line-height: 1.2; font-variant-numeric: tabular-nums; letter-spacing: -.035em; }
+.rail-departure-times > svg { margin-top: 8px; color: var(--rail-muted); }
+.rail-departure-times .rail-station-name { font-size: 11px; margin-top: 3px; }
+.rail-departure-times .rail-station-name > small { font-size: 10px; }
+.rail-departure-action { align-self: start; }
+.rail-departure-action button { display: inline-flex; align-items: center; gap: 4px; color: var(--rail-blue-700); background: var(--rail-surface); border: 1px solid var(--rail-blue-700); border-radius: 6px; padding: 7px 12px; font-size: 12px; }
+.rail-departure-action button:hover, .rail-departure-action button[aria-pressed="true"] { background: var(--rail-blue-700); color: #fff; }
+.rail-departure-action button:disabled { background: var(--rail-surface-muted); color: var(--rail-muted); border-color: var(--rail-border); }
+.rail-departure-service { grid-column: 1 / -1; display: flex; gap: 7px 12px; flex-wrap: wrap; align-items: baseline; font-size: 12px; }
+.rail-departure-service small { color: var(--rail-muted); font-size: 10px; }
+.rail-departure-meta { grid-column: 1 / -1; display: flex; gap: 8px 16px; flex-wrap: wrap; align-items: center; padding-top: 3px; }
+.rail-platform { display: flex; flex-direction: column; font-size: 11px; color: var(--rail-muted); }
+.rail-platform strong { font-size: 11px; font-weight: 550; color: var(--rail-text); }
+.rail-departure-meta a { display: inline-flex; align-items: center; gap: 3px; color: var(--rail-muted); font-size: 10px; }
+.rail-unavailable-note { grid-column: 1 / -1; color: var(--rail-warning); font-size: 12px; }
+.rail-departure.is-unavailable { border-bottom-style: dashed; background: var(--rail-surface-muted); }
+.rail-selected-summary { display: flex; gap: 12px; align-items: center; padding: 12px 9px; animation: rail-enter var(--rail-motion) var(--rail-ease); }
+.rail-selected-summary > div:first-child { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; font-size: 12px; }
+.rail-selected-summary small { color: var(--rail-muted); font-size: 10px; }
+.rail-summary-time { font-size: 17px; font-variant-numeric: tabular-nums; }
+.rail-complete { color: var(--rail-success); display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; }
+.rail-summary-platforms { display: flex; gap: 7px 14px; flex-wrap: wrap; max-width: 45%; }
+.rail-seat-preference { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; border-top: 1px solid var(--rail-border); padding-top: 12px; margin-top: 12px; }
+.rail-state { padding: 12px 16px; border-left: 2px solid var(--rail-border); margin: 12px 0 !important; color: var(--rail-muted); font-size: 12px; }
+.rail-state strong { display: block; color: var(--rail-text); font-size: 13px; }
+.rail-state p { margin: 6px 0 12px; }
+.rail-state.is-error { border-left-color: var(--rail-error); }
+.rail-info-message { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 12px; margin-bottom: 14px !important; color: var(--rail-blue-700); border-left: 2px solid var(--rail-blue-700); font-size: 12px; animation: rail-enter var(--rail-motion); }
+.was-cleared { animation: rail-cleared 500ms ease-out; }
+.rail-wizard-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.rail-loading { display: grid; gap: 10px; padding: 12px 0; }
+.rail-loading-row { border-bottom: 1px solid var(--rail-border); padding: 16px; display: grid; gap: 12px; }
+.rail-loading-times { display: flex; gap: 40px; }
+.rail-loading .skeleton { background-color: var(--rail-border); }
+@keyframes rail-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rail-cleared { from { background: var(--rail-selection); } to { background: transparent; } }
+.rail-search-page .detail-panel { min-width: 0; }
+.rail-search-page .route-detail-section { width: 100%; max-width: 1040px; }
+@media (max-width: 900px) {
+  .rail-search-page { flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
+  .rail-search-page > .sidebar { width: 100%; min-width: 0; height: auto; max-height: 300px; flex-shrink: 0; }
+  .rail-search-page > .sidebar .sidebar-content { min-height: 90px; }
+  .rail-search-page > .detail-panel { overflow: visible; }
+}
+@media (max-width: 600px) {
+  .rail-search-page .route-detail-section { padding: 16px 12px; }
+  .rail-results-header { align-items: start; gap: 10px; }
+  .rail-results-header h2 { font-size: 19px; }
+  .rail-results-header h2 > span { display: block; margin: 3px 0 0; }
+  .rail-sort select { font-size: 11px; max-width: 135px; }
+  .rail-route-card { gap: 10px; padding: 13px 12px 10px; grid-template-columns: minmax(0, 1fr); }
+  .rail-route-times strong { font-size: 27px; }
+  .rail-route-metrics { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 5px 12px; text-align: left; }
+  .rail-route-metrics > strong { font-size: 16px; }
+  .rail-route-footer { align-items: start; }
+  .rail-route-action { font-size: 11px; flex-shrink: 0; }
+  .rail-route-detail { padding: 0 12px 12px; }
+  .rail-overview > summary > span { display: block; margin-left: 17px; }
+  .rail-section-heading { flex-wrap: wrap; gap: 4px; }
+  .rail-station-sign { padding: 12px; }
+  .rail-station-sign h4 { font-size: 17px; gap: 8px; }
+  .rail-departure { grid-template-columns: 1fr; padding: 12px; gap: 8px; }
+  .rail-departure-times { gap: 10px; }
+  .rail-departure-action { grid-row: 4; }
+  .rail-departure-action button { width: 100%; justify-content: center; }
+  .rail-departure-times > div > strong { font-size: 25px; }
+  .rail-selected-summary { flex-wrap: wrap; }
+  .rail-summary-platforms { max-width: 100%; order: 3; width: 100%; }
+  .rail-leg-service { flex-wrap: wrap; }
+  .rail-leg-service .rail-text-button { margin-left: 26px; }
+  .rail-connection-context { gap: 8px; }
+  .rail-connection-context strong { font-size: 12px; }
+  .rail-info-message, .rail-timetable-prompt { align-items: start; flex-direction: column; }
+}
+@media (prefers-color-scheme: dark) {
+  .rail-ui, .rail-timeline {
+    color-scheme: dark; --rail-surface: #162332; --rail-surface-muted: #1c2c3e; --rail-selection: #203c5c;
+    --rail-border: #3a5066; --rail-text: #edf3fa; --rail-muted: #acbcd0; --rail-blue-700: #8bc0ff;
+    --rail-blue-500: #8bc0ff; --rail-success: #7ed4a6; --rail-warning: #f5cb7d; --rail-warning-bg: #3f321d;
+    --rail-error: #ffb0a9; --rail-error-bg: #402b2d;
+  }
+  .rail-ui .btn-primary, .rail-departure-action button[aria-pressed="true"], .rail-departure-action button:hover, .is-current .rail-step-number, .is-complete .rail-step-number { color: #112339; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-ui *, .rail-timeline * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+.rail-loading .skeleton { animation: skeleton-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .rail-loading .skeleton { animation: none; } }
+.rail-empty { display: flex; align-items: flex-start; gap: 12px; }
+.rail-empty p { margin-bottom: 0; }
+.rail-station-sign h4:focus-visible { outline: 2px solid #c4defb; outline-offset: 4px; }
+.rail-ui h3:focus-visible { outline: 2px solid var(--rail-blue-500); outline-offset: 4px; }
+.rail-service-chips > span, .rail-leg-service strong, .rail-departure-service strong { overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  .rail-text-button, .rail-departure-action button { min-height: 40px; }
+  .rail-progress li > button { min-height: 44px; }
+  .rail-station-name > span { font-size: 12px; }
+  .rail-station-sign .rail-station-name > span { font-size: inherit; }
+}
+
+/* Press feedback precedes selection; all transitions remain interruptible. */
+.rail-ui :is(.rail-text-button, .rail-show-more, .rail-progress button, .rail-departure-action button):active {
+  background: var(--rail-selection);
+  color: var(--rail-blue-700);
+  transition-duration: 60ms;
+}
+.rail-ui .btn:active:not(:disabled) { filter: brightness(.94); transform: scale(.99); transition-duration: 60ms; }
+.rail-departure:has(button:active) { background: var(--rail-selection); box-shadow: inset 3px 0 var(--rail-blue-700); }
+.rail-progress li > button:active .rail-step-number { transform: scale(.96); }
+.rail-departure-action button, .rail-show-more, .rail-text-button { transition: background 120ms var(--rail-ease), color 120ms var(--rail-ease); }
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  .rail-ui, .rail-timeline { --rail-border: #758599; --rail-muted: #394d65; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-ui .btn:active, .rail-progress li > button:active .rail-step-number { transform: none; }
+}

@@ -1,146 +1,23 @@
-import React from 'react';
-import type { Route, RouteSegment } from '../../../api/types';
-import { stationDisplayName } from '../../../utils/stationDisplay';
-import { TrainFront, BusFront, Footprints } from 'lucide-react';
-import './RouteTimelineV2.css';
-import { getLineColor } from './utils';
+import { BusFront, Footprints, TrainFront } from 'lucide-react';
+import type { Route } from '../../../api/types';
+import { StationName, ThroughBoundary } from '../../railway/TrainInfo';
+import '../../../styles/railway.css';
 
-export interface RouteTimelineV2Props {
-  route: Route;
-}
+export interface RouteTimelineV2Props { route: Route; onViewTimetable?: (index: number) => void }
 
-function getPrimaryRouteIcon(segments: RouteSegment[]) {
-  if (segments.some(s => s.segment_type === 'train')) return <TrainFront size={20} />;
-  if (segments.some(s => s.segment_type === 'bus')) return <BusFront size={20} />;
-  return <Footprints size={20} />;
-}
-
-export function RouteTimelineV2({ route }: RouteTimelineV2Props) {
-  const activeRoute = route;
-  const { stations = [], segments = [], planner_metadata } = activeRoute;
-
-  return (
-    <div className="rt-container" role="list" aria-label="Route timeline">
-      <div className="rt-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {getPrimaryRouteIcon(segments)}
-          <span className="rt-header-title">Route Detail</span>
-        </div>
-        {planner_metadata && (
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {planner_metadata.planner_state && (
-              <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
-                {planner_metadata.planner_state}
-              </span>
-            )}
-            {planner_metadata.planner_mode && (
-              <span style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '12px', background: 'var(--color-primary-light, #e6f7ff)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }}>
-                {planner_metadata.planner_mode}
-              </span>
-            )}
-          </div>
-        )}
+export function RouteTimelineV2({ route, onViewTimetable }: RouteTimelineV2Props) {
+  return <section className="rail-timeline" aria-label="Route timeline">
+    <div className="rail-section-heading"><h3>Route overview</h3><span>Search schedule · choose exact trains below</span></div>
+    <ol>{route.passenger_legs.map((leg, index) => <li key={leg.index} className={leg.segment_type === 'walk' ? 'is-walk' : ''}>
+      {index > 0 && leg.segment_type !== 'walk' && route.passenger_legs[index - 1].segment_type !== 'walk' && <div className="rail-transfer">Transfer · change {leg.segment_type === 'bus' ? 'to bus' : 'train'}</div>}
+      <div className="rail-leg-stations"><span className="rail-leg-clock">{leg.departure_time || '—'}</span><StationName station={leg.departure_station} /></div>
+      <div className="rail-leg-service">
+        {leg.segment_type === 'walk' ? <Footprints size={17} aria-hidden="true" /> : leg.segment_type === 'bus' ? <BusFront size={17} aria-hidden="true" /> : <TrainFront size={17} aria-hidden="true" />}
+        <div><strong>{leg.segment_type === 'walk' ? 'Walk' : leg.railway_names.join(' / ')}</strong>{leg.duration && <small>{leg.duration}{leg.segment_type === 'walk' ? ' · search estimate' : ''}</small>}</div>
+        {leg.segment_type !== 'walk' && onViewTimetable && <button type="button" className="rail-text-button" onClick={() => onViewTimetable(leg.index)}>View timetable →</button>}
       </div>
-      {stations.map((station, i) => {
-        const segment = segments[i]; // Segment leaving this station
-        const prevSegment = i > 0 ? segments[i - 1] : null;
-        const isLast = i === stations.length - 1;
-
-        let nodeType = 'transfer';
-        if (i === 0) nodeType = 'departure';
-        else if (isLast) nodeType = 'arrival';
-        else if (segment && segment.is_through) nodeType = 'through';
-
-        // Colors
-        const prevColor = prevSegment ? getLineColor(prevSegment.railway_name) : 'transparent';
-        const nextColor = segment ? getLineColor(segment.railway_name) : 'transparent';
-
-        const isPrevWalk = prevSegment?.segment_type === 'walk';
-        const isNextWalk = segment?.segment_type === 'walk';
-
-        return (
-          <React.Fragment key={`${station.id || station.name}-${i}`}>
-            {/* Station Node Row */}
-            <div className="rt-row" role="listitem">
-              <div className="rt-track">
-                {/* Top half line (comes from previous segment) */}
-                {i > 0 && (
-                  <div 
-                    className={`rt-line-top ${isPrevWalk ? 'rt-line-walk' : ''}`} 
-                    style={{ background: isPrevWalk ? 'transparent' : prevColor }} 
-                  />
-                )}
-                {/* Bottom half line (goes to next segment) */}
-                {!isLast && (
-                  <div 
-                    className={`rt-line-bottom ${isNextWalk ? 'rt-line-walk' : ''}`} 
-                    style={{ background: isNextWalk ? 'transparent' : nextColor }} 
-                  />
-                )}
-                
-                {/* Node Dot */}
-                {nodeType === 'through' ? (
-                  <div className="rt-node-through" />
-                ) : (
-                  <div 
-                    className={`rt-node-outer rt-node-${nodeType}`} 
-                    style={{ borderColor: isLast ? prevColor : nextColor }}
-                  />
-                )}
-              </div>
-              <div className="rt-content">
-                <div className="rt-station-header">
-                  <span className="rt-station-name">{stationDisplayName(station)}</span>
-                  {/* Time would go here if available, e.g., <span className="rt-station-time">5:35 AM</span> */}
-                </div>
-                {nodeType === 'through' && (
-                  <div className="rt-through-text">Remain on board</div>
-                )}
-              </div>
-            </div>
-
-            {/* Segment Row (Train or Walk) */}
-            {!isLast && segment && (
-              <div className="rt-row">
-                <div className="rt-track">
-                  <div 
-                    className={`rt-line-full ${isNextWalk ? 'rt-line-walk' : ''}`} 
-                    style={{ background: isNextWalk ? 'transparent' : nextColor }} 
-                  />
-                  {isNextWalk && <div className="rt-walk-icon"><Footprints size={16} /></div>}
-                </div>
-                <div className="rt-content">
-                  {isNextWalk ? (
-                    <div className="rt-walk-text">
-                      {segment.railway_name || 'Walk'}
-                    </div>
-                  ) : (
-                    <div className="rt-train-segment">
-                      <div className="rt-train-badge-row">
-                        <span className="rt-train-badge" style={{ background: nextColor }}>
-                          {segment.segment_type === 'bus' ? 'Bus' : 'Train'}
-                        </span>
-                        <span className="rt-train-name">{segment.railway_name}</span>
-                      </div>
-                      
-                      {/* Optional Stops accordion UI (pseudo for now) */}
-                      {/* Real stops data would be parsed or fetched if available */}
-                      {activeRoute.transfer_count > 0 && i === 0 && (
-                        <div className="rt-stops-accordion">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                          </svg>
-                          Ride
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
+      <ThroughBoundary leg={leg} />
+      <div className="rail-leg-stations"><span className="rail-leg-clock">{leg.arrival_time || '—'}</span><StationName station={leg.arrival_station} /></div>
+    </li>)}</ol>
+  </section>;
 }

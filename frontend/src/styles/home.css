@@ -1,0 +1,135 @@
+.home-page { --home-blue:#0759ad; --home-ink:#17334e; --home-muted:#617283; min-height:100%; background:#f8f9f6; color:var(--home-ink); }
+.home-header { max-width:1320px; margin:auto; padding:28px 48px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.home-wordmark { color:var(--home-ink); text-decoration:none; font-size:23px; font-weight:750; letter-spacing:-.8px; }
+.home-wordmark span { color:var(--home-blue); margin-right:8px; }
+.home-header nav { display:flex; gap:32px; font-size:13px; }
+.home-header nav a { color:var(--home-muted); text-decoration:none; }
+.home-header nav [aria-current] { color:var(--home-blue); }
+.home-main { max-width:1120px; margin:auto; padding:70px 40px 24px; }
+.home-heading { margin-bottom:44px; }
+.home-eyebrow { color:var(--home-blue); font-size:11px; font-weight:700; letter-spacing:2px; margin-bottom:20px; }
+.home-heading h1 { font-size:clamp(36px,4.4vw,62px); line-height:1.1; letter-spacing:-2.6px; font-weight:650; margin-bottom:16px; }
+.home-heading h1 span { color:var(--home-blue); }
+.home-heading > p:last-child { color:var(--home-muted); font-size:16px; }
+.home-wayfinding { display:flex; align-items:center; gap:16px; padding-bottom:13px; border-bottom:4px solid var(--home-blue); margin-bottom:30px; color:var(--home-blue); font-weight:650; }
+.home-wayfinding > span:first-child { border:1px solid var(--home-blue); padding:3px 7px; font-size:13px; }
+.home-wayfinding small { margin-left:12px; font-size:12px; font-weight:400; }
+.home-wayfinding svg { margin-left:auto; }
+.home-stations { display:grid; grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr); align-items:center; gap:20px; }
+.home-station { position:relative; min-width:0; }
+.home-station > label { display:block; font-size:11px; letter-spacing:1.7px; font-weight:750; color:var(--home-blue); margin-bottom:9px; }
+.home-station-input { display:flex; align-items:center; border-bottom:1px solid #a8b9c7; }
+.home-station-input:focus-within { border-bottom:2px solid var(--home-blue); margin-bottom:-1px; }
+.home-station input { width:100%; min-width:0; font:500 24px/1.5 var(--font-family-system); letter-spacing:-.5px; color:var(--home-ink); border:0; background:transparent; padding:8px 0 12px; border-radius:0; }
+.home-station input:not(:focus) { text-overflow:ellipsis; }
+.home-station input::placeholder { color:#81909d; }
+.home-station input:focus-visible { box-shadow:none; outline:none; }
+.home-clear { flex-shrink:0; font-size:23px; width:36px; height:40px; border:0; background:transparent; color:var(--home-muted); cursor:pointer; }
+.home-station-hint { display:block; color:var(--home-muted); font-size:12px; margin-top:10px; min-height:20px; overflow-wrap:anywhere; }
+.home-swap { width:44px; height:44px; margin:auto; border:1px solid #b8c8d6; color:var(--home-blue); background:transparent; border-radius:50%; display:grid; place-items:center; cursor:pointer; }
+.home-swap:hover { background:#e8f0f8; }
+.home-swap:disabled { opacity:.4; cursor:default; }
+.home-swap:active,.home-clear:active { background:#d9e9f8; }
+.home-suggestions { position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:20; background:#fff; border:1px solid #b8c8d6; box-shadow:0 10px 24px #163d6014; }
+.home-suggestion-status { padding:12px 16px; color:var(--home-muted); font-size:12px; }
+.home-suggestions ul { list-style:none; max-height:280px; overflow:auto; }
+.home-suggestions li { padding:12px 16px; border-top:1px solid #e8edf2; cursor:pointer; }
+.home-suggestions li:hover,.home-suggestions li[aria-selected=true] { background:#eaf3fc; box-shadow:inset 3px 0 var(--home-blue); }
+.home-suggestions strong,.home-suggestions span { display:block; overflow-wrap:anywhere; }
+.home-suggestions strong { font-size:15px; }
+.home-suggestions span,.home-suggestions small { color:var(--home-muted); font-size:12px; }
+.home-suggestions small { color:#28724e; }
+.home-retry { margin:0 16px 12px; padding:8px; background:#edf5fd; color:var(--home-blue); border:1px solid #b8c8d6; cursor:pointer; }
+/* Reuse existing date, time and search behavior; scope presentation to the Home entry. */
+.home-search-controls .route-form-title,.home-search-controls .route-fields-wrapper { display:none; }
+.home-search-controls .route-form-container { display:grid; grid-template-columns:minmax(0,1fr) 240px; align-items:end; gap:40px; padding:0; margin-top:32px; background:transparent; border:0; box-shadow:none; }
+.home-search-controls .route-form-section { margin:0; }
+.home-search-controls .route-datetime-fields { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.home-search-controls .route-actions { margin:0; padding:0; }
+.home-search-controls .input-field { color:var(--home-ink); background:#fff; border-color:#b8c8d6; border-radius:3px; height:48px; }
+.home-search-controls .input-label { color:var(--home-muted); font-size:12px; }
+.home-search-controls .btn { width:100%; min-height:48px; border-radius:3px; background:var(--home-blue); color:white; box-shadow:none; }
+.home-time-note { margin-top:18px; color:var(--home-muted); font-size:11px; }
+.home-footer { margin-top:100px; padding-top:18px; border-top:1px solid #d6dfe6; display:flex; justify-content:space-between; gap:20px; color:var(--home-muted); font-size:10px; letter-spacing:1.5px; }
+.home-results { margin-top:42px; }
+.has-results { padding-top:28px; }
+.has-results .home-heading { margin-bottom:28px; }
+.has-results .home-heading h1 { font-size:36px; letter-spacing:-1.3px; }
+@media(max-width:700px) {
+  .home-header { padding:22px; gap:16px; }
+  .home-header nav { gap:18px; font-size:11px; }
+  .home-header nav [aria-current] { display:none; }
+  .home-main { padding:42px 22px 22px; }
+  .home-heading { margin-bottom:34px; }
+  .home-heading h1 { max-width:290px; letter-spacing:-1.5px; font-size:40px; }
+  .home-heading > p:last-child { font-size:14px; }
+  .home-stations { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .home-station input { font-size:21px; }
+  .home-swap { justify-self:end; margin:-7px 0; width:36px; height:36px; background:#f8f9f6; transform:rotate(90deg); }
+  .home-search-controls .route-form-container { grid-template-columns:1fr; gap:24px; margin-top:28px; }
+  .home-search-controls .route-datetime-fields { gap:14px; }
+  .home-search-controls .input-field { min-width:0; width:100%; padding:10px; }
+  .home-footer { margin-top:52px; font-size:9px; letter-spacing:.7px; }
+}
+
+/* Original ticket and gate artwork. The blue route line carries into Home. */
+.ticket-entry { min-height:100svh; overflow:hidden; position:relative; background:#f8f9f6; }
+.entry-skip { position:fixed; top:20px; right:48px; z-index:30; border:0; background:#f8f9f6; color:var(--home-muted); padding:12px 0 12px 16px; cursor:pointer; font:500 13px var(--font-family-system); }
+.entry-skip:hover { color:var(--home-blue); }
+.entry-skip:active { opacity:.6; }
+.entry-skip span { margin-left:10px; }
+.entry-heading { text-align:center; margin:35px 20px 0; }
+.entry-heading h1 { font-size:clamp(34px,3.5vw,48px); line-height:1.13; letter-spacing:-1.8px; font-weight:600; margin-bottom:14px; }
+.entry-heading > p:last-child { color:var(--home-muted); font-size:14px; }
+.entry-heading .home-eyebrow { margin-bottom:16px; }
+.entry-scene { position:relative; height:390px; width:min(100%,720px); margin:0 auto; }
+.entry-ticket { position:absolute; top:36px; left:50%; width:300px; height:156px; transform:translateX(-50%) rotate(-6deg); z-index:3; border:1px solid #c3c4b5; border-radius:3px; background:#f3f0df; color:#293e42; padding:14px 17px; text-align:left; box-shadow:2px 9px 14px #17334e19; cursor:pointer; font-family:var(--font-family-system); transition:transform 120ms ease-out,box-shadow 120ms ease-out; }
+.entry-ticket:hover { transform:translateX(-50%) rotate(-3deg) translateY(-4px); box-shadow:2px 12px 18px #17334e22; }
+.entry-ticket:active { transform:translateX(-50%) rotate(-3deg) translateY(3px); box-shadow:1px 3px 8px #17334e19; }
+.ticket-top,.ticket-bottom { display:flex; align-items:center; justify-content:space-between; font-size:9px; letter-spacing:1px; }
+.ticket-top { color:#657567; }
+.ticket-route { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; font-size:15px; font-weight:650; white-space:nowrap; }
+.ticket-route > span:first-child { font-size:21px; }
+.ticket-route small { display:block; font-size:9px; font-weight:500; margin-top:3px; letter-spacing:0; }
+.ticket-rule { display:block; border-top:1px solid #afbbaf; margin:12px 0 8px; }
+.ticket-bottom { font-size:8px; }
+.ticket-marks { display:block; font-size:11px; letter-spacing:3px; margin-top:5px; opacity:.65; }
+.entry-gate { width:400px; position:absolute; top:174px; left:50%; transform:translateX(-50%); }
+.entry-track { position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--home-blue); transform:scaleX(0); transform-origin:center; }
+.entry-train { width:480px; position:absolute; bottom:3px; left:0; opacity:0; }
+.entry-caption { text-align:center; margin:24px 20px 0; }
+.entry-caption p { font-size:15px; color:var(--home-ink); }
+.entry-caption span { display:block; color:var(--home-muted); font-size:11px; margin-top:8px; }
+.entry-footnote { text-align:center; color:var(--home-muted); font-size:10px; padding:36px 20px 24px; }
+.is-accepting .entry-ticket { animation:ticket-insert 470ms cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
+.is-accepting .gate-status { fill:#2da77b; }
+.is-accepting .entry-gate { animation:gate-depart 350ms 500ms ease-in forwards; }
+.is-accepting .entry-track { animation:track-extend 600ms 450ms ease-out forwards; }
+.is-accepting .entry-train { animation:train-pass 900ms 500ms cubic-bezier(.35,0,.35,1) forwards; }
+.home-replay { display:block; margin:18px 0 0 auto; border:0; background:transparent; color:var(--home-muted); font-size:10px; text-decoration:underline; cursor:pointer; padding:8px; }
+.home-arrived .home-wayfinding { animation:home-arrive 260ms ease-out; }
+@keyframes ticket-insert { 30% { transform:translateX(-50%) rotate(0); } 80% { opacity:1; } 100% { transform:translateX(-50%) translateY(166px) rotate(0) scale(.55,.06); opacity:0; } }
+@keyframes gate-depart { to { opacity:0; transform:translateX(-50%) translateY(12px); } }
+@keyframes track-extend { to { transform:scaleX(1); } }
+@keyframes train-pass { 0% { opacity:0; transform:translateX(-100%); } 15%,80% { opacity:1; } 100% { opacity:0; transform:translateX(150%); } }
+@keyframes home-arrive { from { opacity:.35; } to { opacity:1; } }
+@media(max-width:700px) {
+  .entry-skip { top:14px; right:22px; }
+  .entry-heading { margin-top:26px; }
+  .entry-scene { height:355px; }
+  .entry-ticket { width:280px; height:150px; top:30px; padding:12px 14px; }
+  .ticket-route { font-size:14px; }
+  .entry-gate { width:350px; max-width:100%; top:172px; }
+  .entry-caption { margin-top:20px; }
+  .entry-train { width:350px; }
+  .entry-footnote { padding-top:28px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .entry-ticket,.entry-ticket:hover,.entry-ticket:active { transform:translateX(-50%); transition:none; }
+  .is-accepting .entry-ticket,.is-accepting .entry-gate,.is-accepting .entry-track,.is-accepting .entry-train,.home-arrived .home-wayfinding { animation:none; }
+  .entry-train { display:none; }
+}
+
+.home-search-controls .input-wrapper { min-width:0; }
+.home-search-controls .input-field { box-shadow:none; color-scheme:light; }
+.home-search-controls .btn:hover:not(:disabled) { background:#03498e; box-shadow:none; }

@@ -11,7 +11,9 @@
     "build": "tsc -b && vite build",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:ui": "node tests/ui/render.test.mjs",
+    "test:home": "node tests/ui/home.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",

@@ -1,16 +1,9 @@
 import { MapPin } from 'lucide-react';
-import './RouteTimeline.css';
+import '../../styles/railway.css';
 
 export function RouteEmpty() {
-  return (
-    <div className="route-empty-state">
-      <MapPin className="route-empty-icon" />
-      <div>
-        <div className="route-empty-title">No Routes Found</div>
-        <div className="route-empty-desc">
-          Try searching with different stations.
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="rail-ui" role="status"><div className="rail-state rail-empty">
+    <MapPin size={22} aria-hidden="true" /><div><strong>No routes found around your requested time.</strong>
+      <p>Try a different departure time, date or station.</p></div>
+  </div></div>;
 }

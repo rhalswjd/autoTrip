@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { stationDisplayName } from '../../utils/stationDisplay';
 import { platformLabel } from '../../utils/platform';
 import type { Route, DepartureInfo } from '../../api/types';
@@ -12,18 +12,35 @@ import { selectedTimetableBucket } from '../../utils/timetable';
 import { itineraryPreview, selectedPassengerLegs } from '../../utils/itinerary';
 import { exactTimes, compatibleDeparture, chronologicalJourney, selectExactDeparture, walkDuration, jstDate, displayDateTime } from '../../utils/chronology';
 import './Timetable.css';
+import '../../styles/railway.css';
+import { JourneyProgress } from './JourneyProgress';
+import { SelectedDepartureSummary, SourceBadge, StationName, ThroughBoundary } from '../railway/TrainInfo';
 
 export interface TransferWizardProps {
   route: Route;
+  requestedLeg?: { index: number; requestId: number };
   onItineraryChange?: (route: Route) => void;
 }
 
-export function TransferWizard({ route, onItineraryChange }: TransferWizardProps) {
+export function TransferWizard({ route, onItineraryChange, requestedLeg }: TransferWizardProps) {
   const legs = route.passenger_legs || [];
   const [currentStep, setCurrentStep] = useState(0);
+  const [clearedLegs, setClearedLegs] = useState<number[]>([]);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const reviewRef = useRef<HTMLButtonElement>(null);
+  const summaryRef = useRef<HTMLHeadingElement>(null);
+  const focusRequested = useRef<'leg' | 'review' | 'summary' | null>(null);
+  const focusStep = useRef(0);
+  const navigate = (index: number, open = false) => {
+    focusStep.current = index;
+    focusRequested.current = index === legs.length ? 'summary' : 'leg';
+    setCurrentStep(index);
+    setOpened(open);
+  };
   const [selectedLegs, setSelectedLegs] = useState<Record<number, DepartureInfo>>({});
   const [selectedSeats, setSelectedSeats] = useState<Record<number, SeatPreference>>({});
   const [opened, setOpened] = useState(false);
+  const openTimetable = () => { focusStep.current = currentStep; focusRequested.current = 'leg'; setOpened(true); };
   const [continuedDate, setContinuedDate] = useState('');
   const [notionUrl, setNotionUrl] = useState('');
   const [formError, setFormError] = useState('');
@@ -48,12 +65,34 @@ export function TransferWizard({ route, onItineraryChange }: TransferWizardProps
     setSelectedSeats({});
     setOpened(false);
     setFormError('');
+    setClearedLegs([]);
     reset();
   }, [route.id, reset]);
 
   useEffect(() => {
     onItineraryChange?.(Object.keys(selectedLegs).length ? itineraryPreview(route, selectedLegs) : route);
   }, [route, selectedLegs, onItineraryChange]);
+
+  useEffect(() => {
+    if (requestedLeg) {
+      focusStep.current = requestedLeg.index;
+      focusRequested.current = 'leg';
+      setCurrentStep(requestedLeg.index);
+      setOpened(true);
+    }
+  }, [requestedLeg]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (!focusRequested.current || focusStep.current !== currentStep) return;
+      const target = focusRequested.current === 'review' ? reviewRef.current
+        : focusRequested.current === 'summary' ? summaryRef.current : headingRef.current;
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      focusRequested.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [currentStep, opened, requestedLeg]);
 
   const timetable = query.data?.pages[0];
   const unavailable = timetable?.status === 'unsupported' || timetable?.status === 'provider_error' || query.isError;
@@ -73,7 +112,10 @@ export function TransferWizard({ route, onItineraryChange }: TransferWizardProps
   const selectDeparture = (departure: DepartureInfo) => {
     if (!compatibleDeparture(departure,previousArrival,walkMinutes,queryDate)) return;
     // Changing an earlier train invalidates every later selection.
+    setClearedLegs(Object.keys(selectedLegs).map(Number).filter(index => index > currentStep));
     setSelectedLegs(previous => selectExactDeparture(previous,currentStep,departure));
+    if (departure.arrival_time && currentStep < legs.length - 1) navigate(currentStep + 1, true);
+    else { focusStep.current = currentStep; focusRequested.current = 'review'; setOpened(false); }
   };
 
   const submit = () => {
@@ -104,42 +146,50 @@ export function TransferWizard({ route, onItineraryChange }: TransferWizardProps
   if (isSuccess) return <section aria-label="Saved itinerary"><p>Notion에 저장되었습니다.</p>
     {data?.notion_url && <a href={data.notion_url} target="_blank" rel="noreferrer">Open Notion</a>}</section>;
 
-  return <section className="timetable-container" aria-label="Passenger timetable">
-    <h3>{isSummary ? '선택 일정 확인' : '구간별 시간표'}</h3>
-    <p>{route.search_date} · {legs.filter(item => item.segment_type !== 'walk').length}개 탑승 구간</p>
-    <nav aria-label="Passenger legs" className="passenger-leg-nav">
-      {legs.map(item => <button key={item.index} type="button" aria-current={currentStep === item.index ? 'step' : undefined}
-        onClick={() => { setCurrentStep(item.index); setOpened(false); }}>
-        {item.index + 1}. {stationDisplayName(item.departure_station)} → {stationDisplayName(item.arrival_station)}
-        {item.segment_type === 'bus' ? ' · Bus' : item.segment_type === 'walk' ? ' · Walk' : ''}
-      </button>)}
-    </nav>
-    {!isSummary && leg && <>
-      <h4 data-testid="passenger-leg-heading">{stationDisplayName(leg.departure_station)} → {stationDisplayName(leg.arrival_station)}</h4>
-      <p>{leg.railway_names.join(' / ')}</p>
-      {leg.through_boundaries.length > 0 && <p>Remain on board: {leg.through_boundaries.map(stationDisplayName).join(', ')}</p>}
-      {isWalk ? <p>도보 이동 · {leg.duration || '시간 미확인'}</p> : <>
-        {!opened && <Button onClick={() => setOpened(true)}>View Timetable</Button>}
+  return <section className="timetable-container rail-wizard rail-ui" aria-label="Passenger timetable">
+    <header className="rail-section-heading"><div><span className="rail-eyebrow">BUILD YOUR JOURNEY</span>
+      <h3 ref={summaryRef} tabIndex={-1}>{isSummary ? '선택 일정 확인' : 'Choose your trains'}</h3></div>
+      <span>{Object.keys(selectedLegs).length} / {legs.filter(item => item.segment_type !== 'walk').length} rides selected</span></header>
+    <JourneyProgress legs={legs} currentStep={currentStep} selected={selectedLegs} cleared={clearedLegs} onNavigate={navigate} />
+    {clearedLegs.length > 0 && <p role="status" className="rail-info-message" key={clearedLegs.join(',')}>
+      Your later train selections were cleared because the connection time changed.
+      <button type="button" className="rail-text-button" onClick={() => setClearedLegs([])} aria-label="Dismiss connection update">Dismiss</button>
+    </p>}
+    {!isSummary && leg && <div className="rail-current-leg" key={leg.index}>
+      <header className="rail-station-sign">
+        <span className="rail-eyebrow">{isWalk ? 'WALKING CONNECTION' : `LEG ${leg.index + 1} · ${queryDate || 'Travel date'}`}</span>
+        <h4 ref={headingRef} tabIndex={-1} data-testid="passenger-leg-heading"><StationName station={leg.departure_station} /><span aria-hidden="true">→</span><StationName station={leg.arrival_station} /></h4>
+        <p>{leg.railway_names.join(' / ')}</p>
+      </header>
+      <ThroughBoundary leg={leg} />
+      {previousArrival !== undefined && <div className="rail-connection-context">
+        <span>Previous train arrives{previousRide ? ` at ${stationDisplayName(previousRide.arrival_station)}` : ''}<strong>{displayDateTime(previousArrival)}</strong></span>
+        <span>Available departures from<strong>{displayDateTime(previousArrival + walkMinutes * 60000)}</strong></span>
+        <small>Check that you have enough time to change platforms{walkMinutes > 0 ? ' and complete the walk' : ''}.</small>
+      </div>}
+      {isWalk ? <p className="rail-state">Walking connection · {leg.duration || 'Duration not provided'}</p> : <>
+        {selected && !opened && <SelectedDepartureSummary departure={selected} onChange={openTimetable} />}
+        {!opened && !selected && <div className="rail-timetable-prompt"><p>Choose an exact departure for this ride.</p><Button onClick={openTimetable}>View timetable</Button></div>}
         {opened && query.isPending && <TimetableLoading />}
-        {opened && query.isError && <div role="alert">
-          <p>시간표 조회 실패: {query.error.message}</p>
-          <Button variant="secondary" onClick={() => query.refetch()}>다시 조회</Button>
+        {opened && query.isError && <div role="alert" className="rail-state is-error">
+          <strong>Could not retrieve timetable information.</strong><p>Try again, or explore another leg while this source is unavailable.</p>
+          <Button variant="secondary" loading={query.isFetching} onClick={() => query.refetch()}>Retry</Button>
         </div>}
         {opened && timetable && !query.isError && <>
-          <p>{timetable.source === 'jr_odekake' ? 'JR 오데카케 공식 시간표' : 'Yahoo 시간표'} · {queryDate} · {selectedTimetableBucket(timetable).label}</p>
-          {timetable.status !== 'available' && <p role="status" data-availability={timetable.availability}>
-            {timetable.status === 'unsupported' ? 'Detailed timetable unavailable — ' : 'Provider error — '}
-            {timetable.message || '이 구간의 시간표 공급자가 지원되지 않습니다.'}</p>}
-          {timetable.status === 'provider_error' && <Button variant="secondary" onClick={() => query.refetch()}>다시 조회</Button>}
-          {previousArrival !== undefined && <p>이전 구간 도착 {displayDateTime(previousArrival)} 이후의 출발편 · 환승 여유시간을 확인해 주세요.</p>}
-          <div role="listbox" aria-label="Available departures">
-            {available.map(departure => <TimetableCard key={departure.id} departure={departure}
+          <div className="rail-timetable-meta"><SourceBadge source={timetable.source} /><span>{queryDate} · {selectedTimetableBucket(timetable).label}</span>{query.isFetching && !query.isFetchingNextPage && <span role="status">Updating departures…</span>}</div>
+          {timetable.status !== 'available' && <div role="status" className={`rail-state ${timetable.status === 'provider_error' ? 'is-error' : ''}`} data-availability={timetable.availability}>
+            <strong>{timetable.status === 'unsupported' ? 'Detailed timetable unavailable for this segment.' : 'Could not retrieve timetable information.'}</strong>
+            <p>You can still view the other legs of your journey.</p>
+            {timetable.status === 'provider_error' && <Button variant="secondary" loading={query.isFetching} onClick={() => query.refetch()}>Retry</Button>}
+          </div>}
+          {!unavailable && <div className="rail-departures" aria-label="Available departures" aria-busy={query.isFetching}>
+            {available.map(departure => <TimetableCard key={departure.id} departure={departure} leg={leg}
               isSelected={selected?.id === departure.id} onClick={selectDeparture} />)}
-          </div>
-          {!unavailable && available.length === 0 && <p role="status">{query.hasNextPage ? '이 페이지에는 목적지에 정차하는 출발편이 없습니다. 다음 출발편을 조회할 수 있습니다.' : '선택한 날짜와 구간에 맞는 출발편을 찾지 못했습니다.'}</p>}
-          {query.hasNextPage && <Button variant="secondary" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>다음 출발편 더 보기</Button>}
+          </div>}
+          {!unavailable && available.length === 0 && <p role="status" className="rail-state">{query.hasNextPage ? 'No matching departures on this page. Load more trains to continue.' : previousArrival !== undefined ? 'No compatible departures after the previous connection.' : 'No departures found for this date and journey.'}</p>}
+          {query.hasNextPage && !unavailable && <Button variant="secondary" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>Show more departures</Button>}
         </>}
-        {leg.has_seat_selection && <label>Seat preference <select aria-label="Seat preference"
+        {leg.has_seat_selection && <label className="rail-seat-preference">Seat preference <select aria-label="Seat preference"
           value={selectedSeats[currentStep] || SeatPreference.RESERVED}
           onChange={event => setSelectedSeats(previous => ({ ...previous, [currentStep]: event.target.value as SeatPreference }))}>
           <option value={SeatPreference.RESERVED}>Reserved</option>
@@ -147,8 +197,8 @@ export function TransferWizard({ route, onItineraryChange }: TransferWizardProps
           <option value={SeatPreference.GREEN}>Green</option>
         </select></label>}
       </>}
-    </>}
-    {Object.keys(selectedLegs).length > 0 && <section aria-label="Selected itinerary">
+    </div>}
+    {isSummary && Object.keys(selectedLegs).length > 0 && <section aria-label="Selected itinerary">
       <h4>선택한 일정</h4>
       {legs.filter(item => selectedLegs[item.index]).map(item => {
         const departure = selectedLegs[item.index];
@@ -162,12 +212,12 @@ export function TransferWizard({ route, onItineraryChange }: TransferWizardProps
     </section>}
     {isSummary && <>
       <Input label="Notion page URL (optional)" value={notionUrl} onChange={event => setNotionUrl(event.target.value)} />
-      {(formError || saveError) && <p role="alert">{formError || saveError?.message}</p>}
+      {(formError || saveError) && <p role="alert">{formError || 'Could not save your journey. Please try again.'}</p>}
       <Button disabled={!ready} loading={isPending} onClick={submit}>Add to Notion</Button>
     </>}
-    <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-      {currentStep > 0 && <Button variant="secondary" onClick={() => { setCurrentStep(step => step - 1); setOpened(false); }}>이전 구간</Button>}
-      {!isSummary && <Button disabled={!isWalk && !unavailable && !selected?.arrival_time} onClick={() => { setCurrentStep(step => step + 1); setOpened(false); }}>
+    <div className="rail-wizard-actions">
+      {currentStep > 0 && <Button variant="secondary" onClick={() => navigate(currentStep - 1)}>이전 구간</Button>}
+      {!isSummary && <Button ref={reviewRef} disabled={!isWalk && !unavailable && !selected?.arrival_time} onClick={() => navigate(currentStep + 1)}>
         {currentStep === legs.length - 1 ? '일정 확인' : '다음 구간'}
       </Button>}
     </div>
