@@ -23,8 +23,12 @@ try {
   assert.match(intro, /<button[^>]*type="button"[^>]*class="entry-skip"/);
   assert.match(intro, /aria-label="Insert ticket and enter route search"/);
   assert.match(intro, /経路検索 · ROUTE SEARCH/);
+  assert.match(intro, /YOUR JOURNEY BEGINS/);
+  assert.doesNotMatch(intro, /YOUR JOURNEY STARTS HERE/);
   assert.equal(hasEnteredHome(), false);
-  assert.match(renderHome(), /A little ticket/);
+  const firstVisit = renderHome();
+  assert.match(firstVisit, /A little ticket/);
+  assert.match(firstVisit, /class="home-destination" inert="" aria-hidden="true"/);
   rememberHomeEntry();
   assert.equal(storage.get('autotrip.home.entered'), 'yes');
   assert.equal(hasEnteredHome(), true);
@@ -38,6 +42,17 @@ try {
   assert.match(home, /id="route-departure-time"/);
   assert.match(home, /Search Routes/);
   assert.match(home, /Japan Standard Time/);
+  assert.match(home, /Shin-Osaka/);
+  assert.match(home, /新大阪/);
+  assert.match(home, /class="platform-train"/);
+  assert.match(home, /class="platform-vending"/);
+  assert.ok(home.indexOf('class="platform-vending"') < home.indexOf('class="platform-train-control'));
+  assert.equal((home.match(/data-car=/g) || []).length, 5);
+  assert.match(home, /data-car="rear" transform="translate\(4010 0\) scale\(-1 1\)"/);
+  assert.equal((home.match(/width="90" height="61" rx="15" fill="#37566e"/g) || []).length, 18);
+  assert.equal((home.match(/width="66" height="211" rx="9"/g) || []).length, 5);
+  assert.match(home, /aria-label="Watch the parked Shinkansen depart" aria-disabled="false"/);
+  assert.match(home, /class="home-destination" aria-hidden="false"/);
   console.log('Home regressions passed: optional native-button entry/skip, session persistence, revisit bypass, two station comboboxes, existing date/time/search controls.');
 } finally {
   if (previousStorage) Object.defineProperty(globalThis, 'sessionStorage', previousStorage);

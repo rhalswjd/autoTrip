@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { stationDisplayName } from '../../utils/stationDisplay';
-import { platformLabel } from '../../utils/platform';
 import type { Route, DepartureInfo } from '../../api/types';
 import { SeatPreference } from '../../api/types';
 import { useMovement } from '../../hooks';
@@ -13,6 +12,7 @@ import { itineraryPreview, selectedPassengerLegs } from '../../utils/itinerary';
 import { exactTimes, compatibleDeparture, chronologicalJourney, selectExactDeparture, walkDuration, jstDate, displayDateTime } from '../../utils/chronology';
 import './Timetable.css';
 import '../../styles/railway.css';
+import { ItineraryReview, SavedItinerary } from './ItineraryReview';
 import { JourneyProgress } from './JourneyProgress';
 import { SelectedDepartureSummary, SourceBadge, StationName, ThroughBoundary } from '../railway/TrainInfo';
 
@@ -143,8 +143,7 @@ export function TransferWizard({ route, onItineraryChange, requestedLeg }: Trans
   };
 
   if (!legs.length) return <div role="alert">경로의 탑승 구간 정보가 없습니다. 경로를 다시 검색해 주세요.</div>;
-  if (isSuccess) return <section aria-label="Saved itinerary"><p>Notion에 저장되었습니다.</p>
-    {data?.notion_url && <a href={data.notion_url} target="_blank" rel="noreferrer">Open Notion</a>}</section>;
+  if (isSuccess) return <SavedItinerary notionUrl={data?.notion_url} />;
 
   return <section className="timetable-container rail-wizard rail-ui" aria-label="Passenger timetable">
     <header className="rail-section-heading"><div><span className="rail-eyebrow">BUILD YOUR JOURNEY</span>
@@ -198,23 +197,15 @@ export function TransferWizard({ route, onItineraryChange, requestedLeg }: Trans
         </select></label>}
       </>}
     </div>}
-    {isSummary && Object.keys(selectedLegs).length > 0 && <section aria-label="Selected itinerary">
-      <h4>선택한 일정</h4>
-      {legs.filter(item => selectedLegs[item.index]).map(item => {
-        const departure = selectedLegs[item.index];
-        return <div key={item.index}>
-          <p>{stationDisplayName(item.departure_station)} → {stationDisplayName(item.arrival_station)}: {departure.time} → {departure.arrival_time}</p>
-          <small>{displayDateTime(exactTimes(departure,route.search_date).departure)} → {displayDateTime(exactTimes(departure,route.search_date).arrival)}</small>
-          <p>{departure.train_name} · 출발 플랫폼 {platformLabel(departure.platform, departure.platform_status, departure.source)} · 도착 플랫폼 {platformLabel(departure.arrival_platform, departure.arrival_platform_status, departure.source)}</p>
-        </div>;
-      })}
-      <p>선택 열차 운임은 확인되지 않은 경우 미확정으로 표시됩니다.</p>
+    {isSummary && Object.keys(selectedLegs).length > 0 && <ItineraryReview route={route} selected={selectedLegs} />}
+    {isSummary && <section className="rail-notion-action" aria-label="Save journey to Notion">
+      <div><span className="rail-eyebrow">KEEP YOUR JOURNEY</span><h4>Save to Notion</h4><p>선택한 열차와 플랫폼 정보를 함께 저장합니다.</p></div>
+      <div className="rail-notion-fields">
+        <Input id={`notion-page-url-${route.id}`} label="Notion page URL (optional)" placeholder="https://www.notion.so/…" type="url" value={notionUrl} onChange={event => { setNotionUrl(event.target.value); setFormError(''); }} />
+        {(formError || saveError) && <p role="alert" className="rail-save-error">{formError || 'Could not save your journey. Please try again.'}</p>}
+        <Button disabled={!ready} loading={isPending} onClick={submit}>Add to Notion</Button>
+      </div>
     </section>}
-    {isSummary && <>
-      <Input label="Notion page URL (optional)" value={notionUrl} onChange={event => setNotionUrl(event.target.value)} />
-      {(formError || saveError) && <p role="alert">{formError || 'Could not save your journey. Please try again.'}</p>}
-      <Button disabled={!ready} loading={isPending} onClick={submit}>Add to Notion</Button>
-    </>}
     <div className="rail-wizard-actions">
       {currentStep > 0 && <Button variant="secondary" onClick={() => navigate(currentStep - 1)}>이전 구간</Button>}
       {!isSummary && <Button ref={reviewRef} disabled={!isWalk && !unavailable && !selected?.arrival_time} onClick={() => navigate(currentStep + 1)}>

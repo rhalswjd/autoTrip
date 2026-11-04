@@ -8,6 +8,8 @@ try {
   const { RouteTimelineV2 } = await server.ssrLoadModule('/src/components/route/v2/RouteTimelineV2.tsx');
   const { RouteCard } = await server.ssrLoadModule('/src/components/route/RouteCard.tsx');
   const { TimetableCard } = await server.ssrLoadModule('/src/components/timetable/TimetableCard.tsx');
+  const { ItineraryReview, SavedItinerary } = await server.ssrLoadModule('/src/components/timetable/ItineraryReview.tsx');
+  const { TravelDatePicker, DepartureTimePicker } = await server.ssrLoadModule('/src/components/ui/DateTimePicker.tsx');
   const { route, throughRoute, walkingRoute, departure } = await server.ssrLoadModule('/tests/ui/fixtures.ts');
   const render = (component, props) => renderToStaticMarkup(createElement(component, props));
   const through = render(RouteTimelineV2, { route: throughRoute, onViewTimetable() {} });
@@ -21,7 +23,25 @@ try {
   assert.match(card, /Estimated fare/);
   assert.match(card, /Long transfer wait/);
   assert.match(card, /aria-expanded="true"/);
-  assert.match(render(RouteCard, { route: throughRoute, isSelected: false, onClick() {} }), /Fewest transfers/);
+  assert.match(card, /rail-ticket-line/);
+  const directCard = render(RouteCard, { route: throughRoute, isSelected: false, onClick() {} });
+  assert.match(directCard, /class="rail-transfer-status"><span>Direct<\/span><span>No transfers<\/span>/);
+  assert.match(directCard, /Fewest transfers/);
+  assert.doesNotMatch(card, /rail-transfer-status/);
+  const tomorrowRoute = { ...throughRoute, search_date: '2026-11-04' };
+  const tomorrowCard = render(RouteCard, { route: tomorrowRoute, requestedDepartureDate: '2026-11-03', isSelected: false, onClick() {} });
+  assert.match(tomorrowCard, /class="is-tomorrow">Departs tomorrow/);
+  assert.match(tomorrowCard, /<span>Direct<\/span><span>No transfers<\/span>/);
+  assert.doesNotMatch(tomorrowCard, /Direct · No transfers/);
+  for (const routeDate of ['2026-11-03', '2026-11-05', undefined]) {
+    assert.doesNotMatch(render(RouteCard, { route: { ...throughRoute, search_date: routeDate, departure_time: '23:30', arrival_time: '01:20' }, requestedDepartureDate: '2026-11-03', isSelected: false, onClick() {} }), /Departs tomorrow/);
+  }
+  let clickedRoute;
+  const tomorrowElement = RouteCard({ route: tomorrowRoute, requestedDepartureDate: '2026-11-03', isSelected: true, onClick(route) { clickedRoute = route; } });
+  tomorrowElement.props.onClick();
+  assert.equal(clickedRoute, tomorrowRoute);
+  assert.equal(tomorrowElement.props['aria-expanded'], true);
+  assert.equal(tomorrowElement.props['aria-controls'], `route-detail-${tomorrowRoute.id}`);
   const official = render(TimetableCard, { departure: departure(1, '12:11', '14:43'), isSelected: true, onClick() {} });
   assert.match(official, /JR Odekake · Official/);
   assert.match(official, /공식 정보 미제공/);
@@ -33,6 +53,20 @@ try {
   const missingArrival = render(TimetableCard, { departure: departure(0, '06:45', ''), onClick() {} });
   assert.match(missingArrival, /disabled/);
   assert.match(missingArrival, /Arrival time is not confirmed/);
+  const review = render(ItineraryReview, { route, selected: { 0: departure(0, '06:45', '10:46'), 1: departure(1, '12:11', '14:43'), 2: departure(2, '14:51', '15:24') } });
+  assert.equal((review.match(/<li>/g) || []).length, 3);
+  assert.match(review, /Kii-Katsuura/);
+  assert.match(review, /Yahoo · Timetable/);
+  assert.match(review, /공식 정보 미제공/);
+  assert.match(review, /조회 실패/);
+  const saved = render(SavedItinerary, { notionUrl: 'https://www.notion.so/fixture' });
+  assert.match(saved, /role="status"/);
+  assert.match(saved, /Open Notion/);
+  assert.doesNotMatch(render(SavedItinerary, {}), /<a /);
+  const date = render(TravelDatePicker, { id: 'test-date', label: 'Travel date', value: '2026-11-03', onChange() {} });
+  assert.match(date, /Nov 03, 2026/);
+  assert.match(date, /aria-haspopup="dialog"/);
+  assert.match(render(DepartureTimePicker, { id: 'test-time', label: 'Departure time', value: '00:07', onChange() {} }), /00:07/);
   console.log('UI rendering regressions passed: through ride, walking, estimated fare, long waits, source/platform states, selection and unavailable departure.');
 } finally {
   await server.close();

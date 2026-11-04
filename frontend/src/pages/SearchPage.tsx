@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowRightLeft } from 'lucide-react';
+import { StationPlatform } from '../components/home/StationPlatform';
 import { TicketGateEntry } from '../components/home/TicketGateEntry';
 import { hasEnteredHome, rememberHomeEntry } from '../utils/homeEntry';
 import { StationCombobox } from '../components/home/StationCombobox';
@@ -20,8 +21,9 @@ export function SearchPage() {
     if (!showEntry) { window.scrollTo(0, 0); fromRef.current?.focus({ preventScroll: true }); }
   }, [showEntry]);
   const hasResults = !!panel.routes || panel.routesLoading;
-  if (showEntry) return <div className="home-page"><TicketGateEntry onEnter={enter} /></div>;
-  return <div className="home-page home-arrived">
+  return <div className={`home-page ${showEntry ? "home-entering" : "home-arrived"}`}>
+    <div className="home-destination" inert={showEntry} aria-hidden={showEntry}>
+    <StationPlatform />
     <header className="home-header">
       <Link className="home-wordmark" to="/" aria-label="AutoTrip home"><span aria-hidden="true">↗</span> AutoTrip</Link>
       <nav aria-label="Main navigation"><span aria-current="page">Plan a journey</span><Link to="/settings">Settings</Link></nav>
@@ -46,11 +48,13 @@ export function SearchPage() {
         <p className="home-time-note">All departure times are Japan Standard Time · JST</p>
       </section>
       {hasResults && <section className="home-results" aria-label="Route search results">
-        <RouteResultList routes={panel.routes} isLoading={panel.routesLoading} selectedRoute={panel.selectedRoute}
+        <RouteResultList routes={panel.routes} requestedDepartureDate={panel.requestedDepartureDate} isLoading={panel.routesLoading} selectedRoute={panel.selectedRoute}
           onSelectRoute={panel.handleRouteSelect} renderDetail={route => <SelectedRouteDetail key={route.id} route={route} />} />
       </section>}
       <footer className="home-footer"><span>YOUR NEXT STOP STARTS HERE</span><span>日本を、鉄道で。</span></footer>
       {import.meta.env.DEV && <button className="home-replay" type="button" onClick={() => setShowEntry(true)}>Replay intro · dev preview</button>}
     </main>
+    </div>
+    {showEntry && <TicketGateEntry onEnter={enter} />}
   </div>;
 }

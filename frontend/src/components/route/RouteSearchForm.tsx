@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { StationSearchResult, SearchParams } from '../../api/types';
 import { RouteStationField } from './RouteStationField';
 import { SwapButton } from './SwapButton';
-import { Button, Input } from '../ui';
+import { Button } from '../ui';
+import { TravelDatePicker, DepartureTimePicker } from '../ui/DateTimePicker';
 import { useToast } from '../../hooks/useToast';
 import { useRouteSearch } from '../../hooks/useRouteSearch';
 import type { Route } from '../../api/types';
@@ -14,7 +15,7 @@ export interface RouteSearchFormProps {
   arrival: StationSearchResult | null;
   onDepartureChange: (station: StationSearchResult | null) => void;
   onArrivalChange: (station: StationSearchResult | null) => void;
-  onRoutesLoaded?: (routes: Route[] | undefined, isLoading: boolean) => void;
+  onRoutesLoaded?: (routes: Route[] | undefined, isLoading: boolean, requestedDepartureDate?: string) => void;
 }
 
 function currentJstDateTime(): { date: string; time: string } {
@@ -59,8 +60,8 @@ export function RouteSearchForm({
   }, [isError, error, toastError]);
 
   useEffect(() => {
-    onRoutesLoaded?.(data, isFetching);
-  }, [data, isFetching, onRoutesLoaded]);
+    onRoutesLoaded?.(data, isFetching, submittedParams?.departure_date);
+  }, [data, isFetching, onRoutesLoaded, submittedParams?.departure_date]);
 
   const handleSwap = () => {
     const temp = departure;
@@ -98,21 +99,17 @@ export function RouteSearchForm({
           />
         </div>
         <div className="route-datetime-fields">
-          <Input
+          <TravelDatePicker
             id="route-departure-date"
             label="Travel date"
-            type="date"
             value={departureDate}
-            onChange={(event) => setDepartureDate(event.target.value)}
-            required
+            onChange={setDepartureDate}
           />
-          <Input
+          <DepartureTimePicker
             id="route-departure-time"
             label="Departure time"
-            type="time"
             value={departureTime}
-            onChange={(event) => setDepartureTime(event.target.value)}
-            required
+            onChange={setDepartureTime}
           />
         </div>
       </div>

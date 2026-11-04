@@ -1,4 +1,5 @@
-import { BusFront, Footprints, TrainFront } from 'lucide-react';
+import { BusFront, Footprints } from 'lucide-react';
+import { TrainSilhouette } from '../../railway/TrainSilhouette';
 import type { Route } from '../../../api/types';
 import { StationName, ThroughBoundary } from '../../railway/TrainInfo';
 import '../../../styles/railway.css';
@@ -12,7 +13,7 @@ export function RouteTimelineV2({ route, onViewTimetable }: RouteTimelineV2Props
       {index > 0 && leg.segment_type !== 'walk' && route.passenger_legs[index - 1].segment_type !== 'walk' && <div className="rail-transfer">Transfer · change {leg.segment_type === 'bus' ? 'to bus' : 'train'}</div>}
       <div className="rail-leg-stations"><span className="rail-leg-clock">{leg.departure_time || '—'}</span><StationName station={leg.departure_station} /></div>
       <div className="rail-leg-service">
-        {leg.segment_type === 'walk' ? <Footprints size={17} aria-hidden="true" /> : leg.segment_type === 'bus' ? <BusFront size={17} aria-hidden="true" /> : <TrainFront size={17} aria-hidden="true" />}
+        {leg.segment_type === 'walk' ? <Footprints size={17} aria-hidden="true" /> : leg.segment_type === 'bus' ? <BusFront size={17} aria-hidden="true" /> : <TrainSilhouette size={22} />}
         <div><strong>{leg.segment_type === 'walk' ? 'Walk' : leg.railway_names.join(' / ')}</strong>{leg.duration && <small>{leg.duration}{leg.segment_type === 'walk' ? ' · search estimate' : ''}</small>}</div>
         {leg.segment_type !== 'walk' && onViewTimetable && <button type="button" className="rail-text-button" onClick={() => onViewTimetable(leg.index)}>View timetable →</button>}
       </div>

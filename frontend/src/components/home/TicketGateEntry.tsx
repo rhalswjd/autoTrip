@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Shinkansen } from './Shinkansen';
 
 interface Props { onEnter: () => void }
 
@@ -11,15 +12,15 @@ export function TicketGateEntry({ onEnter }: Props) {
     if (!accepting) return;
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (motion.matches) { onEnter(); return; }
-    const timer = window.setTimeout(onEnter, 1450);
+    const timer = window.setTimeout(onEnter, 2650);
     const handleMotionChange = () => { if (motion.matches) onEnter(); };
     motion.addEventListener('change', handleMotionChange);
     return () => { window.clearTimeout(timer); motion.removeEventListener('change', handleMotionChange); };
   }, [accepting, onEnter]);
   return <main className={`ticket-entry ${accepting ? 'is-accepting' : ''}`} aria-labelledby="entry-title">
-    <header className="home-header"><span className="home-wordmark"><span aria-hidden="true">↗</span> AutoTrip</span>
-      <button type="button" className="entry-skip" onClick={onEnter}>Skip intro <span aria-hidden="true">↗</span></button>
-    </header>
+    <button type="button" className="entry-skip" onClick={onEnter}>Skip intro <span aria-hidden="true">↗</span></button>
+    <div className="entry-interior">
+    <header className="home-header"><span className="home-wordmark"><span aria-hidden="true">↗</span> AutoTrip</span></header>
     <div className="entry-heading"><p className="home-eyebrow">日本の鉄道旅 / JAPAN BY RAIL</p>
       <h1 id="entry-title">A little ticket.<br />A new journey.</h1><p>Your next stop is up to you.</p>
     </div>
@@ -46,21 +47,16 @@ export function TicketGateEntry({ onEnter }: Props) {
         <path d="M111 164H150M139 151 152 164 139 177" fill="none" stroke="#b8f5db" strokeWidth="5" />
         <circle className="gate-status" cx="320" cy="140" r="6" fill="#74a9cc" />
         <text x="195" y="161" fill="#294f69" fontSize="14" letterSpacing="2">入口 / ENTRY</text>
-        <text x="195" y="183" fill="#617785" fontSize="10" letterSpacing="1">YOUR JOURNEY STARTS HERE</text>
+        <text x="195" y="183" fill="#617785" fontSize="10" letterSpacing="1">YOUR JOURNEY BEGINS</text>
         <path d="M80 214H335" stroke="#b8c6cd" />
       </svg>
-      <div className="entry-track" aria-hidden="true" />
-      <svg className="entry-train" viewBox="0 0 540 100" aria-hidden="true">
-        <path d="M0 14H350C400 14 418 23 452 47L518 77Q540 91 515 92H0Z" fill="#fff" stroke="#b3c8d7" strokeWidth="2" />
-        <path d="M348 20Q392 21 419 43L451 58H393L366 38Z" fill="#173d60" />
-        <path d="M0 65H440L502 83H0Z" fill="#0759ad" />
-        <path d="M0 32H320" stroke="#486a88" strokeWidth="15" strokeDasharray="35 17" />
-        <path d="M48 15V88M295 15V88" stroke="#d4dfe6" />
-      </svg>
+
     </div>
     <div className="entry-caption" aria-live="polite"><p>{accepting ? 'Welcome aboard. Let’s find your route.' : 'Tap your ticket to begin.'}</p>
       <span>{accepting ? 'Search is just ahead.' : 'Click, tap or press Enter · You can skip anytime'}</span>
     </div>
     <p className="entry-footnote">A journey planner for Japan. No ticket purchase required.</p>
+    </div>
+    <div className="entry-sweep"><Shinkansen className="entry-train" /></div>
   </main>;
 }

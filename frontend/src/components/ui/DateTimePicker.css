@@ -1,0 +1,38 @@
+.rail-picker-field { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.rail-picker-field > label { font-size:12px; color:#617283; font-weight:500; }
+.rail-picker-trigger { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:11px 14px; border:1px solid #ced9e3; border-radius:10px; background:#fff; color:#203c58; font:500 14px/1.5 var(--font-family-system); cursor:pointer; font-variant-numeric:tabular-nums; transition:background 120ms,border-color 120ms; }
+.rail-picker-trigger svg { color:#6b8499; flex-shrink:0; }
+.rail-picker-trigger:hover { background:#f8fbfe; border-color:#8eaecb; }
+.rail-picker-trigger:active,.rail-picker-trigger[aria-expanded=true] { background:#edf4fc; border-color:#176ac2; }
+.rail-picker-trigger:focus-visible { outline:3px solid #b4d4f5; outline-offset:2px; box-shadow:none; }
+.rail-picker-popover { position:fixed; z-index:1000; width:min(320px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; background:#fff; color:#20344b; border:1px solid #dce4ec; border-radius:16px; padding:16px; box-shadow:0 16px 48px #13375824,0 3px 10px #1337580a; font:13px/1.5 var(--font-family-system); color-scheme:light; animation:picker-appear 120ms ease-out; }
+.rail-picker-popover button,.rail-picker-popover select,.rail-picker-popover input { font:inherit; color:inherit; }
+.rail-picker-popover button { border:0; background:transparent; cursor:pointer; border-radius:8px; }
+.rail-picker-popover button:hover { background:#f0f5fa; }
+.rail-picker-popover button:active { background:#ddebf9; }
+.rail-picker-popover :focus-visible { outline:2px solid #176ac2; outline-offset:1px; box-shadow:none; }
+.picker-calendar-heading { display:flex; gap:3px; align-items:center; margin-bottom:16px; }
+.picker-calendar-heading > div { display:flex; gap:4px; flex:1; min-width:0; }
+.picker-calendar-heading select { max-width:116px; border:0; background:transparent; font-weight:650; padding:6px 0; }
+.picker-calendar-heading input { width:63px; padding:4px; border:1px solid transparent; border-radius:5px; background:transparent; font-weight:600; }
+.picker-calendar-heading > button { display:grid; place-items:center; width:30px; height:34px; flex-shrink:0; }
+.picker-weekdays,.picker-calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; }
+.picker-weekdays { margin-bottom:8px; text-align:center; color:#8290a0; font-size:10px; font-weight:600; }
+.picker-calendar-grid button { height:36px; font-variant-numeric:tabular-nums; }
+.picker-calendar-grid .outside-month { color:#9aa7b5; }
+.picker-calendar-grid button[aria-current=date] { box-shadow:inset 0 0 0 1px #9ebfe2; }
+.picker-calendar-grid button[aria-pressed=true] { color:white; background:#1456a0; font-weight:650; }
+.picker-footer { margin-top:14px; padding-top:12px; border-top:1px solid #e7edf3; display:flex; justify-content:space-between; }
+.picker-footer button { padding:7px 11px; font-size:12px; color:#1456a0; min-height:34px; }
+.picker-footer .picker-done { background:#1456a0; color:#fff; min-width:74px; }
+.picker-time-heading { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
+.picker-time-heading strong { font-size:14px; }
+.picker-time-heading > span { font-size:10px; color:#6b8095; }
+.picker-time-columns { display:grid; grid-template-columns:1fr 18px 1fr; align-items:center; gap:8px; }
+.picker-time-columns > span { text-align:center; font-size:22px; color:#8ca0b3; }
+.picker-time-column > span { display:block; text-align:center; font-size:10px; color:#7d8e9e; margin-bottom:8px; }
+.picker-time-column [role=listbox] { height:196px; overflow:auto; padding:5px; background:#f6f8fb; border-radius:10px; }
+.picker-time-column button { display:block; width:100%; height:38px; font-size:17px; font-variant-numeric:tabular-nums; margin:2px 0; }
+.picker-time-column button[aria-selected=true] { background:#1456a0; color:#fff; font-weight:600; }
+@keyframes picker-appear { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { .rail-picker-popover { animation:none; } .rail-picker-trigger { transition:none; } }

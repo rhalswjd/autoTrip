@@ -72,64 +72,161 @@
   .home-footer { margin-top:52px; font-size:9px; letter-spacing:.7px; }
 }
 
-/* Original ticket and gate artwork. The blue route line carries into Home. */
-.ticket-entry { min-height:100svh; overflow:hidden; position:relative; background:#f8f9f6; }
-.entry-skip { position:fixed; top:20px; right:48px; z-index:30; border:0; background:#f8f9f6; color:var(--home-muted); padding:12px 0 12px 16px; cursor:pointer; font:500 13px var(--font-family-system); }
-.entry-skip:hover { color:var(--home-blue); }
-.entry-skip:active { opacity:.6; }
-.entry-skip span { margin-left:10px; }
-.entry-heading { text-align:center; margin:35px 20px 0; }
-.entry-heading h1 { font-size:clamp(34px,3.5vw,48px); line-height:1.13; letter-spacing:-1.8px; font-weight:600; margin-bottom:14px; }
-.entry-heading > p:last-child { color:var(--home-muted); font-size:14px; }
-.entry-heading .home-eyebrow { margin-bottom:16px; }
-.entry-scene { position:relative; height:390px; width:min(100%,720px); margin:0 auto; }
-.entry-ticket { position:absolute; top:36px; left:50%; width:300px; height:156px; transform:translateX(-50%) rotate(-6deg); z-index:3; border:1px solid #c3c4b5; border-radius:3px; background:#f3f0df; color:#293e42; padding:14px 17px; text-align:left; box-shadow:2px 9px 14px #17334e19; cursor:pointer; font-family:var(--font-family-system); transition:transform 120ms ease-out,box-shadow 120ms ease-out; }
-.entry-ticket:hover { transform:translateX(-50%) rotate(-3deg) translateY(-4px); box-shadow:2px 12px 18px #17334e22; }
-.entry-ticket:active { transform:translateX(-50%) rotate(-3deg) translateY(3px); box-shadow:1px 3px 8px #17334e19; }
-.ticket-top,.ticket-bottom { display:flex; align-items:center; justify-content:space-between; font-size:9px; letter-spacing:1px; }
-.ticket-top { color:#657567; }
-.ticket-route { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; font-size:15px; font-weight:650; white-space:nowrap; }
-.ticket-route > span:first-child { font-size:21px; }
-.ticket-route small { display:block; font-size:9px; font-weight:500; margin-top:3px; letter-spacing:0; }
-.ticket-rule { display:block; border-top:1px solid #afbbaf; margin:12px 0 8px; }
-.ticket-bottom { font-size:8px; }
-.ticket-marks { display:block; font-size:11px; letter-spacing:3px; margin-top:5px; opacity:.65; }
-.entry-gate { width:400px; position:absolute; top:174px; left:50%; transform:translateX(-50%); }
-.entry-track { position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--home-blue); transform:scaleX(0); transform-origin:center; }
-.entry-train { width:480px; position:absolute; bottom:3px; left:0; opacity:0; }
-.entry-caption { text-align:center; margin:24px 20px 0; }
-.entry-caption p { font-size:15px; color:var(--home-ink); }
-.entry-caption span { display:block; color:var(--home-muted); font-size:11px; margin-top:8px; }
-.entry-footnote { text-align:center; color:var(--home-muted); font-size:10px; padding:36px 20px 24px; }
-.is-accepting .entry-ticket { animation:ticket-insert 470ms cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
-.is-accepting .gate-status { fill:#2da77b; }
-.is-accepting .entry-gate { animation:gate-depart 350ms 500ms ease-in forwards; }
-.is-accepting .entry-track { animation:track-extend 600ms 450ms ease-out forwards; }
-.is-accepting .entry-train { animation:train-pass 900ms 500ms cubic-bezier(.35,0,.35,1) forwards; }
-.home-replay { display:block; margin:18px 0 0 auto; border:0; background:transparent; color:var(--home-muted); font-size:10px; text-decoration:underline; cursor:pointer; padding:8px; }
-.home-arrived .home-wayfinding { animation:home-arrive 260ms ease-out; }
-@keyframes ticket-insert { 30% { transform:translateX(-50%) rotate(0); } 80% { opacity:1; } 100% { transform:translateX(-50%) translateY(166px) rotate(0) scale(.55,.06); opacity:0; } }
-@keyframes gate-depart { to { opacity:0; transform:translateX(-50%) translateY(12px); } }
-@keyframes track-extend { to { transform:scaleX(1); } }
-@keyframes train-pass { 0% { opacity:0; transform:translateX(-100%); } 15%,80% { opacity:1; } 100% { opacity:0; transform:translateX(150%); } }
-@keyframes home-arrive { from { opacity:.35; } to { opacity:1; } }
-@media(max-width:700px) {
-  .entry-skip { top:14px; right:22px; }
-  .entry-heading { margin-top:26px; }
-  .entry-scene { height:355px; }
-  .entry-ticket { width:280px; height:150px; top:30px; padding:12px 14px; }
-  .ticket-route { font-size:14px; }
-  .entry-gate { width:350px; max-width:100%; top:172px; }
-  .entry-caption { margin-top:20px; }
-  .entry-train { width:350px; }
-  .entry-footnote { padding-top:28px; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .entry-ticket,.entry-ticket:hover,.entry-ticket:active { transform:translateX(-50%); transition:none; }
-  .is-accepting .entry-ticket,.is-accepting .entry-gate,.is-accepting .entry-track,.is-accepting .entry-train,.home-arrived .home-wayfinding { animation:none; }
-  .entry-train { display:none; }
-}
-
+/* The platform is a single environmental layer; functional controls stay above it. */
+.home-destination { position:relative; isolation:isolate; min-height:100svh; overflow:clip; }
+.home-destination > .home-header,.home-main { position:relative; z-index:1; }
+.home-main { padding-top:48px; }
+.home-heading { min-height:174px; max-width:59%; margin-bottom:54px; }
+.home-heading h1 { font-size:clamp(38px,4vw,56px); }
+.home-heading > p:last-child { max-width:380px; }
 .home-search-controls .input-wrapper { min-width:0; }
 .home-search-controls .input-field { box-shadow:none; color-scheme:light; }
 .home-search-controls .btn:hover:not(:disabled) { background:#03498e; box-shadow:none; }
+.home-footer { margin-top:56px; }
+.home-results { background:transparent; }
+.station-platform { position:absolute; inset:78px 0 auto; height:400px; z-index:0; overflow:hidden; pointer-events:none; }
+.platform-structure { position:absolute; inset:0; width:100%; height:100%; }
+.platform-train-control { position:absolute; width:2757px; max-width:none; top:141px; left:calc(50% + 20px); }
+.platform-sign { position:absolute; top:27px; left:calc(50% + 245px); width:278px; padding:15px 18px 0; background:#f9fbfc; border:1px solid #bccbd4; box-shadow:4px 6px 0 #d0dbe266; color:#20435f; }
+.platform-sign::before,.platform-sign::after { content:''; position:absolute; top:-42px; height:41px; width:3px; background:#a9bdca; }
+.platform-sign::before { left:28px; }
+.platform-sign::after { right:28px; }
+.platform-sign-jp { display:block; font-size:28px; font-weight:600; letter-spacing:6px; line-height:1.3; }
+.platform-sign strong { display:block; font-size:22px; font-weight:600; letter-spacing:-.5px; }
+.platform-sign-line { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:10px -18px 0; padding:7px 12px; color:white; background:#215d91; font-size:8px; letter-spacing:.6px; }
+.platform-sign-line b { font-size:18px; line-height:1; }
+.platform-wash { position:absolute; inset:0; background:linear-gradient(90deg,#f8f9f6 5%,#f8f9f6f7 28%,#f8f9f600 62%),linear-gradient(0deg,#f8f9f6 0%,#f8f9f600 21%); }
+.has-results .home-heading { min-height:174px; }
+
+/* The destination stays mounted behind this removable, keyboard-accessible entry. */
+.ticket-entry { position:fixed; inset:0; z-index:20; overflow-x:clip; overflow-y:auto; }
+.entry-interior { min-height:max(760px,100svh); position:relative; overflow:hidden; background:#f1f5f4; transform-origin:65% 50%; }
+.entry-interior::before { content:''; position:absolute; inset:80px 0 0; background:linear-gradient(168deg,transparent 0 57%,#dce6e9 57.2% 57.4%,transparent 57.6%),linear-gradient(15deg,transparent 0 40%,#e1e9eb 40.2% 40.4%,transparent 40.6%),linear-gradient(180deg,#f1f5f4 48%,#e8eff0); pointer-events:none; }
+.entry-interior::after { content:''; position:absolute; left:50%; top:82px; width:70%; height:8px; background:#d4dfe4; transform:rotate(-9deg); transform-origin:left; }
+.entry-skip { position:fixed; top:20px; right:48px; z-index:30; border:1px solid #c8d6df; border-radius:3px; background:#f8f9f6; color:var(--home-ink); padding:12px 16px; cursor:pointer; font:500 13px var(--font-family-system); }
+.entry-skip:hover { color:var(--home-blue); background:#e9f2fa; }
+.entry-skip:active { opacity:.65; }
+.entry-skip span { margin-left:10px; }
+.entry-heading { position:absolute; left:max(48px,calc((100% - 1200px)/2)); top:204px; width:410px; z-index:2; }
+.entry-heading h1 { font-size:clamp(42px,4.2vw,60px); line-height:1.06; letter-spacing:-2.7px; font-weight:600; margin-bottom:22px; }
+.entry-heading > p:last-child { color:var(--home-muted); font-size:15px; }
+.entry-heading .home-eyebrow { margin-bottom:24px; font-size:11px; }
+.entry-scene { --ticket-travel:52px; --ticket-approach:30px; position:relative; height:620px; width:760px; margin:14px 0 0 calc(50% - 90px); perspective:1100px; }
+.entry-scene::after { content:''; position:absolute; width:550px; height:80px; bottom:30px; left:80px; background:radial-gradient(ellipse,#2e526e26,transparent 68%); }
+.entry-ticket { position:absolute; top:20px; left:50%; width:420px; height:210px; transform:translateX(-50%) rotate(-7deg) rotateX(7deg); transform-origin:center bottom; z-index:3; border:1px solid #bfc3b1; border-radius:4px; background:linear-gradient(115deg,#faf6e7,#eeeada); color:#293e42; padding:22px 24px; text-align:left; box-shadow:4px 18px 24px #17334e26,0 1px 0 #fff inset; cursor:pointer; font-family:var(--font-family-system); transition:transform 120ms ease-out,box-shadow 120ms ease-out; }
+.entry-ticket:hover { transform:translateX(-50%) rotate(-4deg) rotateX(7deg) translateY(-5px); box-shadow:4px 22px 28px #17334e29; }
+.entry-ticket:active { transform:translateX(-50%) rotate(-4deg) translateY(4px); box-shadow:2px 8px 12px #17334e26; }
+.ticket-top,.ticket-bottom { display:flex; align-items:center; justify-content:space-between; font-size:11px; letter-spacing:1.3px; }
+.ticket-top { color:#657567; }
+.ticket-route { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:24px; font-size:21px; font-weight:650; white-space:nowrap; }
+.ticket-route > span:first-child { font-size:30px; }
+.ticket-route small { display:block; font-size:12px; font-weight:500; margin-top:4px; letter-spacing:0; }
+.ticket-rule { display:block; border-top:1px solid #afbbaf; margin:17px 0 12px; }
+.ticket-bottom { font-size:10px; }
+.ticket-marks { display:block; font-size:14px; letter-spacing:4px; margin-top:8px; opacity:.65; }
+.entry-gate { width:720px; position:absolute; top:208px; left:50%; z-index:1; transform:translateX(-50%); }
+.entry-caption { position:absolute; top:470px; left:max(48px,calc((100% - 1200px)/2)); z-index:2; }
+.entry-caption p { font-size:16px; color:var(--home-ink); }
+.entry-caption span { display:block; color:var(--home-muted); font-size:11px; margin-top:10px; }
+.entry-footnote { position:absolute; left:max(48px,calc((100% - 1200px)/2)); bottom:32px; color:var(--home-muted); font-size:11px; }
+.entry-sweep { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:5; visibility:hidden; }
+.entry-train { position:absolute; width:max(414vw,4511px); max-width:none; top:29%; left:0; transform:translateX(100vw); filter:drop-shadow(0 30px 13px #153e6429); }
+.is-accepting .entry-ticket { animation:ticket-insert 530ms cubic-bezier(.4,0,.6,1) forwards; pointer-events:none; }
+.is-accepting .gate-status { fill:#2da77b; }
+.is-accepting .entry-interior { animation:station-enter 450ms 640ms cubic-bezier(.4,0,.2,1) forwards; }
+.is-accepting .entry-sweep { visibility:visible; }
+.is-accepting .entry-train { animation:train-pass 1950ms 620ms cubic-bezier(.3,.1,.55,1) forwards; }
+.home-entering { height:100svh; overflow:hidden; }
+.home-entering .home-destination { height:100svh; overflow:hidden; }
+.home-replay { display:block; margin:18px 0 0 auto; border:0; background:transparent; color:var(--home-muted); font-size:10px; text-decoration:underline; cursor:pointer; padding:8px; }
+.home-arrived .home-wayfinding { animation:home-arrive 240ms ease-out; }
+@keyframes ticket-insert {
+  28% { transform:translateX(-50%) rotate(0) rotateX(18deg); }
+  65% { opacity:1; transform:translateX(-50%) translateY(var(--ticket-approach)) rotateX(58deg) scale(.8); }
+  100% { transform:translateX(-50%) translateY(var(--ticket-travel)) rotateX(88deg) scale(.64); opacity:0; }
+}
+@keyframes station-enter { to { opacity:0; transform:scale(1.17); } }
+@keyframes train-pass {
+  0% { transform:translateX(100vw) scale(.94) rotate(-1deg); }
+  100% { transform:translateX(-110%) scale(1.08) rotate(0); }
+}
+@keyframes home-arrive { from { opacity:.4; } to { opacity:1; } }
+@media(max-width:1100px) and (min-width:701px) {
+  .entry-heading { top:190px; width:310px; }
+  .entry-scene { margin-left:calc(50% - 115px); width:650px; }
+  .entry-gate { width:650px; }
+  .entry-ticket { width:390px; padding:22px 20px; }
+  .ticket-route { font-size:19px; }
+  .entry-caption { top:450px; max-width:280px; }
+  .platform-sign { left:auto; right:55px; width:250px; }
+  .platform-train-control { left:49%; width:2506px; }
+  .home-heading { max-width:55%; }
+}
+@media(max-width:700px) {
+  .home-main { padding-top:28px; }
+  .home-heading { max-width:none; min-height:0; margin-bottom:182px; }
+  .home-heading h1 { font-size:38px; max-width:300px; }
+  .home-heading > p:last-child { font-size:13px; }
+  .station-platform { top:270px; height:180px; }
+  .platform-structure { width:800px; left:-360px; }
+  .platform-sign { left:24px; top:4px; width:180px; padding:9px 12px 0; }
+  .platform-sign-jp { font-size:22px; letter-spacing:4px; }
+  .platform-sign strong { font-size:17px; }
+  .platform-sign-line { margin:7px -12px 0; font-size:6px; padding:5px 9px; }
+  .platform-sign-line b { font-size:14px; }
+  .platform-train-control { width:1704px; top:54px; left:32px; }
+  .platform-wash { background:linear-gradient(0deg,#f8f9f6 0%,#f8f9f600 22%); }
+  .has-results .home-heading { min-height:0; margin-bottom:182px; }
+  .entry-skip { top:14px; right:20px; padding:10px 12px; }
+  .entry-interior { min-height:max(760px,100svh); }
+  .entry-interior::after { top:100px; }
+  .entry-heading { position:relative; left:auto; top:auto; width:auto; text-align:center; margin:24px 20px 0; }
+  .entry-heading h1 { font-size:36px; letter-spacing:-1.4px; margin-bottom:12px; }
+  .entry-heading .home-eyebrow { font-size:9px; margin-bottom:12px; }
+  .entry-heading > p:last-child { font-size:13px; }
+  .entry-scene { --ticket-travel:16px; --ticket-approach:0px; width:100%; height:355px; margin:16px 0 0; }
+  .entry-ticket { width:min(82vw,340px); height:170px; top:12px; padding:16px; }
+  .ticket-top { font-size:9px; }
+  .ticket-route { font-size:16px; margin-top:18px; gap:10px; }
+  .ticket-route > span:first-child { font-size:23px; }
+  .ticket-route small { font-size:9px; }
+  .ticket-rule { margin:12px 0 8px; }
+  .ticket-bottom { font-size:8px; }
+  .ticket-marks { font-size:11px; margin-top:6px; }
+  .entry-gate { width:440px; max-width:115%; top:152px; }
+  .entry-scene::after { width:90%; left:5%; bottom:-12px; }
+  .entry-caption { position:relative; top:auto; left:auto; text-align:center; margin:12px 16px 0; }
+  .entry-caption p { font-size:14px; }
+  .entry-caption span { font-size:10px; }
+  .entry-footnote { position:relative; left:auto; bottom:auto; text-align:center; padding:26px 16px; font-size:9px; }
+  .entry-train { width:3258px; top:33%; }
+  .is-accepting .entry-train { animation-duration:1850ms; animation-delay:720ms; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .entry-ticket,.entry-ticket:hover,.entry-ticket:active { transform:translateX(-50%); transition:none; }
+  .is-accepting .entry-ticket,.is-accepting .entry-interior,.is-accepting .entry-train,.home-arrived .home-wayfinding { animation:none; }
+  .entry-sweep { display:none; }
+}
+
+/* Only the illustrated train accepts input; search controls retain their own hit areas. */
+.home-main { pointer-events:none; }
+.home-search > :not(.home-heading),.home-results,.home-footer,.home-replay { pointer-events:auto; }
+.platform-train-control { padding:0; border:0; background:transparent; color:inherit; cursor:pointer; pointer-events:auto; transition:filter 140ms ease-out,transform 140ms ease-out; }
+.platform-train { display:block; width:100%; }
+.platform-train-control:hover:not([aria-disabled=true]) { transform:translateY(-2px); filter:brightness(1.025) drop-shadow(0 3px 2px #0759ad26); }
+.platform-train-control:focus-visible { outline:2px solid #0759ad; outline-offset:4px; border-radius:6px; box-shadow:none; }
+.platform-train-control:active:not([aria-disabled=true]) { transform:translateY(0); filter:brightness(.97); }
+.platform-train-control[aria-disabled=true] { cursor:default; }
+.platform-train-control.is-departing { animation:platform-depart 1800ms cubic-bezier(.45,0,.65,1) forwards; }
+.platform-train-control.is-away { transform:translateX(calc(-100% - 100vw)); opacity:0; }
+.platform-train-control.is-returning { animation:platform-return 1600ms cubic-bezier(.45,0,.65,1) both; }
+.platform-train-control.is-acknowledged { opacity:.78; }
+@keyframes platform-depart { from { transform:translateX(0); } to { transform:translateX(calc(-100% - 100vw)); } }
+@keyframes platform-return { from { transform:translateX(100vw); opacity:1; } to { transform:translateX(0); opacity:1; } }
+@media(prefers-reduced-motion:reduce) {
+  .platform-train-control,.platform-train-control:hover:not([aria-disabled=true]) { transform:none; transition:none; }
+  .platform-train-control.is-departing,.platform-train-control.is-returning { animation:none; }
+}
+
+.platform-vending { position:absolute; width:56px; top:187px; right:9%; pointer-events:none; }
+@media(max-width:700px) { .platform-vending { width:34px; top:109px; right:25px; } }

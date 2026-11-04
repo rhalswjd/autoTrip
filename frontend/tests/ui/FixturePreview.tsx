@@ -5,13 +5,14 @@ import { RouteResultList } from '../../src/components/route/RouteResultList';
 import { SelectedRouteDetail } from '../../src/components/route/SelectedRouteDetail';
 import { SearchPage } from '../../src/pages/SearchPage';
 import { ToastProvider } from '../../src/components/ui/ToastProvider';
-import type { Route, StationSearchResult } from '../../src/api/types';
-import { longNameRoute, routes, timetable } from './fixtures';
+import type { MovementRequest, Route, StationSearchResult } from '../../src/api/types';
+import { badgeRequestedDate, badgeRoutes, longNameRoute, routes, timetable } from './fixtures';
 import '../../src/styles/global.css';
 import '../../src/styles/layout.css';
 import '../../src/styles/railway.css';
 
 let scenario = 'available';
+let saveAttempts = 0;
 const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const stations: StationSearchResult[] = [
   { id: 'fixture-kyoto', english_name: 'Kyoto', japanese_name: '京都', region: 'Kyoto', has_midori_office: true },
@@ -22,12 +23,19 @@ const stations: StationSearchResult[] = [
 // Test-only API boundary: never call live providers or write to Notion here.
 window.fetch = async (input, options) => {
   const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
-  if (options?.method === 'POST') return response({ detail: 'Persistence is disabled in the UI fixture.' }, 400);
   const url = new URL(String(input), window.location.origin);
+  if (options?.method === 'POST') {
+    if (!url.pathname.endsWith('/movements') || !['save_success', 'save_retry'].includes(scenario)) return response({ detail: 'Persistence is disabled in this fixture scenario.' }, 400);
+    const payload = JSON.parse(String(options.body)) as MovementRequest;
+    saveAttempts += 1;
+    window.dispatchEvent(new CustomEvent('fixture-save', { detail: `Mock save ${saveAttempts}: ${payload.route_id} · ${payload.legs?.length || 0} selected legs · ${payload.selected_departure_time} → ${payload.selected_arrival_time} · no external write` }));
+    if (scenario === 'save_retry' && saveAttempts === 1) return response({ detail: '모의 저장 실패입니다. 다시 시도해 주세요.' }, 503);
+    return response({ ...payload, search_mode: 'fixture', status: 'saved', notion_url: 'https://www.notion.so/00000000000000000000000000000000', child_page_ids: [] });
+  }
   if (url.pathname.endsWith('/stations/search')) return response(stations.filter(station => station.english_name.toLowerCase().includes((url.searchParams.get('q') || '').toLowerCase())));
   if (url.pathname.endsWith('/search')) {
     window.dispatchEvent(new CustomEvent('fixture-search', { detail: url.searchParams.toString() }));
-    return response(routes);
+    return response(scenario === 'badge_search' ? badgeRoutes : routes);
   }
   const index = Number(url.pathname.match(/\/legs\/(\d+)/)?.[1] || 0);
   const routeId = url.pathname.match(/\/routes\/([^/]+)/)?.[1];
@@ -43,21 +51,39 @@ window.fetch = async (input, options) => {
 function ViewportStatus() {
   const [status, setStatus] = useState('Measuring viewport');
   const [request, setRequest] = useState('');
+  const [save, setSave] = useState('');
   useEffect(() => {
     const capture = (event: Event) => setRequest(decodeURIComponent((event as CustomEvent<string>).detail));
+    const captureSave = (event: Event) => setSave((event as CustomEvent<string>).detail);
     window.addEventListener('fixture-search', capture);
-    return () => window.removeEventListener('fixture-search', capture);
+    window.addEventListener('fixture-save', captureSave);
+    return () => { window.removeEventListener('fixture-search', capture); window.removeEventListener('fixture-save', captureSave); };
   }, []);
   useEffect(() => {
+    let lastTrainX: number | null = null;
+    let trainMotion = '';
+    const parkedPhases: string[] = [];
+    const observeParkedTrain = () => {
+      const phase = document.querySelector('.platform-train-control')?.className.split('is-')[1];
+      if (phase && parkedPhases.at(-1) !== phase) { parkedPhases.push(phase); if (parkedPhases.length > 6) parkedPhases.shift(); }
+    };
+    const observer = new MutationObserver(observeParkedTrain);
+    observer.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true });
     const measure = () => {
+      const train = document.querySelector('.is-accepting .entry-train');
+      if (train) {
+        const box = train.getBoundingClientRect();
+        if (lastTrainX !== null && box.x < lastTrainX - 2) trainMotion = ` · Train: RIGHT → LEFT, ${Math.round(box.width)}px wide`;
+        lastTrainX = box.x;
+      } else lastTrainX = null;
       const active = document.activeElement;
-      setStatus(`${window.innerWidth}px · page ${document.documentElement.scrollWidth}px · ${document.documentElement.scrollWidth <= window.innerWidth ? 'no horizontal overflow' : 'OVERFLOW'} · Focus: ${active?.getAttribute('aria-label') || active?.textContent?.slice(0, 65) || active?.tagName}`);
+      setStatus(`${window.innerWidth}px · page ${document.documentElement.scrollWidth}px · ${document.documentElement.scrollWidth <= window.innerWidth ? 'no horizontal overflow' : 'OVERFLOW'} · Focus: ${active?.getAttribute('aria-label') || active?.textContent?.slice(0, 65) || active?.tagName}${trainMotion}${parkedPhases.length ? ` · Parked train: ${parkedPhases.join(' → ')}` : ''}`);
     };
     const timer = window.setInterval(measure, 250);
     measure();
-    return () => window.clearInterval(timer);
+    return () => { window.clearInterval(timer); observer.disconnect(); };
   }, []);
-  return <output style={{ display: 'block', padding: '6px 12px', background: '#e9eef5', color: '#123c71', fontSize: 11 }} aria-label="Viewport diagnostics">{status}{request && <span style={{ display: 'block', overflowWrap: 'anywhere' }}>Last search: {request}</span>}</output>;
+  return <output style={{ display: 'block', padding: '6px 12px', background: '#e9eef5', color: '#123c71', fontSize: 11 }} aria-label="Viewport diagnostics">{status}{request && <span style={{ display: 'block', overflowWrap: 'anywhere' }}>Last search: {request}</span>}{save && <span style={{ display: 'block' }}>{save}</span>}</output>;
 }
 
 export function FixturePreview() {
@@ -73,15 +99,15 @@ export function FixturePreview() {
   useEffect(() => { scenario = mode; }, [mode]);
   return <QueryClientProvider client={client}><ToastProvider><MemoryRouter>
     <div style={{ padding: 12, background: '#e9eef5', color: '#123c71', fontSize: 12 }}>
-      <strong>UI TEST FIXTURES · Synthetic schedules · Saving disabled</strong>{' '}
-      <label>Scenario <select aria-label="Fixture scenario" value={mode} onChange={event => { scenario = event.target.value; setMode(scenario); client.clear(); setRevision(value => value + 1); setSelected(null); }}>
-        {['available', 'long_names', 'search_flow', 'route_loading', 'route_empty', 'slow', 'unsupported', 'provider_error', 'network', 'empty'].map(value => <option key={value}>{value}</option>)}
+      <strong>UI TEST FIXTURES · Synthetic schedules · No external writes</strong>{' '}
+      <label>Scenario <select aria-label="Fixture scenario" value={mode} onChange={event => { scenario = event.target.value; saveAttempts = 0; setMode(scenario); client.clear(); setRevision(value => value + 1); setSelected(null); }}>
+        {['available', 'badges', 'badge_search', 'long_names', 'search_flow', 'save_success', 'save_retry', 'route_loading', 'route_empty', 'slow', 'unsupported', 'provider_error', 'network', 'empty'].map(value => <option key={value}>{value}</option>)}
       </select></label>
       <label style={{ marginLeft: 12 }}><input type="checkbox" checked={reduced} onChange={event => setReduced(event.target.checked)} /> Simulate reduced motion</label>
     </div>
     <ViewportStatus />
-    {mode === 'search_flow' ? <SearchPage key={revision} /> : <main style={{ maxWidth: 1040, margin: '0 auto', padding: 20 }} key={revision}>
-      <RouteResultList routes={mode === 'route_empty' ? [] : mode === 'long_names' ? [longNameRoute] : routes} isLoading={mode === 'route_loading'} selectedRoute={selected} onSelectRoute={route => setSelected(previous => previous?.id === route.id ? null : route)} renderDetail={route => <SelectedRouteDetail key={route.id} route={route} />} />
+    {['search_flow', 'badge_search'].includes(mode) ? <SearchPage key={revision} /> : <main style={{ maxWidth: 1040, margin: '0 auto', padding: 20 }} key={revision}>
+      <RouteResultList routes={mode === 'route_empty' ? [] : mode === 'long_names' ? [longNameRoute] : mode === 'badges' ? badgeRoutes : routes} requestedDepartureDate={mode === 'badges' ? badgeRequestedDate : undefined} isLoading={mode === 'route_loading'} selectedRoute={selected} onSelectRoute={route => setSelected(previous => previous?.id === route.id ? null : route)} renderDetail={route => <SelectedRouteDetail key={route.id} route={route} />} />
     </main>}
   </MemoryRouter></ToastProvider></QueryClientProvider>;
 }

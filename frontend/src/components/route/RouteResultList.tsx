@@ -10,13 +10,14 @@ import '../../styles/railway.css';
 
 export interface RouteResultListProps {
   routes: Route[] | undefined;
+  requestedDepartureDate?: string;
   isLoading: boolean;
   selectedRoute: Route | null;
   onSelectRoute: (route: Route) => void;
   renderDetail?: (route: Route) => ReactNode;
 }
 
-export function RouteResultList({ routes, isLoading, selectedRoute, onSelectRoute, renderDetail }: RouteResultListProps) {
+export function RouteResultList({ routes, requestedDepartureDate, isLoading, selectedRoute, onSelectRoute, renderDetail }: RouteResultListProps) {
   const [sortOption, setSortOption] = useState<RouteSort>('time');
   const [showAll, setShowAll] = useState(false);
   useEffect(() => setShowAll(false), [routes]);
@@ -45,7 +46,7 @@ export function RouteResultList({ routes, isLoading, selectedRoute, onSelectRout
           <h3 tabIndex={-1}>{section.title}</h3>
           {!items.length && <button type="button" className="rail-text-button" onClick={event => { event.currentTarget.closest('section')?.querySelector('h3')?.focus(); setShowAll(true); }}>Show {count} {section.kind === 'daily_alternative' ? 'other direct services' : 'later options'} <ArrowDown size={14} /></button>}
           <ul className="rail-route-list">{items.map(route => <li key={route.id} className={selectedRoute?.id === route.id ? 'is-active' : ''}>
-            <RouteCard route={route} isSelected={selectedRoute?.id === route.id} onClick={onSelectRoute} />
+            <RouteCard route={route} requestedDepartureDate={requestedDepartureDate} isSelected={selectedRoute?.id === route.id} onClick={onSelectRoute} />
             <RouteExpansion id={`route-detail-${route.id}`} expanded={selectedRoute?.id === route.id}>
               {renderDetail?.(route)}
             </RouteExpansion>

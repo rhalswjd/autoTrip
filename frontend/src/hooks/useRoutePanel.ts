@@ -6,6 +6,7 @@ export function useRoutePanel() {
   const [arrivalStation, setArrivalStation] = useState<StationSearchResult | null>(null);
   const [routes, setRoutes] = useState<Route[] | undefined>(undefined);
   const [routesLoading, setRoutesLoading] = useState(false);
+  const [requestedDepartureDate, setRequestedDepartureDate] = useState<string>();
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
 
   const handleStationSelect = useCallback(
@@ -21,7 +22,7 @@ export function useRoutePanel() {
     [departureStation, arrivalStation]
   );
 
-  const handleRoutesLoaded = useCallback((loadedRoutes: Route[] | undefined, isLoading: boolean) => {
+  const handleRoutesLoaded = useCallback((loadedRoutes: Route[] | undefined, isLoading: boolean, requestedDate?: string) => {
     setRoutes((prevRoutes) => {
       if (loadedRoutes !== prevRoutes) {
         setSelectedRoute(null);
@@ -29,6 +30,7 @@ export function useRoutePanel() {
       return loadedRoutes;
     });
     setRoutesLoading(isLoading);
+    setRequestedDepartureDate(requestedDate);
   }, []);
 
   const handleRouteSelect = useCallback((route: Route) => {
@@ -40,6 +42,7 @@ export function useRoutePanel() {
     setArrivalStation(null);
     setRoutes(undefined);
     setRoutesLoading(false);
+    setRequestedDepartureDate(undefined);
     setSelectedRoute(null);
   }, []);
 
@@ -50,6 +53,7 @@ export function useRoutePanel() {
     setArrivalStation,
     routes,
     routesLoading,
+    requestedDepartureDate,
     selectedRoute,
     handleStationSelect,
     handleRoutesLoaded,
