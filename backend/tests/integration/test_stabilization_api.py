@@ -43,7 +43,9 @@ def test_real_api_pipeline_uses_passenger_legs_and_safe_notion_mapping(through_a
     response = client.get('/api/v1/search', params={'departure_station': '敦賀', 'arrival_station': '金沢',
         'departure_date': '2026-10-31', 'departure_time': '06:00'})
     assert response.status_code == 200
-    route = response.json()[0]
+    # Unified duration ordering can put the independently proven direct family
+    # first. Select the transfer topology this persistence regression exercises.
+    route = next(r for r in response.json() if len(r['passenger_legs']) == 2)
     assert len(route['passenger_legs']) == 2
     assert route['transfer_count'] == 1
     options = []

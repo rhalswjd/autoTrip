@@ -51,6 +51,8 @@ class Route(BaseModel):
     departure_time: str = ""
     arrival_time: str = ""
     total_duration: str
+    departure_datetime: str = ""
+    arrival_datetime: str = ""
     onboard_duration: str = ""
     non_riding_duration: str = ""
     total_fare: int

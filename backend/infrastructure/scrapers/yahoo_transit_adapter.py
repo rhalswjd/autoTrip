@@ -6,6 +6,7 @@ import re
 from typing import List
 from urllib.parse import urljoin
 import uuid
+from datetime import datetime
 
 from application.ports.scraper_port import ScraperPort, ScraperException
 from domain.route import Route, RouteSegment, FareBreakdown
@@ -13,6 +14,7 @@ from domain.station import Station
 from domain.timetable import Timetable
 from domain.journey import canonical_station
 from domain.station_identity import qualified_station_name
+from domain.chronology import JST
 from core.logger import logger
 
 class YahooTransitAdapter(ScraperPort):
@@ -103,10 +105,11 @@ class YahooTransitAdapter(ScraperPort):
         search_data = next_data.get("props", {}).get("pageProps", {}).get("naviSearchParam", {}) if next_data else {}
         feature_list = search_data.get("featureInfoList", [])
             
-        for i in range(1, 10):
-            route_div = soup.select_one(f'#route0{i}')
-            if not route_div:
-                continue
+        # DOM IDs may restart at route01 or continue at route04 on page two.
+        # featureInfoList is page-local in both cases; global IDs are not array
+        # offsets. Align the two page-local sequences before normalization.
+        route_blocks = soup.find_all(id=re.compile(r'^route\d+$'))
+        for feature_index, route_div in enumerate(route_blocks):
                 
             summary = route_div.select_one('.routeSummary')
             if not summary:
@@ -114,8 +117,18 @@ class YahooTransitAdapter(ScraperPort):
                 
             time_text = summary.select_one('.time').text if summary.select_one('.time') else ""
             
-            feature = feature_list[i - 1] if len(feature_list) >= i else {}
+            feature = feature_list[feature_index] if len(feature_list) > feature_index else {}
             summary_info = feature.get("summaryInfo", {})
+            # Yahoo can return the next morning even for a late departure query.
+            # Its calendar export contains the real dates; HH:mm alone does not.
+            calendar = summary_info.get('calendarData') or {}
+            instants = {}
+            for field, calendar_field in (('departure_datetime', 'startTime'), ('arrival_datetime', 'endTime')):
+                if calendar.get(calendar_field):
+                    try:
+                        instants[field] = datetime.strptime(calendar[calendar_field], '%Y%m%dT%H%M%S').replace(tzinfo=JST).isoformat()
+                    except (ValueError, TypeError):
+                        logger.warning('Yahoo route calendar field malformed: %s', calendar_field)
             elapsed_raw = str(summary_info.get("totalTime") or "")
             if not elapsed_raw:
                 elapsed_match = re.search(r'([0-9]+時間(?:[0-9]+分)?|[0-9]+分)', time_text)
@@ -304,10 +317,11 @@ class YahooTransitAdapter(ScraperPort):
                 fare_status='indicative' if fare > 0 else 'unknown',
                 transfer_count=transfers,
                 polyline=polyline,
-                search_date=search_date,
+                search_date=instants['departure_datetime'][:10] if instants.get('departure_datetime') else search_date,
                 search_time=search_time,
+                **instants,
                 search_source=source,
-                source_rank=rank_offset + len(routes) + 1,
+                source_rank=rank_offset + feature_index + 1,
                 stations=domain_stations,
                 segments=segments
             ))

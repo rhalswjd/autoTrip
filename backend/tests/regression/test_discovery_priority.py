@@ -10,7 +10,7 @@ from infrastructure.scrapers.timetable.yahoo_timetable_scraper import YahooTimet
 from infrastructure.scrapers.timetable.odekake_scraper import JROdekakeTimetableScraper
 from infrastructure.adapters.transport_scraper import TransportScraperAdapter
 from application.ports.scraper_port import UnsupportedTimetable
-from tests.regression.test_odekake_integration import STATION_PAGE, TRAIN_PAGE
+from tests.fixtures.odekake import STATION_PAGE, TRAIN_PAGE
 
 
 class Response:

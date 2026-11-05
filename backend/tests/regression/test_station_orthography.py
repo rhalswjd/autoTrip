@@ -93,12 +93,13 @@ def test_display_alias_is_scoped_by_id_name_and_region():
 
 
 @pytest.mark.asyncio
-async def test_cached_route_refreshes_display_without_a_new_provider_query():
+async def test_cached_route_refreshes_display_without_requerying_primary():
     origin = Station(id='1163907', name='Kiikatsura', name_jp='紀伊勝浦', prefecture='30', display_name_en='Kii-Katsuura')
     target = Station(id='9960914', name='Yuhigaurakitsuonsen', name_jp='夕日ヶ浦木津温泉', prefecture='26', display_name_en='Yuhigaura-Kitsuonsen')
     repo, provider, cache = AsyncMock(), AsyncMock(), FakeCacheAdapter()
     repo.get_station_by_id.side_effect = lambda identity: origin if identity == origin.id else target
     service = SearchService(provider, cache, repo)
+    provider.search_routes.return_value = []
     request = SearchRequest(departure_station_id=origin.id, arrival_station_id=target.id,
         departure_station=origin.name, arrival_station=target.name, departure_date='2026-11-02', departure_time='06:00')
     old = journey([origin.name_jp, '夕日ケ浦木津温泉'], ['Rail']).model_copy(update={
@@ -108,6 +109,7 @@ async def test_cached_route_refreshes_display_without_a_new_provider_query():
     assert refreshed.stations[0].display_name_en == 'Kii-Katsuura'
     assert refreshed.passenger_legs[-1].arrival_station.display_name_en == 'Yuhigaura-Kitsuonsen'
     assert (await cache.get(refreshed.id)).stations[-1].id == '9960914'
+    # Undated cached samples cannot justify end-of-service exploration.
     provider.search_routes.assert_not_awaited()
 
 

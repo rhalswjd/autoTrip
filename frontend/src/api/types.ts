@@ -71,6 +71,8 @@ export interface Route {
   railway_name: string;
   departure_time: string;
   arrival_time: string;
+  departure_datetime?: string;
+  arrival_datetime?: string;
   total_duration: string;
   onboard_duration: string;
   non_riding_duration: string;

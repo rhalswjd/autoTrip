@@ -13,7 +13,7 @@ from domain.exceptions import DomainException
 from core.logger import logger
 from application.services.route_families import group_route_families, categorize_routes
 from application.services.direct_alternatives import DirectAlternativeDiscovery
-from application.services.practical_alternatives import PracticalAlternativeDiscovery
+from application.services.next_day_discovery import DISCOVERY_POLICY_VERSION, NextDayRouteDiscovery, contextualize_routes
 
 class SearchModeResolver:
     @staticmethod
@@ -43,7 +43,11 @@ class SearchService:
     def _generate_cache_key(self, request: SearchRequest) -> str:
         origin = ('station-id', request.departure_station_id) if request.departure_station_id else ('legacy-name', canonical_station(request.departure_station))
         target = ('station-id', request.arrival_station_id) if request.arrival_station_id else ('legacy-name', canonical_station(request.arrival_station))
-        raw_key = repr(('families-v5', origin, target, request.departure_time, request.departure_date))
+        # v5 cached HH:mm-only samples with the query date, including next-day
+        # Yahoo departures. They cannot safely authorize the new date contract.
+        # The policy marker also excludes the earlier unconditional v6 results;
+        # the dated Route/timetable serialization itself remains unchanged.
+        raw_key = repr(('families-v6', DISCOVERY_POLICY_VERSION, origin, target, request.departure_time, request.departure_date))
         return hashlib.md5(raw_key.encode()).hexdigest()
 
     async def _resolve_station(self, station_id: str | None, display_name: str) -> Station | None:
@@ -181,6 +185,9 @@ class SearchService:
             # Refresh presentation metadata without changing cache identity or
             # trusting cached provider endpoints over the current selected IDs.
             routes = self._bind_endpoints(cached_routes, origin, target)
+            # This policy-versioned entry is the completed result collection.
+            # Reinterpreting its recovered families as raw primary candidates
+            # would restart optional exploration and lose the original frontier.
             for route in routes:
                 await self.cache_port.set(route.id, route, ttl_seconds=self.cache_ttl)
             return routes
@@ -200,30 +207,33 @@ class SearchService:
         
         logger.info(f"Scraper Finished: Found {len(routes)} routes")
         
-        if not routes:
-            return []
         routes = self._bind_endpoints(routes, origin, target)
 
-        # The application request is the source of truth for both the cached route
-        # and every later exact-date timetable lookup.
-        routes = [
-            route.model_copy(update={
-                "search_date": request.departure_date,
-                "search_time": request.departure_time,
-            })
-            for route in routes
-        ]
+        # Provider calendar evidence may place the actual departure tomorrow;
+        # never overwrite that date with the original query calendar.
+        routes = contextualize_routes(routes, request)
             
         # Route fares describe the discovery sample only. Re-searching every raw
         # segment amplified requests and still could not price a later selected train.
-        routes = group_route_families(routes)
-        alternatives = await DirectAlternativeDiscovery(self.scraper_port, self.cache_port).discover(routes, request)
-        later = await PracticalAlternativeDiscovery(self.scraper_port).discover(routes, request, dep_jp, arr_jp)
-        if later:
-            later = self._bind_endpoints(later, origin, target)
-        # Do not group across query contexts: strict overnight services remain selectable.
-        routes = categorize_routes(routes) + categorize_routes(alternatives) + later
-            
+        # Keep existing primary-only direct evidence; enrichment never performs
+        # per-family/per-leg timetable lookups. Use each route's effective date.
+        alternatives = []
+        if routes:
+            alternatives = await DirectAlternativeDiscovery(self.scraper_port, self.cache_port).discover(group_route_families(routes), request)
+        return await self._enrich_and_cache(routes + alternatives, request, origin, target, cache_key)
+
+    async def _enrich_and_cache(self, routes: list[Route], request: SearchRequest,
+                               origin: Station | None, target: Station | None, cache_key: str) -> list[Route]:
+        supplemental = await NextDayRouteDiscovery(self.scraper_port, self.cache_port, self.cache_ttl).discover(request, routes)
+        try:
+            supplemental = self._bind_endpoints(supplemental, origin, target)
+        except DomainException:
+            logger.warning('Optional next-day discovery rejected: station identity mismatch')
+            supplemental = []
+        merged = routes + supplemental
+        routes = categorize_routes(group_route_families(merged))
+        logger.info('Route coverage: primary/cached=%d supplemental=%d merged=%d families=%d',
+                    len(merged) - len(supplemental), len(supplemental), len(merged), len(routes))
         await self.cache_port.set(cache_key, routes, ttl_seconds=self.cache_ttl)
         for r in routes:
             await self.cache_port.set(r.id, r, ttl_seconds=self.cache_ttl)

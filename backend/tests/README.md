@@ -4,7 +4,8 @@
 - `integration/`: FastAPI, service composition and temporary SQLite databases.
 - `regression/`: deterministic fixtures for previously reproduced route/timetable failures.
 - `e2e/`: opt-in Playwright application workflows. Live cases never write to Notion.
-- `data/`: shared non-sensitive fixtures; `factories.py`: shared domain builders.
+- `fixtures/`: shared route/provider builders and synthetic HTML; never import another test module for fixture data.
+- `data/`: shared non-sensitive data files; `factories.py`: shared domain builders.
 
 Run `pytest` from the repository root, or `docker compose exec -T backend pytest`.
 Run individual groups with `pytest backend/tests/unit` (inside Docker: `pytest tests/unit`).

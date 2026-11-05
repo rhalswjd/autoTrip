@@ -15,7 +15,7 @@ from infrastructure.notion.constants import NotionColumns as C
 from infrastructure.scrapers.timetable.odekake_parser import JROdekakeParser
 from infrastructure.scrapers.timetable.yahoo_timetable_scraper import YahooTimetableScraper
 from tests.factories import journey
-from tests.regression.test_odekake_integration import TRAIN_PAGE
+from tests.fixtures.odekake import TRAIN_PAGE
 
 
 @pytest.mark.parametrize(('departure', 'arrival', 'dep_status', 'arr_status'), [

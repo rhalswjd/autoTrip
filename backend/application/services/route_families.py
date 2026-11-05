@@ -29,6 +29,17 @@ def group_route_families(routes: list[Route]) -> list[Route]:
         key = identity or ("unstructured", route.id)
         if key in grouped:
             previous = grouped[key]
+            # Cross-day clock comparisons (07:00 < 22:00) must never replace a
+            # feasible earlier-day family with its faster tomorrow sample.
+            if previous.search_date and route.search_date and previous.search_date != route.search_date:
+                if previous.search_date < route.search_date:
+                    continue
+                # A candidate on the earlier departure day wins before the
+                # existing within-day duration/fare dominance comparison.
+                previous = None
+        else:
+            previous = None
+        if previous is not None:
             previous_duration, current_duration = duration_minutes(previous.total_duration), duration_minutes(route.total_duration)
             comparable = previous_duration is not None and current_duration is not None
             arrival_better = bool(route.arrival_time and previous.arrival_time and route.arrival_time <= previous.arrival_time)

@@ -56,6 +56,8 @@ class RouteSegmentSchema(BaseModel):
     schedule_candidates: Optional[List[ScheduleCandidateSchema]] = Field(None, title="Schedule Candidates", description="Optional list of alternative times.")
 
 class RouteResponseSchema(BaseModel):
+    departure_datetime: str = Field('', description='Provider-proven representative departure instant, including JST offset; empty when unreported.')
+    arrival_datetime: str = Field('', description='Provider-proven representative arrival instant, including calendar rollover; empty when unreported.')
     fare_breakdown: Optional[FareBreakdown] = None
     result_kind: str = 'requested'
     alternative_reason: str = ''
@@ -78,7 +80,7 @@ class RouteResponseSchema(BaseModel):
     total_fare: int = Field(..., title="Total Fare", description="Total fare in JPY.", json_schema_extra={"examples": [580]})
     transfer_count: int = Field(..., title="Transfer Count", description="Number of transfers required.", json_schema_extra={"examples": [0]})
     polyline: str = Field(..., title="Polyline", description="Google Maps encoded polyline string for the route path.", json_schema_extra={"examples": ["_p~iF~ps|U_ulLnnqC_mqNvxq`@"]})
-    search_date: Optional[str] = Field(None, title="Search Date", description="Optional search date in YYYY-MM-DD format.")
+    search_date: Optional[str] = Field(None, title="Search Date", description="Effective representative departure date for timetable lookup in YYYY-MM-DD format; may follow the requested query date.")
     search_time: Optional[str] = Field(None, title="Search Time", description="Departure time used to produce this route.")
     search_source: Optional[str] = Field(None, title="Search Source", description="Ordering source that produced this route.")
     source_rank: Optional[int] = Field(None, title="Source Rank", description="One-based rank within the ordering source across pages.")

@@ -36,21 +36,22 @@ class DirectAlternativeDiscovery:
             probes += 1
             origin, target = route.stations[0], route.stations[-1]
             dep, arr = origin.name_jp or origin.name, target.name_jp or target.name
-            key = 'direct-evidence-v1:' + hashlib.sha256(repr((dep, arr, railway, request.departure_date)).encode()).hexdigest()
+            service_date = route.search_date or request.departure_date
+            key = 'direct-evidence-v1:' + hashlib.sha256(repr((dep, arr, railway, service_date)).encode()).hexdigest()
             try:
                 timetable = await self.cache.get(key)
                 if not isinstance(timetable, Timetable):
                     timetable = await self.provider.get_timetable(route.id, dep, arr,
-                        railway_name_jp=railway, search_date=request.departure_date)
+                        railway_name_jp=railway, search_date=service_date)
                     if not isinstance(timetable, Timetable):
                         continue
                     if timetable.status == 'available':
                         await self.cache.set(key, timetable, ttl_seconds=3600)
                 candidates = []
-                for exact in getattr(timetable, calendar_type_for_date(request.departure_date).value):
+                for exact in getattr(timetable, calendar_type_for_date(service_date).value):
                     stops = exact.metadata.get('stop_sequence', [])
                     start = next((i for i, stop in enumerate(stops) if station_names_match(dep, str(stop))), None)
-                    if (exact.operating_date != request.departure_date or start is None
+                    if (exact.operating_date != service_date or start is None
                             or not any(station_names_match(arr, str(stop)) for stop in stops[start + 1:])
                             or elapsed_minutes(exact.time, exact.arrival_time) is None):
                         continue
@@ -66,6 +67,7 @@ class DirectAlternativeDiscovery:
                         'express_fare': None, 'departure_time': exact.time, 'arrival_time': exact.arrival_time,
                         'departure_platform': exact.platform or None, 'duration': duration})],
                     'transfer_count': 0, 'departure_time': exact.time, 'arrival_time': exact.arrival_time,
+                    'departure_datetime': exact.departure_datetime, 'arrival_datetime': exact.arrival_datetime,
                     'total_duration': duration, 'onboard_duration': duration, 'non_riding_duration': '0m',
                     'total_fare': 0, 'fare_status': 'unknown', 'fare_breakdown': None, 'railway_name': first.railway_name,
                     'family_key': '', 'categories': [], 'search_source': 'timetable_evidence', 'source_rank': None,

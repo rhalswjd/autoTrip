@@ -46,7 +46,7 @@ async def test_search_integration_success_cache_miss_and_hit(search_service, rea
     routes1 = await search_service.search(req)
     assert len(routes1) == 1
     assert routes1[0].departure_station == "Osaka"
-    mock_get.assert_called_once()
+    mock_get.assert_called_once()  # undated legacy candidates cannot prove exhaustion
     
     mock_get.reset_mock()
     routes2 = await search_service.search(req)

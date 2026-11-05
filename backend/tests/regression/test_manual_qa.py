@@ -207,11 +207,11 @@ async def test_short_terminating_train_cannot_be_promoted_to_direct_family():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('bad_wait', [True, False])
-async def test_practical_alternative_keeps_strict_results_and_avoids_unnecessary_next_day(bad_wait):
-    strict = journey(['A', 'B', 'C'], ['JR特急One', 'JR特急Two']).model_copy(update={
+async def test_wait_duration_alone_does_not_justify_tomorrow_discovery(bad_wait):
+    strict = journey(['A', 'B', 'C'], ['JR特急One', 'JR特急Two'], id='strict').model_copy(update={
         'total_duration': '6h' if bad_wait else '1h', 'onboard_duration': '1h',
         'non_riding_duration': '5h' if bad_wait else '0m', 'departure_time': '23:15', 'arrival_time': '05:15'})
-    direct = journey(['A', 'C'], ['JR特急One']).model_copy(update={
+    direct = journey(['A', 'C'], ['JR特急One'], id='tomorrow-direct').model_copy(update={
         'total_duration': '1h', 'onboard_duration': '1h', 'non_riding_duration': '0m',
         'departure_time': '06:00', 'arrival_time': '07:00'})
     provider, stations = AsyncMock(), AsyncMock()
@@ -221,20 +221,16 @@ async def test_practical_alternative_keeps_strict_results_and_avoids_unnecessary
     request = SearchRequest(departure_station='A', arrival_station='C', departure_date='2026-11-02', departure_time='23:00')
     results = await service.search(request)
     assert any(r.id == strict.id and r.result_kind == 'requested' for r in results)
-    later = [r for r in results if r.result_kind == 'later_practical']
-    assert bool(later) == bad_wait
-    assert provider.search_routes.await_count == (2 if bad_wait else 1)
-    if bad_wait:
-        assert later[0].search_date == '2026-11-03'
-        assert later[0].search_time == '04:00'
-        assert '300m shorter' in later[0].alternative_reason
+    later = [r for r in results if r.id == direct.id]
+    assert later == []  # no dated service-day evidence in this legacy fixture
+    assert provider.search_routes.await_count == 1
     await service.search(request)
-    assert provider.search_routes.await_count == (2 if bad_wait else 1)
+    assert provider.search_routes.await_count == 1
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('onboard_night', [False, True])
-async def test_valid_late_direct_or_genuine_overnight_does_not_trigger_later_probe(onboard_night):
+async def test_valid_late_direct_or_genuine_overnight_remains_one_family_after_enrichment(onboard_night):
     route = journey(['A', 'C'], ['JR特急Night']).model_copy(update={
         'total_duration': '6h' if onboard_night else '1h',
         'onboard_duration': '6h' if onboard_night else '1h', 'non_riding_duration': '0m',
@@ -246,4 +242,5 @@ async def test_valid_late_direct_or_genuine_overnight_does_not_trigger_later_pro
         departure_station='A', arrival_station='C', departure_date='2026-11-02', departure_time='23:00'))
     assert len(result) == 1 and result[0].result_kind == 'requested'
     assert result[0].departure_time == '23:00'
+    assert result[0].search_date == '2026-11-02'
     assert provider.search_routes.await_count == 1

@@ -93,7 +93,7 @@ async def test_continuation_date_and_boundary_reach_provider_without_reusing_pre
 @pytest.mark.asyncio
 async def test_jr_cheap_boundary_prioritization_keeps_existing_detail_budget():
     from infrastructure.scrapers.timetable.odekake_scraper import JROdekakeTimetableScraper
-    from tests.regression.test_odekake_integration import STATION_PAGE, TRAIN_PAGE
+    from tests.fixtures.odekake import STATION_PAGE, TRAIN_PAGE
     early=''.join(STATION_PAGE.replace('/100?',f'/{i}?').replace('06:34','05:00') for i in range(24))
     later=STATION_PAGE.replace('/100?','/later?').replace('06:34','08:00')
     downloader=AsyncMock();downloader.fetch_html.side_effect=[early+later,
